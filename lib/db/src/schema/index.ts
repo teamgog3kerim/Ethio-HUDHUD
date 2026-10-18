@@ -20,3 +20,4 @@
 export * from "./learners";
 export * from "./courses";
 export * from "./learning";
+export * from "./administration";

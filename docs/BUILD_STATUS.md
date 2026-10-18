@@ -11,6 +11,10 @@
   network-only service worker never caches learner data or authentication.
 - Expo native companion with Arabic learning screens and device dark/light themes.
 - Managed Clerk sign-up, sign-in and user-isolated persistent learning records.
+- Protected responsive web administration at `/admin`: a real user directory,
+  search/pagination, names/goals, suspension/restore, owner-only admin assignment,
+  confirmed full account deletion, expiring complimentary AI grants, settings,
+  lesson editing/creation/archive and a recent audit trail.
 - Guest mode on the web; native learning requires sign-in.
 - Onboarding: goals, selected proficiency, daily target (default 60 minutes),
   timezone, reminder preference, and a conservative three-question web placement check.
@@ -22,8 +26,9 @@
   course, while preserving foundations. This is **not** 120 unique lessons.
 - Actual progress, study minutes, seven-day activity, streaks and vocabulary counts.
 - Text-only Amharic tutor using Replit AI Integrations for OpenAI, Arabic explanations,
-  scenarios, recent context and privacy preference. 20 request attempts per learner per
-  rolling 24 hours, plus a per-IP minute limit. Clearing chat does not reset usage.
+  scenarios, recent context and privacy preference. Administrator-configured request
+  limits (default 20 free / 100 complimentary) per rolling 24 hours, plus a per-IP
+  minute limit. Clearing chat does not reset usage or account restrictions.
 - JSON learning-data export, chat deletion and learning-data deletion.
 - Native OS share sheet for actual achievements.
 - Native local daily reminder, with OS permission, in the device's local timezone.
@@ -42,8 +47,8 @@
 - **Payments:** Polar is requested but not configured. The Premium screen is disabled.
   There is no working checkout, webhook handler, entitlement activation, cancellation
   portal or refund flow. No other billing provider has been substituted.
-- **Admin:** no admin/editor/reviewer panel or privileged-role management is shipped
-  yet. Content is currently maintained through reviewed source/seed changes.
+- **Qualified review:** the admin editor is not a linguistic-review certification.
+  Content edits reset status to pilot. Independent qualified-review approval is pending.
 - **Community/tutors:** friends, competitive challenges, referrals, public tutor
   discovery, availability and booking are not implemented. There are no invented
   tutors, bookings, testimonials or social statistics.
@@ -52,9 +57,10 @@
   device schedules, not a cloud delivery guarantee.
 - **Offline:** bundled fonts/icon and cached queries are not an offline lesson
   download/synchronization system.
-- **Account deletion:** the in-app action deletes learning records only. A Clerk
-  sign-in identity remains separate; full identity deletion needs a dedicated
-  authenticated workflow and clear confirmation.
+- **Account deletion:** learner self-service deletes learning records only.
+  Authorized admins can permanently delete another user's sign-in identity and
+  learning records after exact-email confirmation. The owner and destructive
+  self-actions are protected. Administrative audit records are retained.
 - **Guest-to-account migration:** browser guest work is not merged into a newly
   signed-in account. Sign in before studying if cross-device continuity matters.
 - **Plan personalization:** introductory goal-based ordering is present; there is

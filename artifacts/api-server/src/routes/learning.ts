@@ -10,6 +10,8 @@ import {
 import { getLearner, profileOf } from "../lib/learner";
 import { getCatalog, getWordQueue, progressSummary } from "../lib/learning";
 import { gradeAnswers, nextReviewInterval, boundedActiveSeconds } from "../lib/scoring";
+import { getAuth } from "@clerk/express";
+import { getAppSettings, getAccessState } from "../lib/app-settings";
 
 const router: IRouter = Router();
 router.get("/profile", async (req, res) => {
@@ -51,7 +53,7 @@ router.post("/lessons/:id/complete", async (req, res) => {
   if (!p.success || !body.success) { res.status(400).json({ error: "إجابات غير صالحة." }); return; }
   const learner = await getLearner(req, res);
   const [lesson] = await db.select().from(lessons).where(eq(lessons.id, p.data.id));
-  if (!lesson) { res.status(404).json({ error: "الدرس غير موجود." }); return; }
+  if (!lesson?.active) { res.status(404).json({ error: "الدرس غير موجود أو تم إخفاؤه بواسطة الإدارة." }); return; }
   const keys = lesson.answerKey as { correctIndex: number; explanation: string }[];
   const exercises = (lesson.content as LessonContent).exercises;
   if (body.data.answers.length !== keys.length || body.data.answers.some((v, i) => v >= exercises[i]!.options.length)) {
@@ -116,8 +118,12 @@ router.post("/vocabulary/:id/review", async (req, res) => {
     .onConflictDoUpdate({ target: [reviews.learnerId, reviews.wordId], set: { interval, nextReview, remembered: body.data.remembered } });
   res.json(ReviewVocabularyResponse.parse({ ...word, interval, due: false }));
 });
-router.get("/billing/status", (_req, res) => {
-  res.json(GetBillingStatusResponse.parse({ plan: "free", configured: false, message: "الاشتراك المدفوع غير مفعّل. لا يتم تحصيل أي رسوم. يلزم إعداد Polar والتحقق من الدفع قبل تفعيل Premium." }));
+router.get("/billing/status", async (req, res) => {
+  const settings = await getAppSettings();
+  const access = await getAccessState(getAuth(req).userId, settings);
+  res.json(GetBillingStatusResponse.parse({ ...access, configured: false, message: access.plan === "complimentary"
+    ? "لديك وصول مجاني مؤقت من الإدارة، وليس اشتراكاً مدفوعاً. لا يتم تحصيل أي رسوم."
+    : "الاشتراك المدفوع غير مفعّل. لا يتم تحصيل أي رسوم. يلزم إعداد Polar والتحقق من الدفع قبل تفعيل Premium." }));
 });
 router.get("/account/export", async (req, res) => {
   const learner = await getLearner(req, res);

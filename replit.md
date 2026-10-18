@@ -12,7 +12,8 @@ An Arabic-first Amharic learning pilot for web, iOS and Android.
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
 - `pnpm --filter @workspace/db run seed` — idempotent pilot curriculum seed
-- `pnpm --filter @workspace/api-server test` — grading, review interval and timer unit tests
+- `pnpm --filter @workspace/api-server test` — grading, review interval, timer and admin policy tests
+- `pnpm --filter @workspace/api-server run bootstrap-owner` — idempotent verified owner setup using `ADMIN_BOOTSTRAP_EMAIL`
 
 ## Stack
 
@@ -55,8 +56,14 @@ or claiming reviewer approval, voice capabilities or paid access.
 - Keep API keys and signing secrets server-only.
 - The development schema used push; do not replay fresh SQL migrations without baselining.
 - SQL migrations do not run at API startup; the startup seed is DML only.
-- Polar billing, reviewed full curriculum, admin/community/tutor-booking and
-  full identity deletion are not yet implemented.
+- Polar billing, reviewed full curriculum and community/tutor-booking are not yet implemented.
+- Responsive web administration lives at `/admin`. App permissions are stored and checked
+  server-side, separately from learner data. Only the owner assigns administrator roles.
+- Owner bootstrap requires verified email ownership in the current Clerk tenant. It runs
+  at startup and on authenticated admin-access checks; tenant-scoped initialization
+  markers prevent both development IDs suppressing production setup and privilege regrant.
+- Apply new database schema through the normal publication migration flow before
+  running this version in production. The API does not auto-run schema DDL.
 
 ## Pointers
 

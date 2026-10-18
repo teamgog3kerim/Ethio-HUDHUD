@@ -15,6 +15,20 @@
       "when": 1792331869695,
       "tag": "0001_heavy_captain_stacy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792346238127,
+      "tag": "0002_peaceful_thanos",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792347123785,
+      "tag": "0003_condemned_midnight",
+      "breakpoints": true
     }
   ]
 }

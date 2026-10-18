@@ -6,6 +6,8 @@ import { SendChatBody, SendChatResponse, GetChatResponse } from "@workspace/api-
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { getLearner } from "../lib/learner";
 import { randomUUID } from "node:crypto";
+import { getAuth } from "@clerk/express";
+import { getAppSettings, getAccessState } from "../lib/app-settings";
 const router: IRouter = Router();
 const aiLimit = rateLimit({ windowMs: 60_000, limit: 10, standardHeaders: "draft-7", legacyHeaders: false });
 const inFlight = new Set<string>();
@@ -18,11 +20,13 @@ router.post("/ai/chat", aiLimit, async (req, res) => {
   const body = SendChatBody.safeParse(req.body);
   if (!body.success || !body.data.message.trim()) { res.status(400).json({ error: "اكتب رسالتك أولاً." }); return; }
   const learner = await getLearner(req, res);
+  const settings = await getAppSettings();
+  const access = await getAccessState(getAuth(req).userId, settings);
   if (inFlight.has(learner.id)) { res.status(429).json({ error: "انتظر إجابة المعلم الحالية." }); return; }
   inFlight.add(learner.id);
   try {
     const used = await db.select({ id: aiUsage.id }).from(aiUsage).where(and(eq(aiUsage.learnerId, learner.id), gte(aiUsage.createdAt, new Date(Date.now() - 86400000))));
-    if (used.length >= 20) { res.status(429).json({ error: "وصلت إلى حد التجربة المجانية: 20 رسالة خلال 24 ساعة." }); return; }
+    if (used.length >= access.dailyAiLimit) { res.status(429).json({ error: `وصلت إلى حد الاستخدام: ${access.dailyAiLimit} طلباً خلال 24 ساعة.` }); return; }
     await db.insert(aiUsage).values({ learnerId: learner.id });
     const previous = learner.preferences.retainChat ? await db.select().from(chatMessages).where(eq(chatMessages.learnerId, learner.id)).orderBy(desc(chatMessages.createdAt)).limit(16) : [];
     const response = await openai.chat.completions.create({

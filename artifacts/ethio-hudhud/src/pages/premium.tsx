@@ -17,6 +17,8 @@ export default function Premium() {
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between"><dt className="text-muted-foreground">{t('الخطة', 'Plan')}</dt><dd className="font-semibold" data-testid="text-plan">{q.data.plan}</dd></div>
             <div className="flex justify-between"><dt className="text-muted-foreground">{t('إعداد Polar', 'Polar configuration')}</dt><dd className="font-semibold" data-testid="text-configured">{q.data.configured ? t('مضبوط', 'Configured') : t('غير مضبوط', 'Not configured')}</dd></div>
+            {q.data.dailyAiLimit !== undefined && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">{t('طلبات المعلّم / 24 ساعة', 'AI requests / 24 hours')}</dt><dd>{q.data.dailyAiLimit}</dd></div>}
+            {q.data.accessExpiresAt && <div className="flex flex-wrap justify-between gap-3"><dt className="text-muted-foreground">{t('انتهاء المنحة المجانية', 'Complimentary expiry')}</dt><dd>{new Date(q.data.accessExpiresAt).toLocaleString()}</dd></div>}
           </dl>
           <p className="mt-4 rounded-2xl bg-secondary p-3 text-sm" dir="auto" data-testid="text-billing-message">{q.data.message}</p>
           <Btn className="mt-4" disabled data-testid="button-subscribe"><Lock className="size-4" />{t('الاشتراك غير متاح', 'Subscription unavailable')}</Btn>

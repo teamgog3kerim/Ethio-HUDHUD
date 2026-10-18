@@ -4,11 +4,12 @@ import { useClerk, useAuth } from '@clerk/react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   BarChart3, BookOpen, CalendarRange, Home, Languages, Layers, LogIn, LogOut, MessageCircle,
-  Moon, Sparkles, Sun, UserRound, Type,
+  Moon, ShieldCheck, Sparkles, Sun, UserRound, Type,
 } from 'lucide-react';
 import {
-  getGetProfileQueryKey, useGetProfile, useSaveProfile,
+  getGetProfileQueryKey, useGetAdminAccess, useGetProfile, useSaveProfile, useGetPublicSettings,
 } from '@workspace/api-client-react';
+import { PlatformNotices } from '@/components/admin/notices';
 import { Logo } from '@/components/logo';
 import { useApp } from '@/lib/app';
 import { toInput } from '@/lib/options';
@@ -82,6 +83,8 @@ export function Shell({ children }: { children: ReactNode }) {
   const { t } = useApp();
   const [loc] = useLocation();
   const { data: profile } = useGetProfile();
+  const { data: access } = useGetAdminAccess();
+  const isAdmin = access?.signedIn && (access.role === 'owner' || access.role === 'admin');
   const items = [
     { href: '/dashboard', icon: Home, label: t('الرئيسية', 'Home') },
     { href: '/learn', icon: BookOpen, label: t('الدروس', 'Learn') },
@@ -121,6 +124,11 @@ export function Shell({ children }: { children: ReactNode }) {
               <span className="block text-xs text-muted-foreground">{profile?.isGuest ? t('جلسة ضيف', 'Guest session') : t('حسابي', 'My account')}</span>
             </span>
           </Link>
+          {isAdmin && (
+            <Link href="/admin" data-testid="nav-admin" className={cn('press flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold', active('/admin') ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-muted')}>
+              <ShieldCheck className="size-4" /> {t('الإدارة', 'Administration')}
+            </Link>
+          )}
           <Link href="/premium" className="press flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:bg-muted" data-testid="nav-premium">
             <Sparkles className="size-4" /> Premium
           </Link>
@@ -133,6 +141,11 @@ export function Shell({ children }: { children: ReactNode }) {
         <Brand size={34} />
         <div className="flex items-center gap-2">
           <Toggles />
+          {isAdmin && (
+            <Link href="/admin" data-testid="nav-admin-mobile" className="press grid size-10 place-items-center rounded-xl border border-border bg-card" aria-label={t('الإدارة', 'Administration')}>
+              <ShieldCheck className="size-4" />
+            </Link>
+          )}
           <Link href="/account" data-testid="nav-account-mobile" className="press grid size-10 place-items-center rounded-xl border border-border bg-card" aria-label={t('الحساب', 'Account')}>
             <UserRound className="size-4" />
           </Link>
@@ -140,7 +153,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </header>
 
       <main className="mx-auto w-full max-w-5xl px-4 pb-28 pt-6 sm:px-8 lg:ms-64 lg:max-w-none lg:px-12 lg:pb-12 lg:pt-10">
-        <div className="mx-auto max-w-5xl">{children}</div>
+        <div className="mx-auto max-w-5xl"><PlatformNotices />{children}</div>
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-7 border-t border-border bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
@@ -176,12 +189,14 @@ export function PublicFrame({ children }: { children: ReactNode }) {
 
 export function Footer() {
   const { t } = useApp();
+  const settings = useGetPublicSettings();
   return (
     <footer className="border-t border-border px-4 py-8 text-center text-sm text-muted-foreground">
       <div className="mb-2 flex justify-center gap-5">
         <Link href="/privacy" className="hover:text-foreground" data-testid="link-privacy">{t('الخصوصية', 'Privacy')}</Link>
         <Link href="/terms" className="hover:text-foreground" data-testid="link-terms">{t('الشروط', 'Terms')}</Link>
         <Link href="/premium" className="hover:text-foreground" data-testid="link-premium">Premium</Link>
+        {settings.data?.supportEmail && <a href={`mailto:${settings.data.supportEmail}`} className="hover:text-foreground" data-testid="link-support">{t('الدعم', 'Support')}</a>}
       </div>
       <p>{t('مشروع تعلّم شخصي — محتوى تجريبي بانتظار المراجعة.', 'A personal learning project — pilot content awaiting review.')}</p>
     </footer>

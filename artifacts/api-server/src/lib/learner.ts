@@ -3,6 +3,7 @@ import { getAuth } from "@clerk/express";
 import { db, learners } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import type { Request, Response } from "express";
+import { getAppSettings } from "./app-settings";
 
 export const defaultPreferences = {
   displayName: "متعلّم جديد", level: "beginner" as const,
@@ -20,7 +21,11 @@ export async function getLearner(req: Request, res: Response) {
     res.cookie("hudhud_guest", guest, { signed: true, httpOnly: true, sameSite: "lax", secure: req.secure, maxAge: 365 * 86400000, path: "/api" });
   }
   const identity = userId ? `clerk:${userId}` : `guest:${guest}`;
-  await db.insert(learners).values({ identity, preferences: defaultPreferences }).onConflictDoNothing();
+  const [existing] = await db.select().from(learners).where(eq(learners.identity, identity));
+  if (!existing) {
+    const settings = await getAppSettings();
+    await db.insert(learners).values({ identity, preferences: { ...defaultPreferences, dailyGoal: settings.defaultDailyGoal } }).onConflictDoNothing();
+  }
   const [learner] = await db.select().from(learners).where(eq(learners.identity, identity));
   if (!learner) throw new Error("Unable to initialize learner");
   const preferences = { ...defaultPreferences, ...(learner.preferences as Partial<typeof defaultPreferences>) };

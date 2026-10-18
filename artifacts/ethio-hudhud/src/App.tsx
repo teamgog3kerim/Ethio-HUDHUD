@@ -24,6 +24,11 @@ import ProgressPage from '@/pages/progress';
 import Onboarding from '@/pages/onboarding';
 import Account from '@/pages/account';
 import Premium from '@/pages/premium';
+import AdminOverview from '@/pages/admin/overview';
+import AdminUsers from '@/pages/admin/users';
+import AdminSettings from '@/pages/admin/settings';
+import AdminContent from '@/pages/admin/content';
+import AdminAudit from '@/pages/admin/audit';
 import { Privacy, Terms } from '@/pages/legal';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
@@ -184,6 +189,11 @@ function ClerkProviderWithRoutes() {
           <Route path="/onboarding" component={Onboarding} />
           <Route path="/account" component={Account} />
           <Route path="/premium" component={Premium} />
+          <Route path="/admin" component={AdminOverview} />
+          <Route path="/admin/users" component={AdminUsers} />
+          <Route path="/admin/settings" component={AdminSettings} />
+          <Route path="/admin/content" component={AdminContent} />
+          <Route path="/admin/audit" component={AdminAudit} />
           <Route path="/privacy" component={Privacy} />
           <Route path="/terms" component={Terms} />
           <Route component={NotFound} />

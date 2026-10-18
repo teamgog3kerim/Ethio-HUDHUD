@@ -5,7 +5,7 @@ import { dateInZone } from "./learner";
 export async function getCatalog(learnerId: string) {
   const [allCourses, allLessons, done] = await Promise.all([
     db.select().from(courses).orderBy(asc(courses.month)),
-    db.select().from(lessons).orderBy(asc(lessons.sequence)),
+    db.select().from(lessons).where(eq(lessons.active, true)).orderBy(asc(lessons.sequence)),
     db.select().from(completions).where(eq(completions.learnerId, learnerId)),
   ]);
   const ids = new Set(done.map(d => d.lessonId));
@@ -19,7 +19,7 @@ export async function getCatalog(learnerId: string) {
 }
 export async function getWordQueue(learnerId: string) {
   const [all, scheduled] = await Promise.all([
-    db.select().from(lessons).orderBy(asc(lessons.sequence)),
+    db.select().from(lessons).where(eq(lessons.active, true)).orderBy(asc(lessons.sequence)),
     db.select().from(reviews).where(eq(reviews.learnerId, learnerId)),
   ]);
   const uniqueWords = new Map<string, LessonContent["words"][number]>();

@@ -285,7 +285,10 @@ export const ClearChatResponse = zod.object({
 export const GetBillingStatusResponse = zod.object({
   "plan": zod.string(),
   "configured": zod.boolean(),
-  "message": zod.string()
+  "message": zod.string(),
+  "dailyAiLimit": zod.number().int().optional(),
+  "accessExpiresAt": zod.string().nullish(),
+  "source": zod.enum(['none', 'admin_grant']).optional()
 })
 
 
@@ -295,5 +298,288 @@ export const ExportAccountResponse = zod.record(zod.string(), zod.unknown())
 export const DeleteAccountResponse = zod.object({
   "status": zod.string()
 })
+
+
+export const GetAdminAccessResponse = zod.object({
+  "role": zod.enum(['owner', 'admin', 'learner']),
+  "signedIn": zod.boolean()
+})
+
+
+export const GetAdminOverviewResponse = zod.object({
+  "registeredUsers": zod.number().int(),
+  "learners": zod.number().int(),
+  "completedLessons": zod.number().int(),
+  "aiRequests": zod.number().int(),
+  "activeComplimentary": zod.number().int(),
+  "suspendedUsers": zod.number().int(),
+  "billingConfigured": zod.boolean()
+})
+
+
+export const getAdminUsersQuerySearchMax = 100;
+
+export const getAdminUsersQueryPageDefault = 1;
+
+
+
+export const GetAdminUsersQueryParams = zod.object({
+  "search": zod.coerce.string().max(getAdminUsersQuerySearchMax).optional(),
+  "page": zod.coerce.number().int().min(1).default(getAdminUsersQueryPageDefault)
+})
+
+export const GetAdminUsersResponse = zod.object({
+  "users": zod.array(zod.object({
+  "id": zod.string(),
+  "email": zod.string(),
+  "emailVerified": zod.boolean(),
+  "displayName": zod.string(),
+  "role": zod.enum(['owner', 'admin', 'learner']),
+  "suspended": zod.boolean(),
+  "createdAt": zod.string(),
+  "lastSignInAt": zod.string().nullable(),
+  "lessonsCompleted": zod.number().int(),
+  "xp": zod.number().int(),
+  "dailyGoal": zod.number().int(),
+  "accessPlan": zod.enum(['free', 'complimentary']),
+  "accessExpiresAt": zod.string().nullable(),
+  "accessReason": zod.string()
+})),
+  "total": zod.number().int(),
+  "page": zod.number().int(),
+  "pageSize": zod.number().int()
+})
+
+
+export const UpdateAdminUserParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const updateAdminUserBodyDisplayNameMax = 80;
+
+export const updateAdminUserBodyDailyGoalMin = 5;
+export const updateAdminUserBodyDailyGoalMax = 180;
+
+export const updateAdminUserBodyReasonMin = 3;
+export const updateAdminUserBodyReasonMax = 500;
+
+
+
+export const UpdateAdminUserBody = zod.object({
+  "displayName": zod.string().min(1).max(updateAdminUserBodyDisplayNameMax).optional(),
+  "dailyGoal": zod.number().int().min(updateAdminUserBodyDailyGoalMin).max(updateAdminUserBodyDailyGoalMax).optional(),
+  "role": zod.enum(['admin', 'learner']).optional(),
+  "suspended": zod.boolean().optional(),
+  "reason": zod.string().min(updateAdminUserBodyReasonMin).max(updateAdminUserBodyReasonMax)
+})
+
+export const UpdateAdminUserResponse = zod.object({
+  "status": zod.string()
+})
+
+
+export const DeleteAdminUserParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const deleteAdminUserBodyReasonMin = 3;
+export const deleteAdminUserBodyReasonMax = 500;
+
+
+
+export const DeleteAdminUserBody = zod.object({
+  "confirmationEmail": zod.string(),
+  "reason": zod.string().min(deleteAdminUserBodyReasonMin).max(deleteAdminUserBodyReasonMax)
+})
+
+export const DeleteAdminUserResponse = zod.object({
+  "status": zod.string()
+})
+
+
+export const SetAdminUserAccessParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const setAdminUserAccessBodyReasonMin = 3;
+export const setAdminUserAccessBodyReasonMax = 500;
+
+
+
+export const SetAdminUserAccessBody = zod.object({
+  "enabled": zod.boolean(),
+  "expiresAt": zod.string().nullable(),
+  "reason": zod.string().min(setAdminUserAccessBodyReasonMin).max(setAdminUserAccessBodyReasonMax)
+})
+
+export const SetAdminUserAccessResponse = zod.object({
+  "status": zod.string()
+})
+
+
+export const getAdminSettingsResponseFreeAiDailyLimitMin = 0;
+export const getAdminSettingsResponseFreeAiDailyLimitMax = 200;
+
+export const getAdminSettingsResponseComplimentaryAiDailyLimitMin = 0;
+export const getAdminSettingsResponseComplimentaryAiDailyLimitMax = 1000;
+
+export const getAdminSettingsResponseDefaultDailyGoalMin = 5;
+export const getAdminSettingsResponseDefaultDailyGoalMax = 180;
+
+export const getAdminSettingsResponseAnnouncementArMax = 500;
+
+export const getAdminSettingsResponseAnnouncementEnMax = 500;
+
+export const getAdminSettingsResponseSupportEmailMax = 254;
+
+
+
+export const GetAdminSettingsResponse = zod.object({
+  "aiEnabled": zod.boolean(),
+  "learningEnabled": zod.boolean(),
+  "freeAiDailyLimit": zod.number().int().min(getAdminSettingsResponseFreeAiDailyLimitMin).max(getAdminSettingsResponseFreeAiDailyLimitMax),
+  "complimentaryAiDailyLimit": zod.number().int().min(getAdminSettingsResponseComplimentaryAiDailyLimitMin).max(getAdminSettingsResponseComplimentaryAiDailyLimitMax),
+  "defaultDailyGoal": zod.number().int().min(getAdminSettingsResponseDefaultDailyGoalMin).max(getAdminSettingsResponseDefaultDailyGoalMax),
+  "announcementAr": zod.string().max(getAdminSettingsResponseAnnouncementArMax),
+  "announcementEn": zod.string().max(getAdminSettingsResponseAnnouncementEnMax),
+  "supportEmail": zod.string().max(getAdminSettingsResponseSupportEmailMax)
+})
+
+
+export const saveAdminSettingsBodyFreeAiDailyLimitMin = 0;
+export const saveAdminSettingsBodyFreeAiDailyLimitMax = 200;
+
+export const saveAdminSettingsBodyComplimentaryAiDailyLimitMin = 0;
+export const saveAdminSettingsBodyComplimentaryAiDailyLimitMax = 1000;
+
+export const saveAdminSettingsBodyDefaultDailyGoalMin = 5;
+export const saveAdminSettingsBodyDefaultDailyGoalMax = 180;
+
+export const saveAdminSettingsBodyAnnouncementArMax = 500;
+
+export const saveAdminSettingsBodyAnnouncementEnMax = 500;
+
+export const saveAdminSettingsBodySupportEmailMax = 254;
+
+
+
+export const SaveAdminSettingsBody = zod.object({
+  "aiEnabled": zod.boolean(),
+  "learningEnabled": zod.boolean(),
+  "freeAiDailyLimit": zod.number().int().min(saveAdminSettingsBodyFreeAiDailyLimitMin).max(saveAdminSettingsBodyFreeAiDailyLimitMax),
+  "complimentaryAiDailyLimit": zod.number().int().min(saveAdminSettingsBodyComplimentaryAiDailyLimitMin).max(saveAdminSettingsBodyComplimentaryAiDailyLimitMax),
+  "defaultDailyGoal": zod.number().int().min(saveAdminSettingsBodyDefaultDailyGoalMin).max(saveAdminSettingsBodyDefaultDailyGoalMax),
+  "announcementAr": zod.string().max(saveAdminSettingsBodyAnnouncementArMax),
+  "announcementEn": zod.string().max(saveAdminSettingsBodyAnnouncementEnMax),
+  "supportEmail": zod.string().max(saveAdminSettingsBodySupportEmailMax)
+})
+
+export const saveAdminSettingsResponseFreeAiDailyLimitMin = 0;
+export const saveAdminSettingsResponseFreeAiDailyLimitMax = 200;
+
+export const saveAdminSettingsResponseComplimentaryAiDailyLimitMin = 0;
+export const saveAdminSettingsResponseComplimentaryAiDailyLimitMax = 1000;
+
+export const saveAdminSettingsResponseDefaultDailyGoalMin = 5;
+export const saveAdminSettingsResponseDefaultDailyGoalMax = 180;
+
+export const saveAdminSettingsResponseAnnouncementArMax = 500;
+
+export const saveAdminSettingsResponseAnnouncementEnMax = 500;
+
+export const saveAdminSettingsResponseSupportEmailMax = 254;
+
+
+
+export const SaveAdminSettingsResponse = zod.object({
+  "aiEnabled": zod.boolean(),
+  "learningEnabled": zod.boolean(),
+  "freeAiDailyLimit": zod.number().int().min(saveAdminSettingsResponseFreeAiDailyLimitMin).max(saveAdminSettingsResponseFreeAiDailyLimitMax),
+  "complimentaryAiDailyLimit": zod.number().int().min(saveAdminSettingsResponseComplimentaryAiDailyLimitMin).max(saveAdminSettingsResponseComplimentaryAiDailyLimitMax),
+  "defaultDailyGoal": zod.number().int().min(saveAdminSettingsResponseDefaultDailyGoalMin).max(saveAdminSettingsResponseDefaultDailyGoalMax),
+  "announcementAr": zod.string().max(saveAdminSettingsResponseAnnouncementArMax),
+  "announcementEn": zod.string().max(saveAdminSettingsResponseAnnouncementEnMax),
+  "supportEmail": zod.string().max(saveAdminSettingsResponseSupportEmailMax)
+})
+
+
+export const GetPublicSettingsResponse = zod.object({
+  "aiEnabled": zod.boolean(),
+  "learningEnabled": zod.boolean(),
+  "freeAiDailyLimit": zod.number().int(),
+  "complimentaryAiDailyLimit": zod.number().int(),
+  "announcementAr": zod.string(),
+  "announcementEn": zod.string(),
+  "supportEmail": zod.string()
+})
+
+
+export const GetAdminLessonsResponseItem = zod.object({
+  "id": zod.string(),
+  "courseId": zod.string(),
+  "sequence": zod.number().int(),
+  "active": zod.boolean(),
+  "reviewStatus": zod.string(),
+  "content": zod.record(zod.string(), zod.unknown()),
+  "answerKey": zod.array(zod.object({
+  "correctIndex": zod.number().int(),
+  "explanation": zod.string()
+})),
+  "reason": zod.string()
+})
+export const GetAdminLessonsResponse = zod.array(GetAdminLessonsResponseItem)
+
+
+export const SaveAdminLessonParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const saveAdminLessonBodySequenceMin = 0;
+export const saveAdminLessonBodySequenceMax = 10000;
+
+export const saveAdminLessonBodyAnswerKeyItemCorrectIndexMin = 0;
+export const saveAdminLessonBodyAnswerKeyItemCorrectIndexMax = 8;
+
+export const saveAdminLessonBodyReasonMin = 3;
+export const saveAdminLessonBodyReasonMax = 500;
+
+
+
+export const SaveAdminLessonBody = zod.object({
+  "courseId": zod.string(),
+  "sequence": zod.number().int().min(saveAdminLessonBodySequenceMin).max(saveAdminLessonBodySequenceMax),
+  "active": zod.boolean(),
+  "content": zod.record(zod.string(), zod.unknown()),
+  "answerKey": zod.array(zod.object({
+  "correctIndex": zod.number().int().min(saveAdminLessonBodyAnswerKeyItemCorrectIndexMin).max(saveAdminLessonBodyAnswerKeyItemCorrectIndexMax),
+  "explanation": zod.string()
+})),
+  "reason": zod.string().min(saveAdminLessonBodyReasonMin).max(saveAdminLessonBodyReasonMax)
+})
+
+export const SaveAdminLessonResponse = zod.object({
+  "id": zod.string(),
+  "courseId": zod.string(),
+  "sequence": zod.number().int(),
+  "active": zod.boolean(),
+  "reviewStatus": zod.string(),
+  "content": zod.record(zod.string(), zod.unknown()),
+  "answerKey": zod.array(zod.object({
+  "correctIndex": zod.number().int(),
+  "explanation": zod.string()
+})),
+  "reason": zod.string()
+})
+
+
+export const GetAdminAuditResponseItem = zod.object({
+  "id": zod.string(),
+  "actorId": zod.string(),
+  "action": zod.string(),
+  "targetId": zod.string(),
+  "detail": zod.record(zod.string(), zod.unknown()),
+  "createdAt": zod.string()
+})
+export const GetAdminAuditResponse = zod.array(GetAdminAuditResponseItem)
 
 

@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { seedCurriculum } from "@workspace/db/seed";
+import { bootstrapConfiguredOwner } from "./lib/admin-auth";
 
 const rawPort = process.env["PORT"];
 
@@ -16,7 +17,10 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-seedCurriculum().then(() => app.listen(port, (err) => {
+seedCurriculum().then(async () => {
+  try { logger.info({ status: await bootstrapConfiguredOwner() }, "Owner bootstrap checked"); }
+  catch (err) { logger.error({ err }, "Owner bootstrap unavailable; verified owner can retry on admin sign-in"); }
+}).then(() => app.listen(port, (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
     process.exit(1);

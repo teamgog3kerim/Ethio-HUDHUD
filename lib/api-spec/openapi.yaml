@@ -172,8 +172,284 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/HealthStatus" }
+  /admin/me:
+    get:
+      operationId: getAdminAccess
+      responses:
+        "200":
+          description: Current server-verified application role
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminAccess" }
+  /admin/overview:
+    get:
+      operationId: getAdminOverview
+      responses:
+        "200":
+          description: Actual administrative totals
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminOverview" }
+  /admin/users:
+    get:
+      operationId: getAdminUsers
+      parameters:
+        - { name: search, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+      responses:
+        "200":
+          description: Paginated authentication directory and app controls
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminUsers" }
+  /admin/users/{id}:
+    patch:
+      operationId: updateAdminUser
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminUserUpdate" }
+      responses:
+        "200":
+          description: User controls saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+    delete:
+      operationId: deleteAdminUser
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminUserDelete" }
+      responses:
+        "200":
+          description: Authentication account and learning records deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+  /admin/users/{id}/access:
+    put:
+      operationId: setAdminUserAccess
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminAccessGrant" }
+      responses:
+        "200":
+          description: Complimentary access saved, never a paid subscription
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+  /admin/settings:
+    get:
+      operationId: getAdminSettings
+      responses:
+        "200":
+          description: Application parameters
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AppSettings" }
+    put:
+      operationId: saveAdminSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AppSettings" }
+      responses:
+        "200":
+          description: Application parameters saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AppSettings" }
+  /app-settings:
+    get:
+      operationId: getPublicSettings
+      responses:
+        "200":
+          description: Public app status, without secrets or private controls
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublicSettings" }
+  /admin/lessons:
+    get:
+      operationId: getAdminLessons
+      responses:
+        "200":
+          description: Editable curriculum including private answer keys
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/AdminLesson" } }
+  /admin/lessons/{id}:
+    put:
+      operationId: saveAdminLesson
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdminLessonInput" }
+      responses:
+        "200":
+          description: Lesson created or updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminLesson" }
+  /admin/audit:
+    get:
+      operationId: getAdminAudit
+      responses:
+        "200":
+          description: Most recent 100 administrative actions
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/AdminAuditEntry" } }
 components:
   schemas:
+    AdminAccess:
+      type: object
+      required: [role, signedIn]
+      properties:
+        role: { type: string, enum: [owner, admin, learner] }
+        signedIn: { type: boolean }
+    AdminOverview:
+      type: object
+      required: [registeredUsers, learners, completedLessons, aiRequests, activeComplimentary, suspendedUsers, billingConfigured]
+      properties:
+        registeredUsers: { type: integer }
+        learners: { type: integer }
+        completedLessons: { type: integer }
+        aiRequests: { type: integer }
+        activeComplimentary: { type: integer }
+        suspendedUsers: { type: integer }
+        billingConfigured: { type: boolean }
+    AdminUser:
+      type: object
+      required: [id, email, emailVerified, displayName, role, suspended, createdAt, lastSignInAt, lessonsCompleted, xp, dailyGoal, accessPlan, accessExpiresAt, accessReason]
+      properties:
+        id: { type: string }
+        email: { type: string }
+        emailVerified: { type: boolean }
+        displayName: { type: string }
+        role: { type: string, enum: [owner, admin, learner] }
+        suspended: { type: boolean }
+        createdAt: { type: string }
+        lastSignInAt: { type: [string, "null"] }
+        lessonsCompleted: { type: integer }
+        xp: { type: integer }
+        dailyGoal: { type: integer }
+        accessPlan: { type: string, enum: [free, complimentary] }
+        accessExpiresAt: { type: [string, "null"] }
+        accessReason: { type: string }
+    AdminUsers:
+      type: object
+      required: [users, total, page, pageSize]
+      properties:
+        users: { type: array, items: { $ref: "#/components/schemas/AdminUser" } }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+    AdminUserUpdate:
+      type: object
+      required: [reason]
+      properties:
+        displayName: { type: string, minLength: 1, maxLength: 80 }
+        dailyGoal: { type: integer, minimum: 5, maximum: 180 }
+        role: { type: string, enum: [admin, learner] }
+        suspended: { type: boolean }
+        reason: { type: string, minLength: 3, maxLength: 500 }
+    AdminUserDelete:
+      type: object
+      required: [confirmationEmail, reason]
+      properties:
+        confirmationEmail: { type: string }
+        reason: { type: string, minLength: 3, maxLength: 500 }
+    AdminAccessGrant:
+      type: object
+      required: [enabled, expiresAt, reason]
+      properties:
+        enabled: { type: boolean }
+        expiresAt: { type: [string, "null"] }
+        reason: { type: string, minLength: 3, maxLength: 500 }
+    AppSettings:
+      type: object
+      required: [aiEnabled, learningEnabled, freeAiDailyLimit, complimentaryAiDailyLimit, defaultDailyGoal, announcementAr, announcementEn, supportEmail]
+      properties:
+        aiEnabled: { type: boolean }
+        learningEnabled: { type: boolean }
+        freeAiDailyLimit: { type: integer, minimum: 0, maximum: 200 }
+        complimentaryAiDailyLimit: { type: integer, minimum: 0, maximum: 1000 }
+        defaultDailyGoal: { type: integer, minimum: 5, maximum: 180 }
+        announcementAr: { type: string, maxLength: 500 }
+        announcementEn: { type: string, maxLength: 500 }
+        supportEmail: { type: string, maxLength: 254 }
+    PublicSettings:
+      type: object
+      required: [aiEnabled, learningEnabled, freeAiDailyLimit, complimentaryAiDailyLimit, announcementAr, announcementEn, supportEmail]
+      properties:
+        aiEnabled: { type: boolean }
+        learningEnabled: { type: boolean }
+        freeAiDailyLimit: { type: integer }
+        complimentaryAiDailyLimit: { type: integer }
+        announcementAr: { type: string }
+        announcementEn: { type: string }
+        supportEmail: { type: string }
+    AdminLessonInput:
+      type: object
+      required: [courseId, sequence, active, content, answerKey, reason]
+      properties:
+        courseId: { type: string }
+        sequence: { type: integer, minimum: 0, maximum: 10000 }
+        active: { type: boolean }
+        content: { type: object, additionalProperties: true }
+        answerKey:
+          type: array
+          items:
+            type: object
+            required: [correctIndex, explanation]
+            properties:
+              correctIndex: { type: integer, minimum: 0, maximum: 8 }
+              explanation: { type: string }
+        reason: { type: string, minLength: 3, maxLength: 500 }
+    AdminLesson:
+      type: object
+      required: [id, courseId, sequence, active, reviewStatus, content, answerKey, reason]
+      properties:
+        id: { type: string }
+        courseId: { type: string }
+        sequence: { type: integer }
+        active: { type: boolean }
+        reviewStatus: { type: string }
+        content: { type: object, additionalProperties: true }
+        answerKey:
+          type: array
+          items:
+            type: object
+            required: [correctIndex, explanation]
+            properties:
+              correctIndex: { type: integer }
+              explanation: { type: string }
+        reason: { type: string }
+    AdminAuditEntry:
+      type: object
+      required: [id, actorId, action, targetId, detail, createdAt]
+      properties:
+        id: { type: string }
+        actorId: { type: string }
+        action: { type: string }
+        targetId: { type: string }
+        detail: { type: object, additionalProperties: true }
+        createdAt: { type: string }
     HealthStatus:
       type: object
       required: [status]
@@ -327,3 +603,6 @@ components:
         plan: { type: string }
         configured: { type: boolean }
         message: { type: string }
+        dailyAiLimit: { type: integer }
+        accessExpiresAt: { type: [string, "null"] }
+        source: { type: string, enum: [none, admin_grant] }

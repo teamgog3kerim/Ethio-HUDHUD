@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "tsx --test src/lib/scoring.test.ts",
+    "test": "tsx --test src/lib/*.test.ts",
+    "bootstrap-owner": "tsx src/scripts/bootstrap-owner.ts",
     "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",

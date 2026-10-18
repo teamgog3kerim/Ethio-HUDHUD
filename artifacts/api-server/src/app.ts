@@ -8,6 +8,7 @@ import { publishableKeyFromHost } from "@clerk/shared/keys";
 import { CLERK_PROXY_PATH, clerkProxyMiddleware, getClerkProxyHost } from "./middlewares/clerkProxyMiddleware";
 import cookieParser from "cookie-parser";
 import { rateLimit } from "express-rate-limit";
+import { HttpError } from "./lib/http-error";
 
 const app: Express = express();
 
@@ -38,7 +39,7 @@ const allowedOrigins = new Set([
   ...(process.env.REPLIT_DOMAINS ?? "").split(","),
 ].filter(Boolean).map(host => `https://${host}`));
 app.use(cors({ credentials: true, origin: (origin, callback) => callback(null, !!origin && allowedOrigins.has(origin)) }));
-app.use(express.json({ limit: "32kb" }));
+app.use(express.json({ limit: "128kb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(process.env.SESSION_SECRET));
 app.use(clerkMiddleware((req) => ({
@@ -60,6 +61,7 @@ app.use("/api", (req, res, next) => {
 
 app.use("/api", router);
 app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if (err instanceof HttpError) { res.status(err.status).json({ error: err.message }); return; }
   req.log.error({ err }, "Request failed");
   res.status(500).json({ error: "تعذر إتمام الطلب. حاول مرة أخرى." });
 });

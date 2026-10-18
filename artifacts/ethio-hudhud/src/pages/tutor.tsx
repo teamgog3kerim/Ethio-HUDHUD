@@ -5,6 +5,7 @@ import {
   getGetChatQueryKey, useClearChat, useGetChat, useGetProfile, useSendChat,
 } from '@workspace/api-client-react';
 import { Btn, Empty, ErrorState, PageHead, Skeleton } from '@/components/bits';
+import { AiAllowance } from '@/components/admin/notices';
 import { Shell } from '@/components/shell';
 import { useToast } from '@/hooks/use-toast';
 import { useApp } from '@/lib/app';
@@ -63,7 +64,7 @@ export default function Tutor() {
           ) : <Btn variant="outline" size="sm" onClick={() => setConfirmClear(true)} data-testid="button-clear-chat"><Trash2 className="size-4" />{t('مسح السجل', 'Clear history')}</Btn>
         )} />
 
-      <p className="mb-3 rounded-2xl border border-gold/50 bg-gold/10 px-4 py-2 text-sm" data-testid="text-ai-allowance">{t('المعلّم الآلي مجاني حتى 20 رسالة خلال أي 24 ساعة متحركة، وقد تُحتسب محاولات الطلب أيضًا.', 'The AI tutor is free up to 20 messages per rolling 24 hours; request attempts may also count.')}</p>
+      <AiAllowance />
       <div className="mb-4 flex gap-2 overflow-x-auto pb-1" role="tablist">
         {SCENARIOS.map((s) => (
           <button key={s.id} type="button" onClick={() => setScenario(s.id)} data-testid={`button-scenario-${s.id}`}

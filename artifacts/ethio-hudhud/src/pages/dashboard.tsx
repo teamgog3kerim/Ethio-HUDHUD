@@ -4,6 +4,7 @@ import {
   useGetCourses, useGetProfile, useGetProgress, useGetStudyPlan, useGetVocabulary,
 } from '@workspace/api-client-react';
 import { Card, ErrorState, LinkBtn, PilotNote, ProgressBar, Skeleton, Am } from '@/components/bits';
+import { AiAllowance } from '@/components/admin/notices';
 import { Shell } from '@/components/shell';
 import { useApp } from '@/lib/app';
 
@@ -124,7 +125,7 @@ export default function Dashboard() {
           <LinkBtn href="/fidel" variant="outline" size="sm" className="mt-3" testId="button-fidel">{t('تعلّم الفيدل', 'Learn Fidel')}</LinkBtn>
         </Card>
       </div>
-      <p className="mt-6 rounded-2xl border border-gold/50 bg-gold/10 px-4 py-3 text-sm" data-testid="text-ai-allowance">{t('المعلّم الآلي مجاني حتى 20 رسالة خلال أي 24 ساعة متحركة، وقد تُحتسب محاولات الطلب أيضًا.', 'The AI tutor is free up to 20 messages per rolling 24 hours; request attempts may also count.')}</p>
+      <AiAllowance />
       <PilotNote className="mt-3" />
       <PilotNote kind="audio" className="mt-3" />
     </Shell>

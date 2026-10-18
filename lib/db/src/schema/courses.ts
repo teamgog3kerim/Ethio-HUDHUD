@@ -1,4 +1,4 @@
-import { pgTable, text, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, jsonb, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 export const courses = pgTable("courses", {
@@ -17,6 +17,7 @@ export const lessons = pgTable("lessons", {
   content: jsonb("content").notNull(),
   answerKey: jsonb("answer_key").notNull(),
   reviewStatus: text("review_status").notNull().default("pilot"),
+  active: boolean("active").notNull().default(true),
 });
 export const insertCourseSchema = createInsertSchema(courses);
 export const insertLessonSchema = createInsertSchema(lessons);

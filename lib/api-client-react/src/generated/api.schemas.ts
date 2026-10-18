@@ -4,6 +4,214 @@
  * Api
  * OpenAPI spec version: 1.0.0
  */
+export type AdminAccessRole = typeof AdminAccessRole[keyof typeof AdminAccessRole];
+
+
+export const AdminAccessRole = {
+  owner: 'owner',
+  admin: 'admin',
+  learner: 'learner',
+} as const;
+
+export interface AdminAccess {
+  role: AdminAccessRole;
+  signedIn: boolean;
+}
+
+export interface AdminOverview {
+  registeredUsers: number;
+  learners: number;
+  completedLessons: number;
+  aiRequests: number;
+  activeComplimentary: number;
+  suspendedUsers: number;
+  billingConfigured: boolean;
+}
+
+export type AdminUserRole = typeof AdminUserRole[keyof typeof AdminUserRole];
+
+
+export const AdminUserRole = {
+  owner: 'owner',
+  admin: 'admin',
+  learner: 'learner',
+} as const;
+
+export type AdminUserAccessPlan = typeof AdminUserAccessPlan[keyof typeof AdminUserAccessPlan];
+
+
+export const AdminUserAccessPlan = {
+  free: 'free',
+  complimentary: 'complimentary',
+} as const;
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  displayName: string;
+  role: AdminUserRole;
+  suspended: boolean;
+  createdAt: string;
+  /** @nullable */
+  lastSignInAt: string | null;
+  lessonsCompleted: number;
+  xp: number;
+  dailyGoal: number;
+  accessPlan: AdminUserAccessPlan;
+  /** @nullable */
+  accessExpiresAt: string | null;
+  accessReason: string;
+}
+
+export interface AdminUsers {
+  users: AdminUser[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export type AdminUserUpdateRole = typeof AdminUserUpdateRole[keyof typeof AdminUserUpdateRole];
+
+
+export const AdminUserUpdateRole = {
+  admin: 'admin',
+  learner: 'learner',
+} as const;
+
+export interface AdminUserUpdate {
+  /**
+     * @minLength 1
+     * @maxLength 80
+     */
+  displayName?: string;
+  /**
+     * @minimum 5
+     * @maximum 180
+     */
+  dailyGoal?: number;
+  role?: AdminUserUpdateRole;
+  suspended?: boolean;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export interface AdminUserDelete {
+  confirmationEmail: string;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export interface AdminAccessGrant {
+  enabled: boolean;
+  /** @nullable */
+  expiresAt: string | null;
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export interface AppSettings {
+  aiEnabled: boolean;
+  learningEnabled: boolean;
+  /**
+     * @minimum 0
+     * @maximum 200
+     */
+  freeAiDailyLimit: number;
+  /**
+     * @minimum 0
+     * @maximum 1000
+     */
+  complimentaryAiDailyLimit: number;
+  /**
+     * @minimum 5
+     * @maximum 180
+     */
+  defaultDailyGoal: number;
+  /** @maxLength 500 */
+  announcementAr: string;
+  /** @maxLength 500 */
+  announcementEn: string;
+  /** @maxLength 254 */
+  supportEmail: string;
+}
+
+export interface PublicSettings {
+  aiEnabled: boolean;
+  learningEnabled: boolean;
+  freeAiDailyLimit: number;
+  complimentaryAiDailyLimit: number;
+  announcementAr: string;
+  announcementEn: string;
+  supportEmail: string;
+}
+
+export type AdminLessonInputContent = { [key: string]: unknown };
+
+export type AdminLessonInputAnswerKeyItem = {
+  /**
+     * @minimum 0
+     * @maximum 8
+     */
+  correctIndex: number;
+  explanation: string;
+};
+
+export interface AdminLessonInput {
+  courseId: string;
+  /**
+     * @minimum 0
+     * @maximum 10000
+     */
+  sequence: number;
+  active: boolean;
+  content: AdminLessonInputContent;
+  answerKey: AdminLessonInputAnswerKeyItem[];
+  /**
+     * @minLength 3
+     * @maxLength 500
+     */
+  reason: string;
+}
+
+export type AdminLessonContent = { [key: string]: unknown };
+
+export type AdminLessonAnswerKeyItem = {
+  correctIndex: number;
+  explanation: string;
+};
+
+export interface AdminLesson {
+  id: string;
+  courseId: string;
+  sequence: number;
+  active: boolean;
+  reviewStatus: string;
+  content: AdminLessonContent;
+  answerKey: AdminLessonAnswerKeyItem[];
+  reason: string;
+}
+
+export type AdminAuditEntryDetail = { [key: string]: unknown };
+
+export interface AdminAuditEntry {
+  id: string;
+  actorId: string;
+  action: string;
+  targetId: string;
+  detail: AdminAuditEntryDetail;
+  createdAt: string;
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -180,11 +388,34 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+export type BillingStatusSource = typeof BillingStatusSource[keyof typeof BillingStatusSource];
+
+
+export const BillingStatusSource = {
+  none: 'none',
+  admin_grant: 'admin_grant',
+} as const;
+
 export interface BillingStatus {
   plan: string;
   configured: boolean;
   message: string;
+  dailyAiLimit?: number;
+  /** @nullable */
+  accessExpiresAt?: string | null;
+  source?: BillingStatusSource;
 }
 
 export type ExportAccount200 = { [key: string]: unknown };
+
+export type GetAdminUsersParams = {
+/**
+ * @maxLength 100
+ */
+search?: string;
+/**
+ * @minimum 1
+ */
+page?: number;
+};
 

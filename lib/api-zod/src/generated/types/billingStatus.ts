@@ -4,9 +4,14 @@
  * Api
  * OpenAPI spec version: 1.0.0
  */
+import type { BillingStatusSource } from './billingStatusSource';
 
 export interface BillingStatus {
   plan: string;
   configured: boolean;
   message: string;
+  dailyAiLimit?: number;
+  /** @nullable */
+  accessExpiresAt?: string | null;
+  source?: BillingStatusSource;
 }
