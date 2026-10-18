@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Ethio HUDHUD"
+description = "Arabic-first Amharic learning with structured lessons, Fidel practice, personalized study plans, AI tutoring and persistent progress."
+version = "1.0.0"
+id = "artifacts/ethio-hudhud"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21932
+
+[services.development]
+run = "pnpm --filter @workspace/ethio-hudhud run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ethio-hudhud", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/ethio-hudhud/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21932"
+BASE_PATH = "/"

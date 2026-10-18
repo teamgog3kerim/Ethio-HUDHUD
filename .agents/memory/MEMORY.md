@@ -1,0 +1,2 @@
+- [Product integrity](product-integrity.md) — Arabic-first, Amharic-only learning; reviewed content and real service capabilities, with Polar required for future billing.
+- [Expo DevTools warning](expo-devtools-environment.md) — missing desktop Linux libraries can disable optional DevTools while Metro continues serving normally.

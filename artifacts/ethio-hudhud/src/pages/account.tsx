@@ -1,0 +1,123 @@
+import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'wouter';
+import { useAuth, useClerk } from '@clerk/react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Download, Trash2 } from 'lucide-react';
+import {
+  getExportAccountQueryKey, getGetProfileQueryKey, useDeleteAccount, useExportAccount,
+  useGetProfile, useSaveProfile, type ProfileInput,
+} from '@workspace/api-client-react';
+import { Btn, Card, ErrorState, PageHead, Skeleton } from '@/components/bits';
+import { Shell } from '@/components/shell';
+import { useToast } from '@/hooks/use-toast';
+import { useApp } from '@/lib/app';
+import { toInput } from '@/lib/options';
+import { cn } from '@/lib/utils';
+
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+export default function Account() {
+  const { t, setLang } = useApp();
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  const [, nav] = useLocation();
+  const { isSignedIn } = useAuth();
+  const { signOut } = useClerk();
+  const q = useGetProfile();
+  const [f, setF] = useState<ProfileInput | null>(null);
+  const [confirm, setConfirm] = useState('');
+  useEffect(() => { if (q.data && !f) setF(toInput(q.data)); }, [q.data, f]);
+  const set = (p: Partial<ProfileInput>) => setF((x) => (x ? { ...x, ...p } : x));
+
+  const save = useSaveProfile({
+    mutation: {
+      onSuccess: (p) => {
+        qc.invalidateQueries({ queryKey: getGetProfileQueryKey() });
+        setLang(p.language);
+        toast({ title: t('تم حفظ الإعدادات', 'Settings saved') });
+      },
+    },
+  });
+  const exp = useExportAccount({ query: { enabled: false, queryKey: getExportAccountQueryKey() } });
+  const del = useDeleteAccount({
+    mutation: {
+      onSuccess: () => {
+        qc.clear();
+        if (isSignedIn) void signOut({ redirectUrl: basePath || '/' });
+        else { nav('/'); qc.invalidateQueries(); }
+      },
+    },
+  });
+
+  const doExport = async () => {
+    const r = await exp.refetch();
+    if (r.data) {
+      const url = URL.createObjectURL(new Blob([JSON.stringify(r.data, null, 2)], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url; a.download = 'hudhud-learning-data.json'; a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: t('تم تنزيل بياناتك', 'Your data was downloaded') });
+    }
+  };
+  const input = 'h-11 w-full rounded-2xl border border-input bg-background px-4 outline-none focus:border-primary';
+  const word = t('احذف', 'DELETE');
+
+  return (
+    <Shell>
+      <PageHead eyebrow={q.data?.isGuest ? t('جلسة ضيف', 'Guest session') : t('حسابي', 'My account')} title={t('الإعدادات', 'Settings')} />
+      {q.isLoading && <Skeleton className="h-96" />}
+      {q.isError && <ErrorState onRetry={() => q.refetch()} />}
+      {f && q.data && (
+        <div className="space-y-5">
+          {q.data.isGuest && (
+            <Card className="flex flex-wrap items-center justify-between gap-3 border-gold/60 bg-gold/10">
+              <p className="max-w-md text-sm">{t('تقدّم الضيف مرتبط بهذا المتصفح ولا يُدمج تلقائياً مع الحساب. سجّل الدخول قبل بدء الدروس لحفظ التقدّم بين أجهزتك.', 'Guest progress stays in this browser and is not automatically merged. Sign in before studying to save progress across devices.')}</p>
+              <div className="flex gap-2"><Link href="/sign-up" className="press rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground" data-testid="link-signup">{t('إنشاء حساب', 'Sign up')}</Link><Link href="/sign-in" className="press rounded-xl border border-input px-4 py-2 text-sm font-semibold" data-testid="link-signin-account">{t('دخول', 'Log in')}</Link></div>
+            </Card>
+          )}
+          <Card className="space-y-4">
+            <label className="block text-sm font-semibold">{t('الاسم', 'Name')}<input className={cn(input, 'mt-1.5')} value={f.displayName} maxLength={80} onChange={(e) => set({ displayName: e.target.value })} data-testid="input-name" /></label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm font-semibold">{t('المستوى', 'Level')}
+                <select className={cn(input, 'mt-1.5')} value={f.level} onChange={(e) => set({ level: e.target.value as ProfileInput['level'] })} data-testid="select-level">
+                  <option value="beginner">{t('مبتدئ', 'Beginner')}</option><option value="intermediate">{t('متوسط', 'Intermediate')}</option><option value="advanced">{t('متقدّم', 'Advanced')}</option>
+                </select></label>
+              <label className="block text-sm font-semibold">{t('اللغة', 'Language')}
+                <select className={cn(input, 'mt-1.5')} value={f.language} onChange={(e) => set({ language: e.target.value as ProfileInput['language'] })} data-testid="select-language">
+                  <option value="ar">العربية</option><option value="en">English</option>
+                </select></label>
+              <label className="block text-sm font-semibold">{t('دقائق يوميًا', 'Daily minutes')}<input type="number" min={5} max={180} className={cn(input, 'mt-1.5')} value={f.dailyGoal} onChange={(e) => set({ dailyGoal: Math.min(180, Math.max(5, Number(e.target.value) || 5)) })} data-testid="input-minutes" /></label>
+              <label className="block text-sm font-semibold">{t('المنطقة الزمنية', 'Timezone')}<input dir="ltr" className={cn(input, 'mt-1.5')} value={f.timezone} onChange={(e) => set({ timezone: e.target.value })} data-testid="input-timezone" /></label>
+            </div>
+            <label className="flex items-center justify-between rounded-2xl border border-border p-3 text-sm font-semibold">{t('تذكير يومي', 'Daily reminder')}
+              <span className="flex items-center gap-3">{f.reminderEnabled && <input type="time" dir="ltr" value={f.reminderTime} onChange={(e) => set({ reminderTime: e.target.value })} className="rounded-lg border border-input bg-background px-2 py-1" data-testid="input-reminder-time" />}
+                <input type="checkbox" className="size-5 accent-[hsl(var(--primary))]" checked={f.reminderEnabled} onChange={(e) => set({ reminderEnabled: e.target.checked })} data-testid="switch-reminder" /></span>
+            </label>
+            <label className="flex items-center justify-between rounded-2xl border border-border p-3 text-sm font-semibold">{t('حفظ سجل المعلّم', 'Keep tutor chat history')}
+              <input type="checkbox" className="size-5 accent-[hsl(var(--primary))]" checked={f.retainChat} onChange={(e) => set({ retainChat: e.target.checked })} data-testid="switch-retain" /></label>
+            <Btn disabled={save.isPending || !f.displayName.trim()} onClick={() => save.mutate({ data: f })} data-testid="button-save-profile">{save.isPending ? t('جارٍ الحفظ...', 'Saving...') : t('حفظ التغييرات', 'Save changes')}</Btn>
+            {save.isError && <p className="text-sm text-destructive">{t('تعذّر الحفظ.', 'Could not save.')}</p>}
+          </Card>
+
+          <Card>
+            <h2 className="font-display mb-1 font-bold">{t('بياناتك', 'Your data')}</h2>
+            <p className="mb-3 text-sm text-muted-foreground">{t('نزّل نسخة JSON من بيانات تعلّمك.', 'Download a JSON copy of your learning data.')}</p>
+            <Btn variant="outline" onClick={doExport} disabled={exp.isFetching} data-testid="button-export"><Download className="size-4" />{exp.isFetching ? t('جارٍ التجهيز...', 'Preparing...') : t('تصدير البيانات', 'Export data')}</Btn>
+            {exp.isError && <p className="mt-2 text-sm text-destructive">{t('تعذّر التصدير.', 'Export failed.')}</p>}
+          </Card>
+
+          <Card className="border-destructive/40">
+            <h2 className="font-display mb-1 font-bold text-destructive">{t('حذف بيانات التعلّم', 'Delete learning data')}</h2>
+            <p className="mb-3 text-sm text-muted-foreground">{t('يحذف التقدّم والمحادثات والتفضيلات. حساب تسجيل الدخول لدى Clerk يبقى منفصلاً ولا يُحذف بهذا الإجراء.', 'Deletes progress, chat and preferences. Your separate Clerk sign-in identity is not deleted by this action.')}</p>
+            <p className="mb-3 text-sm text-muted-foreground">{t(`لا يمكن التراجع. اكتب "${word}" للتأكيد.`, `This cannot be undone. Type "${word}" to confirm.`)}</p>
+            <div className="flex flex-wrap gap-2">
+              <input className={cn(input, 'max-w-48')} value={confirm} onChange={(e) => setConfirm(e.target.value)} data-testid="input-confirm-delete" />
+              <Btn variant="danger" disabled={confirm !== word || del.isPending} onClick={() => del.mutate()} data-testid="button-delete-account"><Trash2 className="size-4" />{t('احذف نهائيًا', 'Delete permanently')}</Btn>
+            </div>
+            {del.isError && <p className="mt-2 text-sm text-destructive">{t('تعذّر الحذف.', 'Deletion failed.')}</p>}
+          </Card>
+        </div>
+      )}
+    </Shell>
+  );
+}

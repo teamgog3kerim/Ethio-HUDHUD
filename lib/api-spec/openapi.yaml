@@ -1,36 +1,329 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: API specification
+  version: 1.0.0
 servers:
   - url: /api
-    description: Base API path
-tags:
-  - name: health
-    description: Health operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
-      tags: [health]
-      summary: Health check
-      description: Returns server health status
       responses:
         "200":
-          description: Healthy
+          description: OK
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/HealthStatus"
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+  /profile:
+    get:
+      operationId: getProfile
+      responses:
+        "200":
+          description: Learner or guest profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+    put:
+      operationId: saveProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProfileInput" }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+  /courses:
+    get:
+      operationId: getCourses
+      responses:
+        "200":
+          description: Catalog
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Course" } }
+  /lessons/{id}:
+    get:
+      operationId: getLesson
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Lesson
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Lesson" }
+  /lessons/{id}/complete:
+    post:
+      operationId: completeLesson
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LessonSubmission" }
+      responses:
+        "200":
+          description: Server graded result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LessonResult" }
+  /progress/summary:
+    get:
+      operationId: getProgress
+      responses:
+        "200":
+          description: Actual learning progress
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Progress" }
+  /study-plan:
+    get:
+      operationId: getStudyPlan
+      responses:
+        "200":
+          description: Six month plan
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/PlanDay" } }
+  /vocabulary:
+    get:
+      operationId: getVocabulary
+      responses:
+        "200":
+          description: Review queue
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Word" } }
+  /vocabulary/{id}/review:
+    post:
+      operationId: reviewVocabulary
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReviewInput" }
+      responses:
+        "200":
+          description: Review scheduled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Word" }
+  /ai/chat:
+    get:
+      operationId: getChat
+      responses:
+        "200":
+          description: Private tutor history
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/ChatMessage" } }
+    post:
+      operationId: sendChat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChatInput" }
+      responses:
+        "200":
+          description: Tutor reply
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChatMessage" }
+    delete:
+      operationId: clearChat
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+  /billing/status:
+    get:
+      operationId: getBillingStatus
+      responses:
+        "200":
+          description: Verified subscription state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingStatus" }
+  /account/export:
+    get:
+      operationId: exportAccount
+      responses:
+        "200":
+          description: Export
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
+  /account:
+    delete:
+      operationId: deleteAccount
+      responses:
+        "200":
+          description: Learning data removed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
-        status:
-          type: string
-      required:
-        - status
-
+        status: { type: string }
+    ProfileInput:
+      type: object
+      required: [displayName, level, goals, dailyGoal, timezone, reminderTime, reminderEnabled, language, onboardingComplete, retainChat]
+      properties:
+        displayName: { type: string, minLength: 1, maxLength: 80 }
+        level: { type: string, enum: [beginner, intermediate, advanced] }
+        goals: { type: array, items: { type: string }, maxItems: 7 }
+        dailyGoal: { type: integer, minimum: 5, maximum: 180 }
+        timezone: { type: string }
+        reminderTime: { type: string }
+        reminderEnabled: { type: boolean }
+        language: { type: string, enum: [ar, en] }
+        onboardingComplete: { type: boolean }
+        retainChat: { type: boolean }
+    Profile:
+      allOf:
+        - { $ref: "#/components/schemas/ProfileInput" }
+        - type: object
+          required: [id, isGuest, joinedAt]
+          properties:
+            id: { type: string }
+            isGuest: { type: boolean }
+            joinedAt: { type: string }
+    Word:
+      type: object
+      required: [id, amharic, arabic, english, transliteration, due, interval]
+      properties:
+        id: { type: string }
+        amharic: { type: string }
+        arabic: { type: string }
+        english: { type: string }
+        transliteration: { type: string }
+        due: { type: boolean }
+        interval: { type: integer }
+    Exercise:
+      type: object
+      required: [id, prompt, options, type]
+      properties:
+        id: { type: string }
+        prompt: { type: string }
+        options: { type: array, items: { type: string } }
+        type: { type: string }
+    Lesson:
+      type: object
+      required: [id, courseId, titleAr, titleEn, titleAm, minutes, objective, explanation, words, exercises, reviewStatus, completed]
+      properties:
+        id: { type: string }
+        courseId: { type: string }
+        titleAr: { type: string }
+        titleEn: { type: string }
+        titleAm: { type: string }
+        minutes: { type: integer }
+        objective: { type: string }
+        explanation: { type: string }
+        words: { type: array, items: { $ref: "#/components/schemas/Word" } }
+        exercises: { type: array, items: { $ref: "#/components/schemas/Exercise" } }
+        reviewStatus: { type: string }
+        completed: { type: boolean }
+    Course:
+      type: object
+      required: [id, titleAr, titleEn, description, level, category, month, lessons, completedCount]
+      properties:
+        id: { type: string }
+        titleAr: { type: string }
+        titleEn: { type: string }
+        description: { type: string }
+        level: { type: string }
+        category: { type: string }
+        month: { type: integer }
+        lessons: { type: array, items: { $ref: "#/components/schemas/Lesson" } }
+        completedCount: { type: integer }
+    LessonSubmission:
+      type: object
+      required: [answers, activeSeconds]
+      properties:
+        answers: { type: array, items: { type: integer, minimum: 0, maximum: 8 } }
+        activeSeconds: { type: integer, minimum: 0, maximum: 3600 }
+    AnswerFeedback:
+      type: object
+      required: [correct, correctIndex, explanation]
+      properties:
+        correct: { type: boolean }
+        correctIndex: { type: integer }
+        explanation: { type: string }
+    LessonResult:
+      type: object
+      required: [score, passed, xpEarned, feedback]
+      properties:
+        score: { type: integer }
+        passed: { type: boolean }
+        xpEarned: { type: integer }
+        feedback: { type: array, items: { $ref: "#/components/schemas/AnswerFeedback" } }
+    Progress:
+      type: object
+      required: [lessonsCompleted, totalLessons, vocabularyLearned, totalMinutes, todayMinutes, streak, xp, averageScore, activity, recentLessons]
+      properties:
+        lessonsCompleted: { type: integer }
+        totalLessons: { type: integer }
+        vocabularyLearned: { type: integer }
+        totalMinutes: { type: number }
+        todayMinutes: { type: number }
+        streak: { type: integer }
+        xp: { type: integer }
+        averageScore: { type: number }
+        activity: { type: array, items: { $ref: "#/components/schemas/Activity" } }
+        recentLessons: { type: array, items: { type: string } }
+    Activity:
+      type: object
+      required: [date, minutes]
+      properties:
+        date: { type: string }
+        minutes: { type: number }
+    PlanDay:
+      type: object
+      required: [day, month, title, lessonId, type, completed]
+      properties:
+        day: { type: integer }
+        month: { type: integer }
+        title: { type: string }
+        lessonId: { type: ["string", "null"] }
+        type: { type: string }
+        completed: { type: boolean }
+    ReviewInput:
+      type: object
+      required: [remembered]
+      properties:
+        remembered: { type: boolean }
+    ChatInput:
+      type: object
+      required: [message, scenario]
+      properties:
+        message: { type: string, minLength: 1, maxLength: 2000 }
+        scenario: { type: string, maxLength: 100 }
+    ChatMessage:
+      type: object
+      required: [id, role, content, createdAt]
+      properties:
+        id: { type: string }
+        role: { type: string, enum: [user, assistant] }
+        content: { type: string }
+        createdAt: { type: string }
+    BillingStatus:
+      type: object
+      required: [plan, configured, message]
+      properties:
+        plan: { type: string }
+        configured: { type: boolean }
+        message: { type: string }
