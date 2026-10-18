@@ -102,6 +102,13 @@ export const GetCoursesResponseItem = zod.object({
   "titleAr": zod.string(),
   "titleEn": zod.string(),
   "titleAm": zod.string(),
+  "dialogue": zod.array(zod.object({
+  "speakerAr": zod.string(),
+  "speakerEn": zod.string(),
+  "amharic": zod.string(),
+  "arabic": zod.string(),
+  "transliteration": zod.string().describe('Approximate pronunciation in Arabic script')
+})).optional(),
   "minutes": zod.number().int(),
   "objective": zod.string(),
   "explanation": zod.string(),
@@ -138,6 +145,13 @@ export const GetLessonResponse = zod.object({
   "titleAr": zod.string(),
   "titleEn": zod.string(),
   "titleAm": zod.string(),
+  "dialogue": zod.array(zod.object({
+  "speakerAr": zod.string(),
+  "speakerEn": zod.string(),
+  "amharic": zod.string(),
+  "arabic": zod.string(),
+  "transliteration": zod.string().describe('Approximate pronunciation in Arabic script')
+})).optional(),
   "minutes": zod.number().int(),
   "objective": zod.string(),
   "explanation": zod.string(),

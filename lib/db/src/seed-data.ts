@@ -1,13 +1,15 @@
 // Pilot content, not represented as professionally reviewed or native-speaker approved.
 import { arabicLessonContent, arabicLearningText, arabicPronunciation } from "./pronunciation";
+import { extraLessonInputs, conversationLessonInputs } from "./extra-curriculum";
 export type SeedWord = { id: string; amharic: string; arabic: string; english: string; transliteration: string; due: boolean; interval: number };
 export type SeedExercise = { id: string; prompt: string; options: string[]; type: string };
 export type LessonContent = {
   titleAr: string; titleEn: string; titleAm: string; minutes: number;
   objective: string; explanation: string; words: SeedWord[]; exercises: SeedExercise[];
+  dialogue?: { speakerAr: string; speakerEn: string; amharic: string; arabic: string; transliteration: string }[];
 };
-type WordTuple = [string, string, string, string];
-type LessonInput = [string, string, string, string, string, WordTuple[]];
+export type WordTuple = [string, string, string, string];
+export type LessonInput = [string, string, string, string, string, WordTuple[]];
 const makeWord = (w: WordTuple): SeedWord => ({
   id: Buffer.from(w[0]).toString("hex"), amharic: w[0], arabic: arabicLearningText(w[1]),
   english: w[2], transliteration: arabicPronunciation(w[3]), due: true, interval: 0,
@@ -58,8 +60,15 @@ const inputs: LessonInput[] = [
     ["ሰኞ", "الاثنين", "Monday", "säñño"], ["ማክሰኞ", "الثلاثاء", "Tuesday", "maksäñño"], ["ረቡዕ", "الأربعاء", "Wednesday", "räbuʿ"], ["ሐሙስ", "الخميس", "Thursday", "hamus"], ["ዓርብ", "الجمعة", "Friday", "arb"],
   ]],
 ];
-export const lessonSeed = inputs.map(([id, courseId, titleAr, titleEn, explanation, rawWords], n) => {
+const allInputs: LessonInput[] = [
+  ...inputs, ...extraLessonInputs,
+  ...conversationLessonInputs.map(c => [
+    c.id, c.courseId, c.titleAr, c.titleEn, c.explanation, c.turns.map(t => t[2]),
+  ] satisfies LessonInput),
+];
+export const lessonSeed = allInputs.map(([id, courseId, titleAr, titleEn, explanation, rawWords], n) => {
   const words = rawWords.map(makeWord);
+  const conversation = conversationLessonInputs.find(c => c.id === id);
   const answers = words.slice(0, 4).map((w, i) => {
     const options = words.slice(0, 4).map(v => v.arabic);
     // Rotate options so the answer is not always in the same position.
@@ -68,7 +77,14 @@ export const lessonSeed = inputs.map(([id, courseId, titleAr, titleEn, explanati
   });
   return {
     id, courseId, sequence: n + 1, reviewStatus: "pilot",
-    content: arabicLessonContent({ titleAr, titleEn, titleAm: words[0]!.amharic, minutes: 10, objective: `تعرّف على ${words.length} مفردات أو مقاطع جديدة واختبر فهمك.`, explanation, words, exercises: answers.map(a => a.exercise) } satisfies LessonContent),
+    content: arabicLessonContent({
+      titleAr, titleEn, titleAm: words[0]!.amharic, minutes: 10,
+      objective: conversation ? "اقرأ الحوار، ثم تبادل الأدوار واختبر فهمك لمعاني جمله." : `تعرّف على ${words.length} مفردات أو مقاطع جديدة واختبر فهمك.`,
+      explanation, words, exercises: answers.map(a => a.exercise),
+      ...(conversation ? { dialogue: conversation.turns.map(([speakerAr, speakerEn, word]) => ({
+        speakerAr, speakerEn, amharic: word[0], arabic: word[1], transliteration: word[3],
+      })) } : {}),
+    } satisfies LessonContent),
     answerKey: answers.map(a => ({ correctIndex: a.correctIndex, explanation: a.explanation })),
   };
 });

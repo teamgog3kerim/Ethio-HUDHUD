@@ -4,6 +4,13 @@ export const lessonContentSchema = z.object({
   titleAr: z.string().trim().min(1).max(150), titleEn: z.string().trim().min(1).max(150),
   titleAm: z.string().trim().min(1).max(150), minutes: z.number().int().min(1).max(180),
   objective: z.string().trim().min(3).max(1000), explanation: z.string().trim().min(10).max(10000),
+  dialogue: z.array(z.object({
+    speakerAr: z.string().trim().min(1).max(100), speakerEn: z.string().trim().min(1).max(100),
+    amharic: z.string().trim().min(1).max(500), arabic: z.string().trim().min(1).max(500),
+    transliteration: z.string().trim().min(1).max(500).refine(isArabicPronunciation, {
+      message: "اكتب نطق جمل المحادثة بحروف عربية.",
+    }),
+  })).min(2).max(30).optional(),
   words: z.array(z.object({
     id: z.string().min(1).max(150), amharic: z.string().min(1).max(300),
     arabic: z.string().min(1).max(300), english: z.string().min(1).max(300),

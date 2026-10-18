@@ -46,6 +46,10 @@ export function arabicLearningText(value: string): string {
 export function arabicLessonContent(content: LessonContent): LessonContent {
   return {
     ...content,
+    ...(content.dialogue ? { dialogue: content.dialogue.map(turn => ({
+      ...turn, arabic: arabicLearningText(turn.arabic),
+      transliteration: arabicPronunciation(turn.transliteration),
+    })) } : {}),
     objective: arabicLearningText(content.objective),
     explanation: arabicLearningText(content.explanation),
     words: content.words.map(word => ({

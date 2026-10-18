@@ -4,6 +4,7 @@
  * Api
  * OpenAPI spec version: 1.0.0
  */
+import type { DialogueTurn } from './dialogueTurn';
 import type { Exercise } from './exercise';
 import type { Word } from './word';
 
@@ -13,6 +14,7 @@ export interface Lesson {
   titleAr: string;
   titleEn: string;
   titleAm: string;
+  dialogue?: DialogueTurn[];
   minutes: number;
   objective: string;
   explanation: string;

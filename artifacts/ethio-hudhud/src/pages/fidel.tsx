@@ -20,7 +20,7 @@ export default function Fidel() {
     const m = new Map<string, { lessonId: string; word: Word }[]>();
     first?.lessons.forEach((l) =>
       l.words.forEach((w) =>
-        Array.from(w.amharic).filter(isEthiopic).forEach((c) => {
+        Array.from(w.amharic).filter(c => isEthiopic(c) && /\p{L}/u.test(c)).forEach((c) => {
           const arr = m.get(c) ?? [];
           if (!arr.some((x) => x.word.id === w.id)) arr.push({ lessonId: l.id, word: w });
           m.set(c, arr);

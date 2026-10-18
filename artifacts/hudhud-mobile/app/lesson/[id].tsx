@@ -40,7 +40,16 @@ export default function LessonPage() {
         <Card><Txt>{lesson.data.objective}</Txt><Txt>{lesson.data.explanation}</Txt></Card>
         <Action title={transliteration ? "إخفاء النطق بالعربية" : "إظهار النطق بالعربية"} secondary onPress={() => setTransliteration(!transliteration)} />
         {transliteration && <PronunciationNote />}
-        {lesson.data.words.map(w => <Card key={w.id}><Txt style={styles.fidel}>{w.amharic}</Txt><Txt style={{ textAlign: "center", fontSize: 19 }}>{w.arabic}</Txt>{transliteration && <Txt style={{ textAlign: "center", writingDirection: "rtl", fontSize: 18, color: c.mutedForeground }}>{w.transliteration}</Txt>}</Card>)}
+        {lesson.data.dialogue?.length ? <Card>
+          <Txt style={styles.subheading}>اقرأ المحادثة وتبادل الأدوار</Txt>
+          <Txt>اقرأ سطر كل متحدث، ثم جرّب الرد بنفسك قبل النظر إلى الجملة التالية.</Txt>
+          {lesson.data.dialogue.map((turn, i) => <Card key={i} style={{ backgroundColor: i % 2 ? c.secondary : c.background }}>
+            <Txt style={{ color: c.primary, fontFamily: "IBMPlexSansArabic_600SemiBold" }}>{turn.speakerAr}</Txt>
+            <Txt style={[styles.fidel, { fontSize: 25, lineHeight: 40 }]}>{turn.amharic}</Txt>
+            {transliteration && <Txt style={{ writingDirection: "rtl", textAlign: "center", fontSize: 18, color: c.mutedForeground }}>{turn.transliteration}</Txt>}
+            <Txt style={{ writingDirection: "rtl" }}>{turn.arabic}</Txt>
+          </Card>)}
+        </Card> : lesson.data.words.map(w => <Card key={w.id}><Txt style={styles.fidel}>{w.amharic}</Txt><Txt style={{ textAlign: "center", fontSize: 19 }}>{w.arabic}</Txt>{transliteration && <Txt style={{ textAlign: "center", writingDirection: "rtl", fontSize: 18, color: c.mutedForeground }}>{w.transliteration}</Txt>}</Card>)}
         <Txt style={{ color: c.mutedForeground, fontSize: 12 }}>الصوت غير متاح حالياً. لا يتم تقديم تقييم للنطق دون خدمة معتمدة.</Txt>
         <Action title="أنا مستعدّ للاختبار" onPress={() => setExerciseMode(true)} icon="arrow-left" />
       </> : <>

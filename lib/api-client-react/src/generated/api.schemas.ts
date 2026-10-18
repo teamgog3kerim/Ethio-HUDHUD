@@ -278,12 +278,22 @@ export interface Exercise {
   type: string;
 }
 
+export interface DialogueTurn {
+  speakerAr: string;
+  speakerEn: string;
+  amharic: string;
+  arabic: string;
+  /** Approximate pronunciation in Arabic script */
+  transliteration: string;
+}
+
 export interface Lesson {
   id: string;
   courseId: string;
   titleAr: string;
   titleEn: string;
   titleAm: string;
+  dialogue?: DialogueTurn[];
   minutes: number;
   objective: string;
   explanation: string;

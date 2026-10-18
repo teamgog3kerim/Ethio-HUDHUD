@@ -13,6 +13,7 @@ import { useApp } from '@/lib/app';
 import { isEthiopic } from '@/lib/options';
 import { cn } from '@/lib/utils';
 import { PronunciationNote } from '@/components/pronunciation-note';
+import { ConversationCard } from '@/components/conversation-card';
 
 type Phase = 'vocab' | 'quiz' | 'result';
 
@@ -64,8 +65,9 @@ export default function LessonPage() {
 
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
   const ss = String(seconds % 60).padStart(2, '0');
-  const total = lesson ? lesson.words.length + lesson.exercises.length : 1;
-  const done = phase === 'vocab' ? vi : phase === 'quiz' ? (lesson?.words.length ?? 0) + qi : total;
+  const readingSteps = lesson?.dialogue?.length ? 1 : (lesson?.words.length ?? 0);
+  const total = lesson ? readingSteps + lesson.exercises.length : 1;
+  const done = phase === 'vocab' ? vi : phase === 'quiz' ? readingSteps + qi : total;
   const NextIcon = lang === 'ar' ? ChevronLeft : ChevronRight;
   const PrevIcon = lang === 'ar' ? ChevronRight : ChevronLeft;
 
@@ -95,6 +97,14 @@ export default function LessonPage() {
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{lesson.explanation}</p>
                 </Card>
               )}
+              {lesson.dialogue?.length ? (
+                <>
+                  <ConversationCard turns={lesson.dialogue} />
+                  <div className="mt-5 flex justify-end">
+                    <Btn variant="gold" onClick={() => setPhase('quiz')} data-testid="button-start-quiz">{t('ابدأ التمارين', 'Start exercises')}</Btn>
+                  </div>
+                </>
+              ) : <>
               {lesson.words[vi] && (
                 <Card className="py-10 text-center" data-testid={`card-word-${lesson.words[vi].id}`}>
                   <p className="mb-3 text-xs text-muted-foreground">{vi + 1} / {lesson.words.length}</p>
@@ -117,6 +127,7 @@ export default function LessonPage() {
                   <Btn variant="gold" onClick={() => (lesson.exercises.length ? setPhase('quiz') : submit([]))} data-testid="button-start-quiz">{t('ابدأ التمارين', 'Start exercises')}</Btn>
                 )}
               </div>
+              </>}
             </div>
           )}
 

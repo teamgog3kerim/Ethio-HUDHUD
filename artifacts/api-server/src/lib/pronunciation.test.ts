@@ -15,7 +15,7 @@ test("the reported thank-you pronunciation is Arabic script, not a translation",
 });
 
 test("every pilot word and letter has an Arabic pronunciation, including English UI syllables", () => {
-  assert.equal(lessonSeed.length, 12);
+  assert.equal(lessonSeed.length, 30);
   for (const lesson of lessonSeed) {
     assert.ok(lessonContentSchema.safeParse(lesson.content).success, lesson.id);
     for (const word of lesson.content.words) {

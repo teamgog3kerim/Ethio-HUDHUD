@@ -33,6 +33,7 @@ export * from './chatInput';
 export * from './chatMessage';
 export * from './chatMessageRole';
 export * from './course';
+export * from './dialogueTurn';
 export * from './exercise';
 export * from './exportAccount200';
 export * from './getAdminUsersParams';

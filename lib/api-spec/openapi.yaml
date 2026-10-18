@@ -497,6 +497,15 @@ components:
         prompt: { type: string }
         options: { type: array, items: { type: string } }
         type: { type: string }
+    DialogueTurn:
+      type: object
+      required: [speakerAr, speakerEn, amharic, arabic, transliteration]
+      properties:
+        speakerAr: { type: string }
+        speakerEn: { type: string }
+        amharic: { type: string }
+        arabic: { type: string }
+        transliteration: { type: string, description: Approximate pronunciation in Arabic script }
     Lesson:
       type: object
       required: [id, courseId, titleAr, titleEn, titleAm, minutes, objective, explanation, words, exercises, reviewStatus, completed]
@@ -506,6 +515,9 @@ components:
         titleAr: { type: string }
         titleEn: { type: string }
         titleAm: { type: string }
+        dialogue:
+          type: array
+          items: { $ref: "#/components/schemas/DialogueTurn" }
         minutes: { type: integer }
         objective: { type: string }
         explanation: { type: string }
