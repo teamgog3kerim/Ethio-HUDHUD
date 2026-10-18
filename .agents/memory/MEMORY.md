@@ -2,3 +2,4 @@
 - [Expo DevTools warning](expo-devtools-environment.md) — missing desktop Linux libraries can disable optional DevTools while Metro continues serving normally.
 - [Web-first distribution](web-distribution.md) — domain-hosted web app with Android/iOS installation; the same mobile-friendly web app serves learners and admins.
 - [Deleted identity tokens](deleted-session-tokens.md) — provider deletion does not instantly invalidate old JWTs; tombstones must block data recreation.
+- [Shared React contexts](shared-react-contexts.md) — pnpm peer splits can duplicate context libraries in production even when preview works; verify bundle deduplication.

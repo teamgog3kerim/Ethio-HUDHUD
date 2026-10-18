@@ -33,6 +33,17 @@ export default defineConfig({
     react(),
     tailwindcss({ optimize: false }),
     runtimeErrorOverlay(),
+    {
+      name: 'single-react-query-context',
+      generateBundle() {
+        const providers = [...this.getModuleIds()].filter((id) =>
+          /\/@tanstack\/react-query\/.*\/QueryClientProvider\.[cm]?[jt]sx?$/.test(id),
+        );
+        if (providers.length > 1) {
+          this.error('Multiple React Query providers in the production bundle. Keep @tanstack/react-query deduplicated so shared API hooks use the application provider.');
+        }
+      },
+    },
     ...(process.env.NODE_ENV !== 'production' &&
     process.env.REPL_ID !== undefined
       ? [
@@ -57,7 +68,10 @@ export default defineConfig({
         'attached_assets',
       ),
     },
-    dedupe: ['react', 'react-dom'],
+    // pnpm can install the shared API client's React Query with a different
+    // React peer than this app. Without deduplication, production gets two
+    // independent contexts even though both imports use the same version.
+    dedupe: ['react', 'react-dom', '@tanstack/react-query'],
   },
   root: path.resolve(import.meta.dirname),
   build: {
