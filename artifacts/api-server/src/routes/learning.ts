@@ -12,6 +12,7 @@ import { getCatalog, getWordQueue, progressSummary } from "../lib/learning";
 import { gradeAnswers, nextReviewInterval, boundedActiveSeconds } from "../lib/scoring";
 import { getAuth } from "@clerk/express";
 import { getAppSettings, getAccessState } from "../lib/app-settings";
+import { arabicAnswerKey } from "@workspace/db/pronunciation";
 
 const router: IRouter = Router();
 router.get("/profile", async (req, res) => {
@@ -54,7 +55,7 @@ router.post("/lessons/:id/complete", async (req, res) => {
   const learner = await getLearner(req, res);
   const [lesson] = await db.select().from(lessons).where(eq(lessons.id, p.data.id));
   if (!lesson?.active) { res.status(404).json({ error: "الدرس غير موجود أو تم إخفاؤه بواسطة الإدارة." }); return; }
-  const keys = lesson.answerKey as { correctIndex: number; explanation: string }[];
+  const keys = arabicAnswerKey(lesson.answerKey as { correctIndex: number; explanation: string }[]);
   const exercises = (lesson.content as LessonContent).exercises;
   if (body.data.answers.length !== keys.length || body.data.answers.some((v, i) => v >= exercises[i]!.options.length)) {
     res.status(400).json({ error: "أجب عن جميع الأسئلة أولاً." }); return;

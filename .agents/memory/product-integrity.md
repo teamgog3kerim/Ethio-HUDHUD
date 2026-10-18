@@ -11,6 +11,16 @@ language; do not expand into Oromo or Tigrinya.
 **How to apply:** Keep curriculum, tutor instructions, marketing and future
 extensions within the Amharic-learning product.
 
+Pronunciation guides for Amharic words and letters must use Arabic script
+throughout the app, not Latin transliteration.
+
+**Why:** The user says the learners are Arabic-language speakers and need to
+read how Amharic words and letters are pronounced.
+
+**How to apply:** Apply this to all learning surfaces, alphabet examples,
+revision cards, quiz explanations, tutor instructions and admin-authored content.
+Keep pronunciation distinct from the Arabic translation and label it approximate.
+
 Do not present unreviewed material as verified, invent tutor listings or audio,
 fabricate pronunciation assessment, or claim a paid entitlement from a button.
 

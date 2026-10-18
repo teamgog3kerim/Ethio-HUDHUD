@@ -7,6 +7,7 @@ import { useApp } from '@/lib/app';
 import { FIDEL_FAMILIES, fidelForms, isEthiopic } from '@/lib/options';
 import { cn } from '@/lib/utils';
 import { Type } from 'lucide-react';
+import { PronunciationNote } from '@/components/pronunciation-note';
 
 export default function Fidel() {
   const { t, lang } = useApp();
@@ -48,11 +49,11 @@ export default function Fidel() {
           {fidelForms(FIDEL_FAMILIES[fam].base).map((c, i) => (
             <button key={c.ch} type="button" onClick={() => setCh(c.ch)} data-testid={`button-form-${i}`} className="pop press rounded-2xl bg-secondary py-3" style={{ animationDelay: `${i * 35}ms` }}>
               <Am className="block text-3xl font-semibold text-primary sm:text-5xl">{c.ch}</Am>
-              <span className="text-xs text-muted-foreground">{FIDEL_FAMILIES[fam].latin}{c.vowel}</span>
+              <span className="block text-sm text-muted-foreground" dir="rtl" lang="ar">{c.pronunciation}</span>
             </button>
           ))}
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">{t('الرموز اللاتينية تقريبية للتوضيح فقط وتنتظر مراجعة لغوية.', 'Latin symbols are approximate aids and await linguistic review.')}</p>
+        <PronunciationNote />
       </Card>
 
       <h2 className="font-display mb-1 text-xl font-bold">{t('حروف من مقررك الأول', 'Letters from your first course')}</h2>

@@ -6,6 +6,7 @@ import { Am, ErrorState, LinkBtn, PilotNote, ProgressBar, Skeleton } from '@/com
 import { Brand, Footer, Toggles } from '@/components/shell';
 import { useApp } from '@/lib/app';
 import { FIDEL_FAMILIES, fidelForms } from '@/lib/options';
+import { PronunciationNote } from '@/components/pronunciation-note';
 
 export default function Landing() {
   const { t, lang } = useApp();
@@ -66,10 +67,11 @@ export default function Landing() {
             {fidelForms(FIDEL_FAMILIES[fam].base).map((c, i) => (
               <div key={c.ch} className="pop rounded-2xl bg-secondary py-3 text-center" style={{ animationDelay: `${i * 40}ms` }}>
                 <Am className="block text-3xl font-semibold text-primary sm:text-5xl">{c.ch}</Am>
-                <span className="text-xs text-muted-foreground">{FIDEL_FAMILIES[fam].latin}{c.vowel}</span>
+                <span className="block text-sm text-muted-foreground" dir="rtl" lang="ar">{c.pronunciation}</span>
               </div>
             ))}
           </div>
+          <PronunciationNote />
         </div>
       </section>
 
@@ -81,7 +83,7 @@ export default function Landing() {
           </div>
           <ol className="space-y-3">
             {[
-              { i: Sprout, a: 'تعلّم الكلمات', e: 'Learn the words', da: 'بطاقات بالأمهرية والعربية والنطق بالحروف اللاتينية.', de: 'Cards with Amharic, Arabic and Latin transliteration.' },
+              { i: Sprout, a: 'تعلّم الكلمات', e: 'Learn the words', da: 'بطاقات بالأمهرية والمعنى بالعربية والنطق بالحروف العربية.', de: 'Cards with Amharic, Arabic meanings and Arabic-script pronunciation.' },
               { i: BookOpenCheck, a: 'تمارين يصحّحها الخادم', e: 'Server-graded exercises', da: 'تحصل على التصحيح والشرح، وتعيد المحاولة إن لم تنجح.', de: 'You get grading and explanations, and retry if you miss.' },
               { i: Repeat, a: 'مراجعة متباعدة', e: 'Spaced review', da: 'الكلمات التي نسيتها تعود مبكرًا، والتي تتقنها تتباعد.', de: 'Forgotten words return sooner; known ones space out.' },
             ].map((s, n) => (

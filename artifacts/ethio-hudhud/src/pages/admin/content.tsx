@@ -54,6 +54,7 @@ function Editor({ target, onClose, onDone }: { target: Target; onClose: () => vo
         </div>
         <label className="flex items-center gap-3 text-sm font-semibold"><input type="checkbox" className="size-5 accent-[hsl(var(--primary))]" checked={active} onChange={(e) => setActive(e.target.checked)} data-testid="toggle-lesson-active" />{t('نشط (إلغاؤه يؤرشف الدرس)', 'Active (unchecking archives the lesson)')}</label>
         <Field label={t('المحتوى (JSON)', 'Content (JSON object)')}><textarea dir="ltr" rows={10} spellCheck={false} className={fieldCls + ' font-mono text-xs'} value={content} onChange={(e) => setContent(e.target.value)} data-testid="input-lesson-content" /></Field>
+        <p className="text-sm text-muted-foreground">{t('حقل transliteration مخصّص للنطق التقريبي بالحروف العربية، وليس للترجمة أو للحروف اللاتينية. مثال: ሰላም ← سَلَام.', 'The transliteration field requires approximate pronunciation in Arabic script, not a translation or Latin letters. Example: ሰላም → سَلَام.')}</p>
         <Field label={t('مفتاح الإجابات (JSON)', 'Answer key (JSON array)')}><textarea dir="ltr" rows={6} spellCheck={false} className={fieldCls + ' font-mono text-xs'} value={key} onChange={(e) => setKey(e.target.value)} data-testid="input-lesson-key" /></Field>
         <Field label={t('السبب', 'Reason')}><textarea rows={2} maxLength={500} className={fieldCls} value={reason} onChange={(e) => setReason(e.target.value)} data-testid="input-lesson-reason" /></Field>
         {err && <Notice kind="err">{err}</Notice>}

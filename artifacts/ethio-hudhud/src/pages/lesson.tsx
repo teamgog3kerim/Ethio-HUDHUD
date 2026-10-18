@@ -12,6 +12,7 @@ import { useActiveTimer } from '@/hooks/use-active-timer';
 import { useApp } from '@/lib/app';
 import { isEthiopic } from '@/lib/options';
 import { cn } from '@/lib/utils';
+import { PronunciationNote } from '@/components/pronunciation-note';
 
 type Phase = 'vocab' | 'quiz' | 'result';
 
@@ -98,12 +99,13 @@ export default function LessonPage() {
                 <Card className="py-10 text-center" data-testid={`card-word-${lesson.words[vi].id}`}>
                   <p className="mb-3 text-xs text-muted-foreground">{vi + 1} / {lesson.words.length}</p>
                   <Am className="block text-6xl font-bold text-primary sm:text-7xl">{lesson.words[vi].amharic}</Am>
-                  {showTr && <p className="pop mt-3 text-lg text-muted-foreground" dir="ltr" data-testid="text-transliteration">{lesson.words[vi].transliteration}</p>}
+                  {showTr && <p className="pop mt-3 text-lg leading-loose text-muted-foreground" dir="rtl" lang="ar" data-testid="text-transliteration">{lesson.words[vi].transliteration}</p>}
                   <p className="font-display mt-5 text-3xl font-bold">{lesson.words[vi].arabic}</p>
                   <p className="text-muted-foreground" dir="ltr">{lesson.words[vi].english}</p>
                   <button type="button" onClick={toggleTr} aria-pressed={showTr} data-testid="button-toggle-transliteration" className="press mx-auto mt-5 flex items-center gap-2 rounded-full border border-border px-4 py-1.5 text-sm">
-                    {showTr ? <EyeOff className="size-4" /> : <Eye className="size-4" />}{showTr ? t('إخفاء النطق اللاتيني', 'Hide transliteration') : t('إظهار النطق اللاتيني', 'Show transliteration')}
+                    {showTr ? <EyeOff className="size-4" /> : <Eye className="size-4" />}{showTr ? t('إخفاء النطق بالعربية', 'Hide Arabic pronunciation') : t('إظهار النطق بالعربية', 'Show Arabic pronunciation')}
                   </button>
+                  {showTr && <PronunciationNote />}
                   <p className="mx-auto mt-4 w-fit rounded-full bg-gold/15 px-3 py-1 text-xs">{t('الصوت بانتظار تسجيلات مراجَعة', 'Audio awaiting reviewed recordings')}</p>
                 </Card>
               )}

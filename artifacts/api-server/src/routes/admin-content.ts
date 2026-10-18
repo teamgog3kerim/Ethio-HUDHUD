@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
-import { db, lessons, courses, adminAudit } from "@workspace/db";
+import { db, lessons, courses, adminAudit, type LessonContent } from "@workspace/db";
+import { arabicLessonContent, arabicAnswerKey } from "@workspace/db/pronunciation";
 import { and, eq, asc, count, sql } from "drizzle-orm";
 import { SaveAdminLessonBody, GetAdminLessonsResponse, SaveAdminLessonResponse } from "@workspace/api-zod";
 import { HttpError } from "../lib/http-error";
@@ -7,7 +8,10 @@ import { lessonContentSchema } from "../lib/lesson-validation";
 const router: IRouter = Router();
 router.get("/lessons", async (_req, res) => {
   const rows = await db.select().from(lessons).orderBy(asc(lessons.sequence));
-  res.json(GetAdminLessonsResponse.parse(rows.map(row => ({ ...row, reason: "" }))));
+  res.json(GetAdminLessonsResponse.parse(rows.map(row => ({
+    ...row, reason: "", content: arabicLessonContent(row.content as LessonContent),
+    answerKey: arabicAnswerKey(row.answerKey as { correctIndex: number; explanation: string }[]),
+  }))));
 });
 router.put("/lessons/:id", async (req, res) => {
   const id = String(req.params.id);
@@ -27,7 +31,7 @@ router.put("/lessons/:id", async (req, res) => {
       const [remaining] = await tx.select({ total: count() }).from(lessons).where(and(eq(lessons.courseId, old.courseId), eq(lessons.active, true)));
       if (remaining!.total <= 1) throw new HttpError(409, "لا يمكن إخفاء أو نقل آخر درس نشط في المسار.");
     }
-    const values = { courseId: data.courseId, sequence: data.sequence, active: data.active, content: content.data, answerKey: data.answerKey, reviewStatus: "pilot" };
+    const values = { courseId: data.courseId, sequence: data.sequence, active: data.active, content: arabicLessonContent(content.data), answerKey: arabicAnswerKey(data.answerKey), reviewStatus: "pilot" };
     const [row] = await tx.insert(lessons).values({ id, ...values }).onConflictDoUpdate({ target: lessons.id, set: values }).returning();
     await tx.insert(adminAudit).values({ actorId: res.locals.adminId, action: old ? "lesson.updated" : "lesson.created", targetId: id, detail: { reason: data.reason, courseId: data.courseId, active: data.active, reviewStatus: "pilot" } });
     return row!;

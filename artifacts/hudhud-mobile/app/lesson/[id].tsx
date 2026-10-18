@@ -3,7 +3,7 @@ import { AppState, Pressable, View } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetLesson, getGetLessonQueryKey, useCompleteLesson, type LessonResult } from "@workspace/api-client-react";
-import { Action, Card, Failure, Loading, Screen, Txt, styles } from "@/components/LearningUI";
+import { Action, Card, Failure, Loading, PronunciationNote, Screen, Txt, styles } from "@/components/LearningUI";
 import { useColors } from "@/hooks/useColors";
 export default function LessonPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -38,8 +38,9 @@ export default function LessonPage() {
         {!result.passed && <Action title="حاول مرة أخرى" secondary onPress={() => { setAnswers({}); setResult(null); active.current = 0; void lesson.refetch(); }} />}
       </> : !exerciseMode ? <>
         <Card><Txt>{lesson.data.objective}</Txt><Txt>{lesson.data.explanation}</Txt></Card>
-        <Action title={transliteration ? "إخفاء النقل اللاتيني" : "إظهار النقل اللاتيني"} secondary onPress={() => setTransliteration(!transliteration)} />
-        {lesson.data.words.map(w => <Card key={w.id}><Txt style={styles.fidel}>{w.amharic}</Txt><Txt style={{ textAlign: "center", fontSize: 19 }}>{w.arabic}</Txt>{transliteration && <Txt style={{ textAlign: "center", color: c.mutedForeground }}>{w.transliteration}</Txt>}</Card>)}
+        <Action title={transliteration ? "إخفاء النطق بالعربية" : "إظهار النطق بالعربية"} secondary onPress={() => setTransliteration(!transliteration)} />
+        {transliteration && <PronunciationNote />}
+        {lesson.data.words.map(w => <Card key={w.id}><Txt style={styles.fidel}>{w.amharic}</Txt><Txt style={{ textAlign: "center", fontSize: 19 }}>{w.arabic}</Txt>{transliteration && <Txt style={{ textAlign: "center", writingDirection: "rtl", fontSize: 18, color: c.mutedForeground }}>{w.transliteration}</Txt>}</Card>)}
         <Txt style={{ color: c.mutedForeground, fontSize: 12 }}>الصوت غير متاح حالياً. لا يتم تقديم تقييم للنطق دون خدمة معتمدة.</Txt>
         <Action title="أنا مستعدّ للاختبار" onPress={() => setExerciseMode(true)} icon="arrow-left" />
       </> : <>

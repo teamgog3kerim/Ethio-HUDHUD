@@ -1,4 +1,5 @@
 // Pilot content, not represented as professionally reviewed or native-speaker approved.
+import { arabicLessonContent, arabicLearningText, arabicPronunciation } from "./pronunciation";
 export type SeedWord = { id: string; amharic: string; arabic: string; english: string; transliteration: string; due: boolean; interval: number };
 export type SeedExercise = { id: string; prompt: string; options: string[]; type: string };
 export type LessonContent = {
@@ -8,8 +9,8 @@ export type LessonContent = {
 type WordTuple = [string, string, string, string];
 type LessonInput = [string, string, string, string, string, WordTuple[]];
 const makeWord = (w: WordTuple): SeedWord => ({
-  id: Buffer.from(w[0]).toString("hex"), amharic: w[0], arabic: w[1],
-  english: w[2], transliteration: w[3], due: true, interval: 0,
+  id: Buffer.from(w[0]).toString("hex"), amharic: w[0], arabic: arabicLearningText(w[1]),
+  english: w[2], transliteration: arabicPronunciation(w[3]), due: true, interval: 0,
 });
 export const courseSeed = [
   { id: "fidel", titleAr: "الفيدل وأصوات الأمهرية", titleEn: "Fidel & pronunciation", description: "تعرّف على حروف الفيدل واقرأ كلماتك الأولى.", level: "beginner", category: "fidel", month: 1 },
@@ -67,7 +68,7 @@ export const lessonSeed = inputs.map(([id, courseId, titleAr, titleEn, explanati
   });
   return {
     id, courseId, sequence: n + 1, reviewStatus: "pilot",
-    content: { titleAr, titleEn, titleAm: words[0]!.amharic, minutes: 10, objective: `تعرّف على ${words.length} مفردات أو مقاطع جديدة واختبر فهمك.`, explanation, words, exercises: answers.map(a => a.exercise) } satisfies LessonContent,
+    content: arabicLessonContent({ titleAr, titleEn, titleAm: words[0]!.amharic, minutes: 10, objective: `تعرّف على ${words.length} مفردات أو مقاطع جديدة واختبر فهمك.`, explanation, words, exercises: answers.map(a => a.exercise) } satisfies LessonContent),
     answerKey: answers.map(a => ({ correctIndex: a.correctIndex, explanation: a.explanation })),
   };
 });

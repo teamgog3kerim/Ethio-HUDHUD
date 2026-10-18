@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { PronunciationNote } from '@/components/pronunciation-note';
 import { useQueryClient } from '@tanstack/react-query';
 import { Check, Layers, RotateCcw } from 'lucide-react';
 import {
@@ -69,7 +70,8 @@ export default function Review() {
                 className="flip-face absolute inset-0 grid place-items-center rounded-[2rem] border border-border bg-card shadow-lg">
                 <span className="text-center">
                   <Am className="block text-7xl font-bold text-primary">{word.amharic}</Am>
-                  <span className="mt-3 block text-muted-foreground" dir="ltr">{word.transliteration}</span>
+                  <span className="mt-3 block text-lg leading-loose text-muted-foreground" dir="rtl" lang="ar">{word.transliteration}</span>
+                  <PronunciationNote />
                   <span className="mt-6 block text-xs text-muted-foreground">{t('اضغط لإظهار المعنى', 'Tap to reveal meaning')}</span>
                 </span>
               </button>

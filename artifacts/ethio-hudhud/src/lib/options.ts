@@ -38,19 +38,22 @@ export const SCENARIOS: { id: string; ar: string; en: string }[] = [
 
 // Real Ge'ez (Fidel) consonant families. Each family is 8 consecutive code
 // points: seven vowel orders (+ labialised form which we skip).
-export const FIDEL_FAMILIES: { base: number; latin: string }[] = [
-  { base: 0x1200, latin: 'h' }, { base: 0x1208, latin: 'l' }, { base: 0x1210, latin: 'ḥ' },
-  { base: 0x1218, latin: 'm' }, { base: 0x1220, latin: 'ś' }, { base: 0x1228, latin: 'r' },
-  { base: 0x1230, latin: 's' }, { base: 0x1240, latin: 'q' }, { base: 0x1260, latin: 'b' },
-  { base: 0x1270, latin: 't' }, { base: 0x1290, latin: 'n' }, { base: 0x12a0, latin: 'ʾ' },
-  { base: 0x12a8, latin: 'k' }, { base: 0x12c8, latin: 'w' }, { base: 0x12d0, latin: 'ʿ' },
-  { base: 0x12d8, latin: 'z' }, { base: 0x12e8, latin: 'y' }, { base: 0x12f0, latin: 'd' },
-  { base: 0x1308, latin: 'g' }, { base: 0x1320, latin: 'ṭ' }, { base: 0x1330, latin: 'ṗ' },
-  { base: 0x1338, latin: 'ṣ' }, { base: 0x1348, latin: 'f' }, { base: 0x1350, latin: 'p' },
+export const FIDEL_FAMILIES: { base: number; arabic: string }[] = [
+  { base: 0x1200, arabic: 'ه' }, { base: 0x1208, arabic: 'ل' }, { base: 0x1210, arabic: 'ه' },
+  { base: 0x1218, arabic: 'م' }, { base: 0x1220, arabic: 'س' }, { base: 0x1228, arabic: 'ر' },
+  { base: 0x1230, arabic: 'س' }, { base: 0x1240, arabic: 'ق' }, { base: 0x1260, arabic: 'ب' },
+  { base: 0x1270, arabic: 'ت' }, { base: 0x1290, arabic: 'ن' }, { base: 0x12a0, arabic: 'أ' },
+  { base: 0x12a8, arabic: 'ك' }, { base: 0x12c8, arabic: 'و' }, { base: 0x12d0, arabic: 'أ' },
+  { base: 0x12d8, arabic: 'ز' }, { base: 0x12e8, arabic: 'ي' }, { base: 0x12f0, arabic: 'د' },
+  { base: 0x1308, arabic: 'گ' }, { base: 0x1320, arabic: 'ط' }, { base: 0x1330, arabic: 'پ' },
+  { base: 0x1338, arabic: 'ص' }, { base: 0x1348, arabic: 'ف' }, { base: 0x1350, arabic: 'پ' },
 ];
-export const FIDEL_ORDERS = ['ä', 'u', 'i', 'a', 'e', 'ə', 'o'];
+export const FIDEL_ORDERS = ['َ', 'ُو', 'ِي', 'َا', 'ِي', 'ِ', 'ُو'];
 export const fidelForms = (base: number) =>
-  FIDEL_ORDERS.map((v, i) => ({ ch: String.fromCodePoint(base + i), vowel: v }));
+  FIDEL_ORDERS.map((v, i) => ({
+    ch: String.fromCodePoint(base + i),
+    pronunciation: `${FIDEL_FAMILIES.find(f => f.base === base)!.arabic}${v}`,
+  }));
 
 export function isEthiopic(ch: string) {
   const c = ch.codePointAt(0) ?? 0;

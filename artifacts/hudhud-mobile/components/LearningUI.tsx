@@ -9,6 +9,12 @@ export function Txt({ style, ...props }: TextProps) {
   const c = useColors();
   return <Text {...props} style={[{ fontFamily: "IBMPlexSansArabic_400Regular", color: c.foreground, fontSize: 16, textAlign: "right", lineHeight: 27 }, style]} />;
 }
+export function PronunciationNote() {
+  const c = useColors();
+  return <Txt style={{ fontSize: 12, color: c.mutedForeground, writingDirection: "rtl" }}>
+    النطق بالحروف العربية تقريبي وينتظر المراجعة اللغوية؛ بعض الأصوات والحركات لا مقابل دقيق لها في العربية. گ: جيم قاهرية، چ: تاء وشين متصلتان، پ: باء مهموسة.
+  </Txt>;
+}
 export function Screen({ children, title, subtitle }: PropsWithChildren<{ title: string; subtitle?: string }>) {
   const c = useColors();
   const inset = useSafeAreaInsets();
