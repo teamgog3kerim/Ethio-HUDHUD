@@ -4,6 +4,7 @@ import { Btn } from '@/components/bits';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { useApp } from '@/lib/app';
 import { getMobilePlatform, isInAppBrowser, type MobilePlatform } from '@/lib/install-platform';
+import { trackEvent } from '@/lib/analytics';
 
 interface InstallEvent extends Event {
   prompt(): Promise<void>;
@@ -21,6 +22,28 @@ export function InstallPrompt() {
   const [busy, setBusy] = useState(false);
   const [manual, setManual] = useState(false);
   const installed = useRef(false);
+  const installationTracked = useRef(false);
+  const promptTracked = useRef(false);
+  const instructionsTracked = useRef(new Set<string>());
+  const instructions = inApp ? 'external_browser' : platform === 'ios' ? 'ios_share_menu' : (!deferred || manual) ? 'android_browser_menu' : null;
+
+  useEffect(() => {
+    if (!open) {
+      promptTracked.current = false;
+      instructionsTracked.current.clear();
+      return;
+    }
+    if (!platform) return;
+    const data = { platform, in_app_browser: inApp };
+    if (!promptTracked.current) {
+      promptTracked.current = true;
+      trackEvent('install_prompt_shown', data);
+    }
+    if (instructions && !instructionsTracked.current.has(instructions)) {
+      instructionsTracked.current.add(instructions);
+      trackEvent('install_instructions_shown', { ...data, instruction_type: instructions });
+    }
+  }, [open, platform, inApp, instructions]);
 
   useEffect(() => {
     const device = getMobilePlatform(navigator.userAgent, navigator.platform, navigator.maxTouchPoints);
@@ -42,12 +65,25 @@ export function InstallPrompt() {
       event.preventDefault();
       setDeferred(event as InstallEvent);
     };
-    const onInstalled = () => {
+    const closeInstalledPrompt = () => {
       installed.current = true;
       setOpen(false);
       setDeferred(null);
     };
-    const onDisplayChange = () => { if (isStandalone()) onInstalled(); };
+    const onInstalled = () => {
+      // Only this browser event confirms completion. Standalone display mode
+      // (especially on iOS) is not evidence of a new installation.
+      if (!installationTracked.current) {
+        installationTracked.current = true;
+        trackEvent('install_completed', {
+          platform: device,
+          in_app_browser: isInAppBrowser(navigator.userAgent),
+          source: 'appinstalled',
+        });
+      }
+      closeInstalledPrompt();
+    };
+    const onDisplayChange = () => { if (isStandalone()) closeInstalledPrompt(); };
     window.addEventListener('beforeinstallprompt', beforeInstall);
     window.addEventListener('appinstalled', onInstalled);
     standalone.addEventListener('change', onDisplayChange);
@@ -59,9 +95,13 @@ export function InstallPrompt() {
     };
   }, []);
 
-  const dismiss = () => {
+  const closePrompt = () => {
     setOpen(false);
     try { localStorage.setItem(DISMISSED_KEY, String(Date.now())); } catch { /* Storage is optional. */ }
+  };
+  const dismiss = () => {
+    if (open && platform) trackEvent('install_prompt_dismissed', { platform, in_app_browser: inApp });
+    closePrompt();
   };
   const install = async () => {
     if (!deferred) { setManual(true); return; }
@@ -69,7 +109,11 @@ export function InstallPrompt() {
     try {
       await deferred.prompt();
       const choice = await deferred.userChoice;
-      if (choice.outcome === 'accepted') dismiss();
+      if (platform) trackEvent('install_browser_response', {
+        platform, in_app_browser: inApp, outcome: choice.outcome,
+      });
+      // Acceptance is not completion, nor a dismissal of our prompt.
+      if (choice.outcome === 'accepted') closePrompt();
       else setManual(true);
     } catch {
       setManual(true);
