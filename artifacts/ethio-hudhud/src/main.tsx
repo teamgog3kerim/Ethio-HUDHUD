@@ -5,6 +5,17 @@ import { ErrorBoundary } from '@/components/error-boundary';
 
 import './index.css';
 
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  const register = () => {
+    void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, {
+      scope: import.meta.env.BASE_URL,
+      updateViaCache: 'none',
+    }).catch(error => console.warn('Hudhud install support could not start:', error));
+  };
+  if (document.readyState === 'complete') register();
+  else window.addEventListener('load', register, { once: true });
+}
+
 createRoot(document.getElementById('root')!, {
   // Keeps caught errors off reportError(), which would raise the dev overlay.
   onCaughtError: (error, errorInfo) => {

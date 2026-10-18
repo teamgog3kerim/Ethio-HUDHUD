@@ -8,6 +8,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Logo } from '@/components/logo';
+import { InstallPrompt } from '@/components/install-prompt';
 import { Toggles } from '@/components/shell';
 import { AppProvider, useApp } from '@/lib/app';
 import NotFound from '@/pages/not-found';
@@ -201,6 +202,7 @@ function App() {
             <ClerkProviderWithRoutes />
           </WouterRouter>
           <Toaster />
+          <InstallPrompt />
         </TooltipProvider>
       </AppProvider>
     </QueryClientProvider>

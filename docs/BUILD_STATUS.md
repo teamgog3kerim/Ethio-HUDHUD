@@ -3,6 +3,12 @@
 ## Implemented
 
 - Arabic-first responsive web app, English web UI and dark/light themes.
+- Mobile-browser home-screen installation: Android install dialog when supported,
+  manual browser-menu fallback, iPhone/iPad Add to Home Screen instructions, app
+  manifest/icons and standalone launch. Dismissal waits seven days before prompting
+  again; standalone sessions do not show it. This installs the web app, not the
+  separate Expo/native app. Learning still needs an internet connection. The
+  network-only service worker never caches learner data or authentication.
 - Expo native companion with Arabic learning screens and device dark/light themes.
 - Managed Clerk sign-up, sign-in and user-isolated persistent learning records.
 - Guest mode on the web; native learning requires sign-in.
