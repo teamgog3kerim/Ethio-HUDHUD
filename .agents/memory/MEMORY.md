@@ -4,4 +4,5 @@
 - [Deleted identity tokens](deleted-session-tokens.md) — provider deletion does not instantly invalidate old JWTs; tombstones must block data recreation.
 - [Shared React contexts](shared-react-contexts.md) — pnpm peer splits can duplicate context libraries in production even when preview works; verify bundle deduplication.
 - [Workflow child ports](workflow-child-ports.md) — merge restarts can leave older API/Expo children holding ports; verify the listener before restarting again.
+- [Clerk Arabic localization](clerk-localization.md) — the official Arabic locale has gaps; check sign-in and sign-up separately instead of assuming complete translation.
 - [Favourite identity boundaries](favourite-identity-boundaries.md) — guest saves stay separate from account saves; any future transfer needs explicit learner consent.

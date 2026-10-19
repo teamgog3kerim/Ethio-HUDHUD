@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { useAuth, useClerk } from '@clerk/react';
+import { useAuth, useClerk, useUser } from '@clerk/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Download, Trash2 } from 'lucide-react';
 import {
@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useApp } from '@/lib/app';
 import { toInput } from '@/lib/options';
 import { cn } from '@/lib/utils';
+import { SignOutAction } from '@/components/sign-out';
 import { AnalyticsPreference } from '@/components/analytics-preference';
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -24,6 +25,7 @@ export default function Account() {
   const [, nav] = useLocation();
   const { isSignedIn } = useAuth();
   const { signOut } = useClerk();
+  const { user } = useUser();
   const q = useGetProfile();
   const [f, setF] = useState<ProfileInput | null>(null);
   const [confirm, setConfirm] = useState('');
@@ -66,6 +68,18 @@ export default function Account() {
   return (
     <Shell>
       <PageHead eyebrow={q.data?.isGuest ? t('جلسة ضيف', 'Guest session') : t('حسابي', 'My account')} title={t('الإعدادات', 'Settings')} />
+      {isSignedIn && (
+        <Card className="mb-5 flex flex-wrap items-center justify-between gap-4" data-testid="card-identity">
+          <div className="flex min-w-0 items-center gap-3">
+            {user?.imageUrl ? <img src={user.imageUrl} alt="" className="size-12 rounded-full" /> : <span className="grid size-12 place-items-center rounded-full bg-gold font-bold text-gold-foreground">{(user?.firstName?.[0] ?? '?').toUpperCase()}</span>}
+            <div className="min-w-0">
+              <p className="truncate font-semibold">{user?.fullName || user?.username || t('حسابي', 'My account')}</p>
+              <p dir="ltr" className="truncate text-start text-sm text-muted-foreground">{user?.primaryEmailAddress?.emailAddress ?? ''}</p>
+            </div>
+          </div>
+          <SignOutAction testId="button-signout-account" className="press inline-flex h-11 items-center gap-2 rounded-2xl border border-input bg-card px-5 text-sm font-semibold" />
+        </Card>
+      )}
       <AnalyticsPreference />
       {q.isLoading && <Skeleton className="h-96" />}
       {q.isError && <ErrorState onRetry={() => q.refetch()} />}

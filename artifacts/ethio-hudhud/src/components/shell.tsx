@@ -1,15 +1,16 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
-import { useClerk, useAuth } from '@clerk/react';
+import { useAuth } from '@clerk/react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  BarChart3, BookOpen, CalendarRange, Home, Languages, Layers, LogIn, LogOut, MessageCircle,
+  BarChart3, BookOpen, CalendarRange, Home, Languages, Layers, LogIn, UserPlus, MessageCircle,
   Moon, ShieldCheck, Sparkles, Sun, UserRound, Type,
 } from 'lucide-react';
 import {
   getGetProfileQueryKey, useGetAdminAccess, useGetProfile, useSaveProfile, useGetPublicSettings,
 } from '@workspace/api-client-react';
 import { PlatformNotices } from '@/components/admin/notices';
+import { SignOutAction } from '@/components/sign-out';
 import { Logo } from '@/components/logo';
 import { useApp } from '@/lib/app';
 import { toInput } from '@/lib/options';
@@ -58,24 +59,13 @@ export function Brand({ size = 40 }: { size?: number }) {
 export function AuthButtons() {
   const { t } = useApp();
   const { isSignedIn } = useAuth();
-  const { signOut } = useClerk();
-  const qc = useQueryClient();
-  if (isSignedIn) {
-    return (
-      <button
-        type="button"
-        data-testid="button-signout"
-        onClick={() => { qc.clear(); void signOut({ redirectUrl: basePath || '/' }); }}
-        className="press flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
-      >
-        <LogOut className="size-4" /> {t('تسجيل الخروج', 'Sign out')}
-      </button>
-    );
-  }
+  if (isSignedIn) return <SignOutAction />;
+  const cls = 'press flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted';
   return (
-    <Link href="/sign-in" data-testid="link-signin" className="press flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted">
-      <LogIn className="size-4" /> {t('تسجيل الدخول', 'Sign in')}
-    </Link>
+    <>
+      <Link href="/sign-in" data-testid="link-signin" className={cls}><LogIn className="size-4" /> {t('تسجيل الدخول', 'Sign in')}</Link>
+      <Link href="/sign-up" data-testid="link-signup-shell" className={cn(cls, 'font-semibold text-primary')}><UserPlus className="size-4" /> {t('إنشاء حساب', 'Create account')}</Link>
+    </>
   );
 }
 
@@ -84,6 +74,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const [loc] = useLocation();
   const { data: profile } = useGetProfile();
   const { data: access } = useGetAdminAccess();
+  const { isSignedIn } = useAuth();
   const isAdmin = access?.signedIn && (access.role === 'owner' || access.role === 'admin');
   const items = [
     { href: '/dashboard', icon: Home, label: t('الرئيسية', 'Home') },
@@ -144,6 +135,11 @@ export function Shell({ children }: { children: ReactNode }) {
           {isAdmin && (
             <Link href="/admin" data-testid="nav-admin-mobile" className="press grid size-10 place-items-center rounded-xl border border-border bg-card" aria-label={t('الإدارة', 'Administration')}>
               <ShieldCheck className="size-4" />
+            </Link>
+          )}
+          {!isSignedIn && (
+            <Link href="/sign-in" data-testid="link-signin-mobile" className="press grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground" aria-label={t('تسجيل الدخول', 'Sign in')}>
+              <LogIn className="size-4" />
             </Link>
           )}
           <Link href="/account" data-testid="nav-account-mobile" className="press grid size-10 place-items-center rounded-xl border border-border bg-card" aria-label={t('الحساب', 'Account')}>

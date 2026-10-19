@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, type ReactNode } from 'react';
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from '@clerk/react';
+import { ClerkProvider, Show, useClerk } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
+import { arSA, enUS } from '@clerk/localizations';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { Redirect, Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Logo } from '@/components/logo';
 import { InstallPrompt } from '@/components/install-prompt';
-import { Toggles } from '@/components/shell';
+import { SignInPage, SignUpPage } from '@/components/auth-pages';
 import { AppProvider, useApp } from '@/lib/app';
 import NotFound from '@/pages/not-found';
 import Landing from '@/pages/landing';
@@ -94,36 +94,6 @@ function buildAppearance(dark: boolean) {
   };
 }
 
-function AuthFrame({ children, mode }: { children: ReactNode; mode: 'in' | 'up' }) {
-  const { t } = useApp();
-  return (
-    <div className="grain grid min-h-[100dvh] bg-background lg:grid-cols-[1fr_1.1fr]">
-      <aside className="relative hidden overflow-hidden bg-deep p-10 text-[hsl(75_30%_96%)] lg:flex lg:flex-col lg:justify-between">
-        <span aria-hidden className="am pointer-events-none absolute -bottom-24 end-[-3rem] select-none text-[30rem] font-extrabold leading-none text-white/[0.06]">ሁ</span>
-        <div className="flex items-center gap-3"><Logo size={48} /><span className="font-display text-xl font-extrabold">HUDHUD</span></div>
-        <div className="relative">
-          <h2 className="font-display text-4xl font-extrabold leading-snug">{mode === 'in' ? t('أهلًا بعودتك. حروفك بانتظارك.', 'Welcome back. Your letters are waiting.') : t('احفظ تقدّمك في الفيدل.', 'Keep your Fidel progress safe.')}</h2>
-          <p className="mt-3 max-w-sm text-white/70">{t('الحساب يحفظ دروسك ومراجعاتك على كل أجهزتك.', 'An account keeps your lessons and reviews on every device.')}</p>
-        </div>
-        <p className="relative text-sm text-white/50">{t('محتوى تجريبي بانتظار المراجعة', 'Pilot content awaiting review')}</p>
-      </aside>
-      <div className="relative flex flex-col items-center justify-center gap-4 px-4 py-10">
-        <div className="absolute end-4 top-4"><Toggles /></div>
-        <div className="lg:hidden" />
-        {children}
-        <a href={basePath || '/'} className="text-sm text-muted-foreground underline" data-testid="link-continue-guest">{t('أو تابع كضيف', 'Or continue as a guest')}</a>
-      </div>
-    </div>
-  );
-}
-
-function SignInPage() {
-  return <AuthFrame mode="in"><SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /></AuthFrame>;
-}
-function SignUpPage() {
-  return <AuthFrame mode="up"><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></AuthFrame>;
-}
-
 function HomeRedirect() {
   return (
     <>
@@ -158,6 +128,7 @@ function ClerkProviderWithRoutes() {
   const { dark, lang } = useApp();
   const appearance = useMemo(() => buildAppearance(dark), [dark]);
   const ar = lang === 'ar';
+  const locale = ar ? arSA : enUS;
   return (
     <ClerkProvider
       publishableKey={clerkPubKey}
@@ -166,8 +137,12 @@ function ClerkProviderWithRoutes() {
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
       localization={{
-        signIn: { start: { title: ar ? 'أهلًا بعودتك' : 'Welcome back', subtitle: ar ? 'سجّل الدخول لمتابعة تعلّمك' : 'Sign in to continue learning' } },
-        signUp: { start: { title: ar ? 'أنشئ حسابك' : 'Create your account', subtitle: ar ? 'احفظ تقدّمك في الأمهرية' : 'Keep your Amharic progress' } },
+        ...locale,
+        formFieldInputPlaceholder__emailAddress: ar ? 'أدخل بريدك الإلكتروني' : 'Enter your email address',
+        formFieldInputPlaceholder__password: ar ? 'أدخل كلمة المرور' : 'Enter your password',
+        formFieldInputPlaceholder__signUpPassword: ar ? 'أنشئ كلمة مرور قوية' : 'Create a password',
+        signIn: { ...locale.signIn, start: { ...locale.signIn?.start, title: ar ? 'أهلًا بعودتك' : 'Welcome back', subtitle: ar ? 'سجّل الدخول لمتابعة تعلّمك' : 'Sign in to continue learning' } },
+        signUp: { ...locale.signUp, start: { ...locale.signUp?.start, title: ar ? 'أنشئ حسابك' : 'Create your account', subtitle: ar ? 'احفظ تقدّمك في الأمهرية' : 'Keep your Amharic progress' } },
       }}
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}

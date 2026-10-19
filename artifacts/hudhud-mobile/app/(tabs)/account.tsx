@@ -9,6 +9,7 @@ import { Action, Card, Failure, Loading, Txt, styles } from "@/components/Learni
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { router } from "expo-router";
+import { SessionActions } from "@/components/SessionActions";
 export default function Account() {
   const query = useGetProfile();
   if (query.isLoading) return <Loading />;
@@ -42,6 +43,7 @@ function Preferences({ profile }: { profile: Profile }) {
   ]);
   return <KeyboardAwareScrollViewCompat style={{ backgroundColor: c.background, flex: 1 }} contentContainerStyle={{ padding: 22, gap: 18, paddingTop: Platform.OS === "web" ? 82 : inset.top + 20, paddingBottom: 130 }} bottomOffset={40} keyboardShouldPersistTaps="handled">
     <Txt style={styles.heading}>رحلتك، على طريقتك</Txt>
+    <SessionActions />
     <Card><Txt>الاسم</Txt><TextInput accessibilityLabel="الاسم" value={form.displayName} onChangeText={displayName => setForm(p => ({ ...p, displayName }))} style={{ padding: 14, borderRadius: c.radius, backgroundColor: c.background, color: c.foreground, textAlign: "right" }} />
       <Txt>المستوى</Txt>{(["beginner", "intermediate", "advanced"] as const).map((level, i) => <Action key={level} secondary={form.level !== level} title={["مبتدئ", "متوسط", "متقدم"][i]!} onPress={() => setForm(p => ({ ...p, level }))} />)}
       <Txt>هدفك اليومي</Txt><View style={{ flexDirection: "row", gap: 10 }}>{[15, 30, 60].map(dailyGoal => <Action key={dailyGoal} title={`${dailyGoal} دقيقة`} secondary={form.dailyGoal !== dailyGoal} onPress={() => setForm(p => ({ ...p, dailyGoal }))} />)}</View>
@@ -58,7 +60,6 @@ function Preferences({ profile }: { profile: Profile }) {
     <Action title="تصدير بياناتي" secondary onPress={() => { void exportAccount().then(data => Share.share({ message: JSON.stringify(data, null, 2) })).catch(() => setNotice("تعذر تصدير البيانات.")); }} />
     <Action title="حذف المحادثات" secondary onPress={() => Alert.alert("حذف المحادثات", "هل تريد حذف سجل المعلّم؟", [{ text: "إلغاء" }, { text: "حذف", style: "destructive", onPress: () => clear.mutate(undefined, { onSuccess: () => { void qc.invalidateQueries(); setNotice("حُذفت المحادثات."); } }) }])} />
     <Txt style={{ fontSize: 12, color: c.mutedForeground }}>الاشتراك: مجاني. Premium والصوت غير مفعّلين. لا يتم تحصيل رسوم.</Txt>
-    <Action title="تسجيل الخروج" secondary onPress={() => { if (Platform.OS !== "web") void Notifications.cancelAllScheduledNotificationsAsync(); qc.clear(); void signOut().then(() => router.replace("/welcome")); }} />
     {!!userId && <Action title="حذف بيانات التعلّم نهائياً" secondary onPress={deleteData} />}
   </KeyboardAwareScrollViewCompat>;
 }

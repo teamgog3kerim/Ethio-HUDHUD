@@ -19,6 +19,7 @@ export default function Welcome() {
     </View>
     <Txt>دروس أمهرية بشرح عربي، حروف الفيدل، ومراجعة ذكية. رحلة يومية تبدأ بكلمة واحدة.</Txt>
     <Action title="ابدأ رحلتك" icon="arrow-left" onPress={() => router.push("/sign-in")} />
+    <Action title="إنشاء حساب جديد" secondary onPress={() => router.push("/sign-up")} />
     <Action title="استكشف تجربة الويب كضيف" secondary onPress={() => void WebBrowser.openBrowserAsync(`https://${process.env.EXPO_PUBLIC_DOMAIN}/dashboard`)} />
     <Txt style={{ fontSize: 12, color: c.mutedForeground }}>محتوى تجريبي ينتظر مراجعة لغوية مؤهلة. التسجيلات الصوتية وتقييم النطق غير متاحين بعد.</Txt>
     {Platform.OS === "web" && <Txt style={{ fontSize: 12 }}>هذه معاينة التطبيق الأصلي. استخدم حسابك لحفظ تقدمك بين الأجهزة.</Txt>}
