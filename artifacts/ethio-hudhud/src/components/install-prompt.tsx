@@ -5,13 +5,10 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { useApp } from '@/lib/app';
 import { getMobilePlatform, isInAppBrowser, type MobilePlatform } from '@/lib/install-platform';
 import { trackEvent } from '@/lib/analytics';
+import { clearPendingInstall, getPendingInstall, type InstallEvent } from '@/lib/install-events';
 
-interface InstallEvent extends Event {
-  prompt(): Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
 const DISMISSED_KEY = 'hh-install-dismissed-at';
-const WEEK = 7 * 24 * 60 * 60 * 1000;
+const DAY = 24 * 60 * 60 * 1000;
 
 export function InstallPrompt() {
   const { t, lang } = useApp();
@@ -52,10 +49,11 @@ export function InstallPrompt() {
     if (!device || isStandalone()) return;
     setPlatform(device);
     setInApp(isInAppBrowser(navigator.userAgent));
+    setDeferred(getPendingInstall());
     let recentlyDismissed = false;
     try {
       const value = Number(localStorage.getItem(DISMISSED_KEY));
-      recentlyDismissed = value > 0 && Date.now() - value < WEEK;
+      recentlyDismissed = value > 0 && Date.now() - value < DAY;
     } catch { /* Private browsing can disable storage; the prompt still works. */ }
     const timer = recentlyDismissed ? undefined : window.setTimeout(() => {
       if (!installed.current && !isStandalone()) setOpen(true);
@@ -69,6 +67,7 @@ export function InstallPrompt() {
       installed.current = true;
       setOpen(false);
       setDeferred(null);
+      clearPendingInstall();
     };
     const onInstalled = () => {
       // Only this browser event confirms completion. Standalone display mode
@@ -86,12 +85,15 @@ export function InstallPrompt() {
     const onDisplayChange = () => { if (isStandalone()) closeInstalledPrompt(); };
     window.addEventListener('beforeinstallprompt', beforeInstall);
     window.addEventListener('appinstalled', onInstalled);
-    standalone.addEventListener('change', onDisplayChange);
+    // Older iPhones expose the legacy MediaQueryList listener API only.
+    if (standalone.addEventListener) standalone.addEventListener('change', onDisplayChange);
+    else standalone.addListener(onDisplayChange);
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener('beforeinstallprompt', beforeInstall);
       window.removeEventListener('appinstalled', onInstalled);
-      standalone.removeEventListener('change', onDisplayChange);
+      if (standalone.removeEventListener) standalone.removeEventListener('change', onDisplayChange);
+      else standalone.removeListener(onDisplayChange);
     };
   }, []);
 
@@ -119,14 +121,23 @@ export function InstallPrompt() {
       setManual(true);
     } finally {
       // Browser install events can only be used once.
+      clearPendingInstall();
       setDeferred(null);
       setBusy(false);
     }
   };
 
   if (!platform) return null;
-  return <Dialog open={open} onOpenChange={next => { if (!next) dismiss(); }}>
-    <DialogContent dir={lang === 'ar' ? 'rtl' : 'ltr'} className="w-[calc(100%-2rem)] max-w-sm rounded-3xl border-border bg-card p-6 text-start" data-testid="install-prompt">
+  return <>
+    {!installed.current && <button
+      type="button"
+      onClick={() => { setManual(false); setOpen(true); }}
+      aria-haspopup="dialog"
+      className="fixed end-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 inline-flex min-h-11 items-center gap-2 rounded-full border border-primary/20 bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-lg"
+      data-testid="button-open-install"
+    ><Download className="size-4" />{t('تثبيت التطبيق', 'Install app')}</button>}
+    <Dialog open={open} onOpenChange={next => { if (!next) dismiss(); }}>
+    <DialogContent dir={lang === 'ar' ? 'rtl' : 'ltr'} className="w-[calc(100%-2rem)] max-h-[85dvh] max-w-sm overflow-y-auto rounded-3xl border-border bg-card p-6 text-start" data-testid="install-prompt">
       <div className="flex items-center gap-3 pt-2">
         <img src={`${import.meta.env.BASE_URL}icons/icon-192.png`} alt="" width={64} height={64} className="size-16 rounded-2xl" />
         <div><p className="text-xs font-bold tracking-widest text-primary">ETHIO HUDHUD</p><DialogTitle className="font-display mt-2 text-xl leading-relaxed">{t('ثبّت هدهد على هاتفك', 'Install Hudhud on your phone')}</DialogTitle></div>
@@ -151,5 +162,6 @@ export function InstallPrompt() {
         <Btn variant="ghost" onClick={dismiss} data-testid="button-install-later">{t('ليس الآن', 'Not now')}</Btn>
       </div>
     </DialogContent>
-  </Dialog>;
+  </Dialog>
+  </>;
 }

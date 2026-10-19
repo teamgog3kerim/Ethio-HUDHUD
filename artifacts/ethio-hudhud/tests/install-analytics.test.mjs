@@ -61,17 +61,25 @@ test('privacy signals and tracker opt-out suppress custom events', () => {
 
 // Deterministic hook harness: exercise the component's event handlers/effects
 // without a browser, real tracker, learner session, or additional dependencies.
-function mount(platform = 'android', { inApp = false, standalone = false, cooldown = false } = {}) {
+function mount(platform = 'android', { inApp = false, standalone = false, cooldown = false, earlyPrompt = null, legacyMedia = false, storageBlocked = false } = {}) {
   const slots = [], pending = [], listeners = new Map(), timers = new Map(), events = [];
   let cursor = 0, dirty = false, tree, displayChange;
   const media = {
     matches: standalone,
-    addEventListener: (_, fn) => { displayChange = fn; },
-    removeEventListener: () => {},
+    ...(legacyMedia ? {
+      addListener: fn => { displayChange = fn; },
+      removeListener: () => {},
+    } : {
+      addEventListener: (_, fn) => { displayChange = fn; },
+      removeEventListener: () => {},
+    }),
   };
   const window = {
     matchMedia: () => media,
-    localStorage: { getItem: () => cooldown ? String(Date.now()) : null, setItem: () => {} },
+    localStorage: {
+      getItem: () => { if (storageBlocked) throw Error('Storage blocked'); return cooldown ? String(Date.now()) : null; },
+      setItem: () => { if (storageBlocked) throw Error('Storage blocked'); },
+    },
     setTimeout: fn => { timers.set(fn, fn); return fn; },
     clearTimeout: key => timers.delete(key),
     addEventListener: (name, fn) => listeners.set(name, fn),
@@ -103,6 +111,7 @@ function mount(platform = 'android', { inApp = false, standalone = false, cooldo
     '@/components/ui/dialog': { Dialog: 'dialog', DialogContent: 'content' },
     '@/lib/app': { useApp: () => ({ t: (_, en) => en, lang: 'en' }) },
     '@/lib/install-platform': { getMobilePlatform: () => platform, isInAppBrowser: () => inApp },
+    '@/lib/install-events': { getPendingInstall: () => earlyPrompt, clearPendingInstall: () => {} },
     '@/lib/analytics': { trackEvent: (name, data) => events.push({ name, ...data }) },
   });
   function render() {
@@ -126,6 +135,19 @@ function mount(platform = 'android', { inApp = false, standalone = false, cooldo
     emit(name, event = {}) { listeners.get(name)?.(event); render(); },
     display() { media.matches = true; displayChange?.(); render(); },
     dismiss() { find(tree, 'button-install-later').props.onClick(); render(); },
+    reopen() { find(tree, 'button-open-install').props.onClick(); render(); },
+    has(id) { return Boolean(find(tree, id)); },
+    isOpen() {
+      function dialog(node) {
+        if (!node || typeof node !== 'object') return;
+        if (node.type === 'dialog') return node;
+        for (const child of [node.props?.children].flat(Infinity)) {
+          const found = dialog(child);
+          if (found) return found;
+        }
+      }
+      return Boolean(dialog(tree)?.props.open);
+    },
     async install(outcome, fail = false) {
       this.emit('beforeinstallprompt', {
         preventDefault() {}, prompt: async () => { if (fail) throw Error('cancelled'); },
@@ -139,6 +161,29 @@ function mount(platform = 'android', { inApp = false, standalone = false, cooldo
 }
 
 const count = (app, name) => app.events.filter(event => event.name === name).length;
+
+test('early Android browser requests are captured once and cleared after use or installation', () => {
+  const listeners = new Map();
+  let registrations = 0, prevented = 0;
+  const api = load(source('../src/lib/install-events.ts'), {
+    window: { addEventListener: (name, fn) => { listeners.set(name, fn); registrations++; } },
+    navigator: { userAgent: 'Android', platform: 'Linux', maxTouchPoints: 5 },
+  }, {
+    './install-platform': { getMobilePlatform: () => 'android' },
+  });
+  api.startInstallCapture();
+  api.startInstallCapture();
+  assert.equal(registrations, 2);
+  const event = { preventDefault: () => { prevented++; } };
+  listeners.get('beforeinstallprompt')(event);
+  assert.equal(api.getPendingInstall(), event);
+  assert.equal(prevented, 1);
+  api.clearPendingInstall();
+  assert.equal(api.getPendingInstall(), null);
+  listeners.get('beforeinstallprompt')(event);
+  listeners.get('appinstalled')();
+  assert.equal(api.getPendingInstall(), null);
+});
 
 test('prompt/instructions count once across rerenders; explicit close counts dismissal', () => {
   const app = mount('ios');
@@ -202,5 +247,43 @@ test('desktop and already-installed launches emit no install funnel events', () 
   for (const app of [mount(null), mount('ios', { standalone: true })]) {
     app.show(); app.emit('appinstalled');
     assert.equal(app.events.length, 0);
+  }
+});
+
+test('dismissed prompts can be reopened immediately without waiting for the cooldown', () => {
+  const app = mount('android', { cooldown: true });
+  app.show();
+  assert.equal(app.isOpen(), false);
+  assert.equal(app.has('button-open-install'), true);
+  app.reopen();
+  assert.equal(app.isOpen(), true);
+  assert.equal(count(app, 'install_prompt_shown'), 1);
+  app.dismiss();
+  app.reopen();
+  assert.equal(count(app, 'install_prompt_shown'), 2);
+});
+
+test('browser install event captured before mount is available in the popup', () => {
+  const app = mount('android', { earlyPrompt: { prompt() {}, userChoice: Promise.resolve({ outcome: 'accepted' }) } });
+  app.show();
+  assert.equal(app.has('button-install-app'), true);
+  assert.equal(count(app, 'install_instructions_shown'), 0);
+});
+
+test('older iOS media listeners and blocked private storage do not break the popup', () => {
+  const app = mount('ios', { legacyMedia: true, storageBlocked: true });
+  app.show();
+  assert.equal(app.isOpen(), true);
+  app.dismiss();
+  app.reopen();
+  assert.equal(app.isOpen(), true);
+  app.display();
+  assert.equal(app.isOpen(), false);
+  assert.equal(app.has('button-open-install'), false);
+});
+
+test('desktop and installed apps do not show an install launcher', () => {
+  for (const app of [mount(null), mount('ios', { standalone: true })]) {
+    assert.equal(app.has('button-open-install'), false);
   }
 });

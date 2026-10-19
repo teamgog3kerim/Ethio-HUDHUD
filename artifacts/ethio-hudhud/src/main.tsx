@@ -2,8 +2,11 @@ import { createRoot } from 'react-dom/client';
 
 import App from './App';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { startInstallCapture } from '@/lib/install-events';
 
 import './index.css';
+
+startInstallCapture();
 
 if ('serviceWorker' in navigator && window.isSecureContext) {
   const register = () => {
