@@ -49,7 +49,7 @@ function Preferences({ profile }: { profile: Profile }) {
     </Card>
     <Card><Txt>تذكير محلي حسب توقيت جهازك</Txt><TextInput accessibilityLabel="وقت التذكير" value={form.reminderTime} onChangeText={reminderTime => setForm(p => ({ ...p, reminderTime, reminderEnabled: false }))} placeholder="19:00" style={{ color: c.foreground, padding: 14, backgroundColor: c.background, borderRadius: c.radius }} /><Switch accessibilityLabel="تفعيل التذكير" value={form.reminderEnabled} onValueChange={v => void updateReminder(v)} /><Txt style={{ color: c.mutedForeground, fontSize: 12 }}>{form.timezone} · إذا سافرت، أعد تفعيل التذكير لضبط التوقيت.</Txt></Card>
     <Card><Txt>الاحتفاظ بالمحادثات</Txt><Switch accessibilityLabel="الاحتفاظ بالمحادثات" value={form.retainChat} onValueChange={retainChat => setForm(p => ({ ...p, retainChat }))} /><Txt>تعطيل الاحتفاظ وحفظ التفضيلات يحذف المحادثات المخزّنة. الرسائل تُرسل إلى مزوّد الذكاء الاصطناعي للمعالجة.</Txt></Card>
-    {notice && <Txt style={{ color: c.primary }}>{notice}</Txt>}
+    {!!notice && <Txt style={{ color: c.primary }}>{notice}</Txt>}
     {save.isError && <Txt style={{ color: c.destructive }}>تعذر حفظ التفضيلات.</Txt>}
     <Action title={save.isPending ? "جارٍ الحفظ…" : "احفظ وابدأ التعلّم"} disabled={save.isPending || !form.displayName.trim()} icon="check" onPress={() => {
       if (!form.reminderEnabled && Platform.OS !== "web") void Notifications.cancelAllScheduledNotificationsAsync();

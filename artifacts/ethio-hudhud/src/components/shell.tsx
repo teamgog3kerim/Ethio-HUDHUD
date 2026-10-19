@@ -152,7 +152,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl px-4 pb-28 pt-6 sm:px-8 lg:ms-64 lg:max-w-none lg:px-12 lg:pb-12 lg:pt-10">
+      <main className="mx-auto w-full max-w-5xl px-4 pb-28 pt-6 sm:px-8 lg:ms-64 lg:w-[calc(100%_-_16rem)] lg:max-w-none lg:px-12 lg:pb-12 lg:pt-10">
         <div className="mx-auto max-w-5xl"><PlatformNotices />{children}</div>
       </main>
 
