@@ -6,6 +6,13 @@
  */
 
 export interface PlanDay {
+  /** @nullable */
+  suggestedDate?: string | null;
+  /** @nullable */
+  suggestedWeek?: number | null;
+  /** @nullable */
+  currentSuggestedWeek?: number | null;
+  overdue?: boolean;
   day: number;
   month: number;
   title: string;

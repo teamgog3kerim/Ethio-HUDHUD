@@ -7,7 +7,7 @@ import { db, pool, learners, lessons, completions, attempts, reviews } from "@wo
 import type { LessonContent } from "@workspace/db";
 import learningRouter from "../routes/learning";
 import { defaultPreferences } from "./learner";
-import { GetCoursesResponse, GetLessonResponse, GetProgressResponse, CompleteLessonResponse } from "@workspace/api-zod";
+import { GetCoursesResponse, GetLessonResponse, GetProgressResponse, CompleteLessonResponse, GetProfileResponse, GetStudyPlanResponse } from "@workspace/api-zod";
 
 // Opt-in because it needs a migrated development/test database. The canonical
 // test:learning-path command enables it, so the release check cannot silently
@@ -127,4 +127,49 @@ test("real completion routes: browsing, failure, retry, reload and one-time cred
   const [persisted] = await db.select().from(completions).where(eq(completions.learnerId, learner.id));
   assert.equal(persisted!.id, original.id);
   assert.equal(persisted!.completedAt.getTime(), original.completedAt.getTime());
+
+  // Scheduling is preference data, not completion data. Exercise the actual
+  // routes and stored timestamps rather than browser doubles.
+  const put = (path: string, body: unknown) => fetch(`${base}${path}`, {
+    method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body),
+  });
+  const staleProfile = GetProfileResponse.parse(await get("/profile"));
+  const scheduleInput = { startDate: "2026-10-19", studyDays: [1, 3, 5], timezone: "Asia/Riyadh", paused: false };
+  for (const invalid of [
+    { ...scheduleInput, startDate: "2026-02-30" },
+    { ...scheduleInput, timezone: "Not/A_Timezone" },
+    { ...scheduleInput, studyDays: [] },
+    { ...scheduleInput, studyDays: [1, 1] },
+    { ...scheduleInput, studyDays: [7] },
+  ]) assert.equal((await put("/study-schedule", invalid)).status, 400);
+  assert.equal((await put("/study-schedule", scheduleInput)).status, 200);
+  let savedProfile = GetProfileResponse.parse(await get("/profile"));
+  assert.equal(savedProfile.studySchedule!.startDate, scheduleInput.startDate);
+  assert.deepEqual(savedProfile.studySchedule!.studyDays, [1, 3, 5]);
+  assert.equal(savedProfile.timezone, "Asia/Riyadh");
+  assert.equal(savedProfile.reminderEnabled, false);
+  // Older web/native clients and a language toggle omit scheduling fields.
+  // A stale whole-profile save must not silently remove a newly saved schedule.
+  assert.equal((await put("/profile", { ...staleProfile, displayName: "Schedule test", studySchedule: null })).status, 200);
+  savedProfile = GetProfileResponse.parse(await get("/profile"));
+  assert.equal(savedProfile.studySchedule!.startDate, scheduleInput.startDate);
+  assert.equal(savedProfile.displayName, "Schedule test");
+  assert.equal((await put("/study-schedule", { ...scheduleInput, paused: true })).status, 200);
+  savedProfile = GetProfileResponse.parse(await get("/profile"));
+  assert.ok(savedProfile.studySchedule!.pausedOn);
+  let savedPlan = GetStudyPlanResponse.parse(await get("/study-plan"));
+  assert.ok(savedPlan.every(day => !day.overdue && !!day.suggestedDate));
+  assert.equal((await put("/study-schedule", { ...scheduleInput, paused: false })).status, 200);
+  assert.equal(GetProfileResponse.parse(await get("/profile")).studySchedule!.pausedOn, null);
+  assert.equal((await put("/study-schedule", { ...scheduleInput, startDate: "2027-01-04", studyDays: [1] })).status, 200);
+  savedPlan = GetStudyPlanResponse.parse(await get("/study-plan"));
+  assert.equal(savedPlan[0]!.suggestedDate, "2027-01-04");
+  assert.equal(savedPlan.find(day => day.lessonId === lessonId && day.type === "lesson")!.completed, true);
+  assert.equal((await put("/study-schedule", { ...scheduleInput, startDate: null })).status, 200);
+  assert.equal(GetProfileResponse.parse(await get("/profile")).studySchedule, null);
+  assert.ok(GetStudyPlanResponse.parse(await get("/study-plan")).every(day => day.suggestedDate === null && !day.overdue));
+  await counts(1, 3, wordCount);
+  const [afterSchedule] = await db.select().from(completions).where(eq(completions.learnerId, learner.id));
+  assert.equal(afterSchedule!.id, original.id);
+  assert.equal(afterSchedule!.completedAt.getTime(), original.completedAt.getTime());
 });

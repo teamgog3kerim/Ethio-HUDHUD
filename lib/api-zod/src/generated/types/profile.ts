@@ -5,9 +5,11 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { ProfileInput } from './profileInput';
+import type { StudySchedule } from './studySchedule';
 
-export type Profile = ProfileInput & {
+export type Profile = ProfileInput & ({
+  studySchedule?: StudySchedule | null;
   id: string;
   isGuest: boolean;
   joinedAt: string;
-};
+});

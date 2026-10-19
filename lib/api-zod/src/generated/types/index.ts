@@ -57,4 +57,6 @@ export * from './profileInputLevel';
 export * from './progress';
 export * from './publicSettings';
 export * from './reviewInput';
+export * from './studySchedule';
+export * from './studyScheduleInput';
 export * from './word';

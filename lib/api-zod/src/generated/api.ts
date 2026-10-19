@@ -20,7 +20,6 @@ export const getProfileResponseOneDailyGoalMin = 5;
 export const getProfileResponseOneDailyGoalMax = 180;
 
 
-
 export const GetProfileResponse = zod.object({
   "displayName": zod.string().min(1).max(getProfileResponseOneDisplayNameMax),
   "level": zod.enum(['beginner', 'intermediate', 'advanced']),
@@ -33,6 +32,12 @@ export const GetProfileResponse = zod.object({
   "onboardingComplete": zod.boolean(),
   "retainChat": zod.boolean()
 }).and(zod.object({
+  "studySchedule": zod.union([zod.object({
+  "startDate": zod.string(),
+  "studyDays": zod.array(zod.number().int()),
+  "pausedOn": zod.string().nullable(),
+  "pausedDays": zod.number().int()
+}),zod.null()]).optional(),
   "id": zod.string(),
   "isGuest": zod.boolean(),
   "joinedAt": zod.string()
@@ -45,7 +50,6 @@ export const saveProfileBodyGoalsMax = 7;
 
 export const saveProfileBodyDailyGoalMin = 5;
 export const saveProfileBodyDailyGoalMax = 180;
-
 
 
 export const SaveProfileBody = zod.object({
@@ -69,7 +73,6 @@ export const saveProfileResponseOneDailyGoalMin = 5;
 export const saveProfileResponseOneDailyGoalMax = 180;
 
 
-
 export const SaveProfileResponse = zod.object({
   "displayName": zod.string().min(1).max(saveProfileResponseOneDisplayNameMax),
   "level": zod.enum(['beginner', 'intermediate', 'advanced']),
@@ -82,6 +85,12 @@ export const SaveProfileResponse = zod.object({
   "onboardingComplete": zod.boolean(),
   "retainChat": zod.boolean()
 }).and(zod.object({
+  "studySchedule": zod.union([zod.object({
+  "startDate": zod.string(),
+  "studyDays": zod.array(zod.number().int()),
+  "pausedOn": zod.string().nullable(),
+  "pausedDays": zod.number().int()
+}),zod.null()]).optional(),
   "id": zod.string(),
   "isGuest": zod.boolean(),
   "joinedAt": zod.string()
@@ -180,7 +189,6 @@ export const GetFavouritesResponse = zod.array(GetFavouritesResponseItem)
  */
 
 
-
 export const SaveFavouriteParams = zod.object({
   "id": zod.coerce.string().min(1)
 })
@@ -191,7 +199,6 @@ export const SaveFavouriteResponse = zod.void()
 /**
  * Idempotently remove this learner's save, including for an archived lesson.
  */
-
 
 
 export const RemoveFavouriteParams = zod.object({
@@ -252,7 +259,6 @@ export const completeLessonBodyActiveSecondsMin = 0;
 export const completeLessonBodyActiveSecondsMax = 3600;
 
 
-
 export const CompleteLessonBody = zod.object({
   "answers": zod.array(zod.number().int().min(completeLessonBodyAnswersItemMin).max(completeLessonBodyAnswersItemMax)),
   "activeSeconds": zod.number().int().min(completeLessonBodyActiveSecondsMin).max(completeLessonBodyActiveSecondsMax)
@@ -286,8 +292,12 @@ export const GetProgressResponse = zod.object({
   "recentLessons": zod.array(zod.string())
 })
 
-
+export const saveStudyScheduleBodyStartDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
 export const GetStudyPlanResponseItem = zod.object({
+  "suggestedDate": zod.string().nullish(),
+  "suggestedWeek": zod.number().int().nullish(),
+  "currentSuggestedWeek": zod.number().int().nullish(),
+  "overdue": zod.boolean().optional(),
   "day": zod.number().int(),
   "month": zod.number().int(),
   "title": zod.string(),
@@ -343,7 +353,6 @@ export const sendChatBodyMessageMax = 2000;
 export const sendChatBodyScenarioMax = 100;
 
 
-
 export const SendChatBody = zod.object({
   "message": zod.string().min(1).max(sendChatBodyMessageMax),
   "scenario": zod.string().max(sendChatBodyScenarioMax)
@@ -367,7 +376,6 @@ export const getBillingStatusResponseTrialDaysRemainingMax = 2;
 
 export const getBillingStatusResponseReminderOneDaysRemainingMin = 0;
 export const getBillingStatusResponseReminderOneDaysRemainingMax = 4;
-
 
 
 export const GetBillingStatusResponse = zod.object({
@@ -434,7 +442,6 @@ export const getAdminUsersQuerySearchMax = 100;
 export const getAdminUsersQueryPageDefault = 1;
 
 
-
 export const GetAdminUsersQueryParams = zod.object({
   "search": zod.coerce.string().max(getAdminUsersQuerySearchMax).optional(),
   "page": zod.coerce.number().int().min(1).default(getAdminUsersQueryPageDefault)
@@ -476,7 +483,6 @@ export const updateAdminUserBodyReasonMin = 3;
 export const updateAdminUserBodyReasonMax = 500;
 
 
-
 export const UpdateAdminUserBody = zod.object({
   "displayName": zod.string().min(1).max(updateAdminUserBodyDisplayNameMax).optional(),
   "dailyGoal": zod.number().int().min(updateAdminUserBodyDailyGoalMin).max(updateAdminUserBodyDailyGoalMax).optional(),
@@ -498,7 +504,6 @@ export const deleteAdminUserBodyReasonMin = 3;
 export const deleteAdminUserBodyReasonMax = 500;
 
 
-
 export const DeleteAdminUserBody = zod.object({
   "confirmationEmail": zod.string(),
   "reason": zod.string().min(deleteAdminUserBodyReasonMin).max(deleteAdminUserBodyReasonMax)
@@ -515,7 +520,6 @@ export const SetAdminUserAccessParams = zod.object({
 
 export const setAdminUserAccessBodyReasonMin = 3;
 export const setAdminUserAccessBodyReasonMax = 500;
-
 
 
 export const SetAdminUserAccessBody = zod.object({
@@ -543,7 +547,6 @@ export const getAdminSettingsResponseAnnouncementArMax = 500;
 export const getAdminSettingsResponseAnnouncementEnMax = 500;
 
 export const getAdminSettingsResponseSupportEmailMax = 254;
-
 
 
 export const GetAdminSettingsResponse = zod.object({
@@ -574,7 +577,6 @@ export const saveAdminSettingsBodyAnnouncementEnMax = 500;
 export const saveAdminSettingsBodySupportEmailMax = 254;
 
 
-
 export const SaveAdminSettingsBody = zod.object({
   "aiEnabled": zod.boolean(),
   "learningEnabled": zod.boolean(),
@@ -600,7 +602,6 @@ export const saveAdminSettingsResponseAnnouncementArMax = 500;
 export const saveAdminSettingsResponseAnnouncementEnMax = 500;
 
 export const saveAdminSettingsResponseSupportEmailMax = 254;
-
 
 
 export const SaveAdminSettingsResponse = zod.object({
@@ -656,7 +657,6 @@ export const saveAdminLessonBodyReasonMin = 3;
 export const saveAdminLessonBodyReasonMax = 500;
 
 
-
 export const SaveAdminLessonBody = zod.object({
   "courseId": zod.string(),
   "sequence": zod.number().int().min(saveAdminLessonBodySequenceMin).max(saveAdminLessonBodySequenceMax),
@@ -695,3 +695,46 @@ export const GetAdminAuditResponseItem = zod.object({
 export const GetAdminAuditResponse = zod.array(GetAdminAuditResponseItem)
 
 
+export const saveStudyScheduleResponseOneDailyGoalMax = 180;
+
+export const saveStudyScheduleResponseOneDisplayNameMax = 80;
+
+export const saveStudyScheduleBodyStudyDaysItemMax = 6;
+
+export const saveStudyScheduleBodyStudyDaysMax = 7;
+
+export const saveStudyScheduleResponseOneGoalsMax = 7;
+
+export const SaveStudyScheduleBody = zod.object({
+  "startDate": zod.string().regex(saveStudyScheduleBodyStartDateRegExp).nullable().describe('Local calendar date, or null for undated self-paced learning'),
+  "studyDays": zod.array(zod.number().int().min(saveStudyScheduleBodyStudyDaysItemMin).max(saveStudyScheduleBodyStudyDaysItemMax)).min(1).max(saveStudyScheduleBodyStudyDaysMax).describe('Sunday is 0; activities are distributed over these weekdays within 180 calendar days'),
+  "paused": zod.boolean(),
+  "timezone": zod.string()
+})
+
+export const saveStudyScheduleResponseOneDailyGoalMin = 5;
+
+export const SaveStudyScheduleResponse = zod.object({
+  "displayName": zod.string().min(1).max(saveStudyScheduleResponseOneDisplayNameMax),
+  "level": zod.enum(['beginner', 'intermediate', 'advanced']),
+  "goals": zod.array(zod.string()).max(saveStudyScheduleResponseOneGoalsMax),
+  "dailyGoal": zod.number().int().min(saveStudyScheduleResponseOneDailyGoalMin).max(saveStudyScheduleResponseOneDailyGoalMax),
+  "timezone": zod.string(),
+  "reminderTime": zod.string(),
+  "reminderEnabled": zod.boolean(),
+  "language": zod.enum(['ar', 'en']),
+  "onboardingComplete": zod.boolean(),
+  "retainChat": zod.boolean()
+}).and(zod.object({
+  "studySchedule": zod.union([zod.object({
+  "startDate": zod.string(),
+  "studyDays": zod.array(zod.number().int()),
+  "pausedOn": zod.string().nullable(),
+  "pausedDays": zod.number().int()
+}),zod.null()]).optional(),
+  "id": zod.string(),
+  "isGuest": zod.boolean(),
+  "joinedAt": zod.string()
+}))
+
+export const saveStudyScheduleBodyStudyDaysItemMin = 0;

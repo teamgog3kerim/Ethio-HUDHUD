@@ -4,12 +4,14 @@ import { db, learners } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import type { Request, Response } from "express";
 import { getAppSettings } from "./app-settings";
+import type { StudySchedule } from "@workspace/api-zod";
 
 export const defaultPreferences = {
   displayName: "متعلّم جديد", level: "beginner" as const,
   goals: ["conversation"], dailyGoal: 60, timezone: "Africa/Addis_Ababa",
   reminderTime: "19:00", reminderEnabled: false, language: "ar" as const,
   onboardingComplete: false, retainChat: true,
+  studySchedule: null as StudySchedule | null,
 };
 export async function getLearner(req: Request, res: Response) {
   const auth = getAuth(req);

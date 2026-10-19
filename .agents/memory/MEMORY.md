@@ -8,3 +8,4 @@
 - [Clerk Arabic localization](clerk-localization.md) — the official Arabic locale has gaps; check sign-in and sign-up separately instead of assuming complete translation.
 - [Favourite identity boundaries](favourite-identity-boundaries.md) — guest saves stay separate from account saves; any future transfer needs explicit learner consent.
 - [Learning regression isolation](learning-regression-isolation.md) — separate browser doubles from real grading/persistence; keep test identities isolated and use Nix-wrapped Chromium on Replit.
+- [Study scheduling](study-scheduling.md) — fewer study weekdays group activities within 180 calendar days; dates remain suggestions, not progress or notification consent.

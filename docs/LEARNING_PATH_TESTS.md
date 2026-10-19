@@ -64,6 +64,11 @@ Teardown also runs on assertion failures. It checks invalid submissions, forged
 client success fields, server-only answer keys, failed/deduplicated attempts,
 passing/reloaded progress, review creation, and stable completion ID/timestamp/XP
 after both immediate replay and a new passing attempt outside the duplicate window.
+It also validates scheduling inputs, reloads saved date/day/timezone preferences,
+checks that older whole-profile saves retain the schedule, and exercises pause,
+resume, rescheduling and removal without changing completion timestamps or XP.
+Pure scheduling tests cover local-midnight and DST boundaries, leap days,
+weekday distribution, paused-week freezing and overdue-versus-progress separation.
 
 The test server and guest adapters are not imported by the normal app entry.
 These checks do not cover Clerk sign-in, published deployment routing, or a

@@ -255,11 +255,30 @@ export interface ProfileInput {
   retainChat: boolean;
 }
 
-export type Profile = ProfileInput & {
+export interface StudyScheduleInput {
+  /**
+     * Local calendar date, or null for undated self-paced learning
+     * @nullable
+     * @pattern ^\d{4}-\d{2}-\d{2}$
+     */
+  startDate: string | null;
+  /**
+     * Sunday is 0; activities are distributed over these weekdays within 180 calendar days
+     * @minItems 1
+     * @maxItems 7
+     * @items.minimum 0
+     * @items.maximum 6
+     */
+  studyDays: number[];
+  paused: boolean;
+  timezone: string;
+}
+export type Profile = ProfileInput & ({
+  studySchedule?: StudySchedule | null;
   id: string;
   isGuest: boolean;
   joinedAt: string;
-};
+});
 
 export interface Word {
   id: string;
@@ -360,6 +379,13 @@ export interface Progress {
 }
 
 export interface PlanDay {
+  /** @nullable */
+  suggestedDate?: string | null;
+  /** @nullable */
+  suggestedWeek?: number | null;
+  /** @nullable */
+  currentSuggestedWeek?: number | null;
+  overdue?: boolean;
   day: number;
   month: number;
   title: string;
@@ -507,3 +533,11 @@ search?: string;
 page?: number;
 };
 
+
+export interface StudySchedule {
+  startDate: string;
+  studyDays: number[];
+  /** @nullable */
+  pausedOn: string | null;
+  pausedDays: number;
+}

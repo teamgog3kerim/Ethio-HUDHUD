@@ -24,6 +24,14 @@
 - Fidel reference, optional transliteration, and scheduled vocabulary flashcards.
 - A 180-day introductory lesson/review plan; goal choice prioritizes a later
   course, while preserving foundations. This is **not** 120 unique lessons.
+- Optional web plan scheduling: saved local start date, preferred weekdays and
+  profile timezone. The 180 activities are grouped onto selected study days within
+  180 calendar days (some days contain several activities), not 180 study days.
+  Current suggested week, upcoming practice/review and earlier incomplete lesson
+  suggestions are separate from actual lesson completion. Pausing freezes the
+  suggested week; resuming shifts suggestions by whole paused local calendar days.
+  Changing the date/weekdays reanchors suggestions; removing the schedule restores
+  the undated path. None of these actions edits completions or enables notifications.
 - Actual progress, study minutes, seven-day activity, streaks and vocabulary counts.
 - Text-only Amharic tutor using Replit AI Integrations for OpenAI, Arabic explanations,
   scenarios, recent context and privacy preference. Administrator-configured request

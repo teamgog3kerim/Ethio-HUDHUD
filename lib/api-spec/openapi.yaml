@@ -110,6 +110,22 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Progress" }
+  /study-schedule:
+    put:
+      operationId: saveStudySchedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudyScheduleInput" }
+      responses:
+        "200":
+          description: Saved scheduling preferences; lesson progress is unchanged
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "400":
+          description: Invalid schedule
   /study-plan:
     get:
       operationId: getStudyPlan
@@ -498,12 +514,43 @@ components:
         language: { type: string, enum: [ar, en] }
         onboardingComplete: { type: boolean }
         retainChat: { type: boolean }
+    StudyScheduleInput:
+      type: object
+      required: [startDate, studyDays, paused, timezone]
+      properties:
+        startDate:
+          type: [string, "null"]
+          pattern: '^\d{4}-\d{2}-\d{2}$'
+          description: Local calendar date, or null for undated self-paced learning
+        studyDays:
+          type: array
+          minItems: 1
+          maxItems: 7
+          uniqueItems: true
+          items: { type: integer, minimum: 0, maximum: 6 }
+          description: Sunday is 0; activities are distributed over these weekdays within 180 calendar days
+        paused: { type: boolean }
+        timezone: { type: string }
+    StudySchedule:
+      type: object
+      required: [startDate, studyDays, pausedOn, pausedDays]
+      properties:
+        startDate: { type: string }
+        studyDays:
+          type: array
+          items: { type: integer }
+        pausedOn: { type: [string, "null"] }
+        pausedDays: { type: integer }
     Profile:
       allOf:
         - { $ref: "#/components/schemas/ProfileInput" }
         - type: object
           required: [id, isGuest, joinedAt]
           properties:
+            studySchedule:
+              anyOf:
+                - { $ref: "#/components/schemas/StudySchedule" }
+                - { type: "null" }
             id: { type: string }
             isGuest: { type: boolean }
             joinedAt: { type: string }
@@ -612,6 +659,10 @@ components:
       type: object
       required: [day, month, title, lessonId, type, completed]
       properties:
+        suggestedDate: { type: ["string", "null"] }
+        suggestedWeek: { type: ["integer", "null"] }
+        currentSuggestedWeek: { type: ["integer", "null"] }
+        overdue: { type: boolean }
         day: { type: integer }
         month: { type: integer }
         title: { type: string }
