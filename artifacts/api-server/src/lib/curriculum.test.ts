@@ -38,6 +38,21 @@ test("all lessons validate, stay pilot, and have unambiguous server-graded exerc
   }
 });
 
+test("every month has a passable quiz and enforces the 75 percent boundary", () => {
+  assert.deepEqual([...courseSeed].sort((a, b) => a.month - b.month).map(c => c.month), [1, 2, 3, 4, 5, 6]);
+  for (const lesson of lessonSeed) {
+    assert.ok(courseSeed.some(c => c.id === lesson.courseId), lesson.id);
+    const keys = lesson.answerKey;
+    assert.ok(keys.length > 0, `${lesson.id} must not complete just by browsing`);
+    const minimum = Math.ceil(keys.length * 0.75);
+    const answersFor = (correctCount: number) => keys.map((key, i) => i < correctCount
+      ? key.correctIndex
+      : (key.correctIndex + 1) % lesson.content.exercises[i]!.options.length);
+    assert.equal(gradeAnswers(answersFor(minimum), keys).passed, true, lesson.id);
+    assert.equal(gradeAnswers(answersFor(minimum - 1), keys).passed, false, lesson.id);
+  }
+});
+
 test("all twenty-four conversations preserve both roles, Amharic lines, Arabic meanings and Arabic pronunciation", () => {
   const conversations = lessonSeed.filter(l => l.content.dialogue?.length);
   assert.equal(conversations.length, 24);

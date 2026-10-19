@@ -11,6 +11,30 @@ env = { "CI" = "true" }
 [workflows]
 runButton = "Project"
 
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "artifacts/ethio-hudhud: web"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "artifacts/api-server: API Server"
+
+[[workflows.workflow]]
+name = "learning-path-regression"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm run test:learning-path"
+
+[workflows.workflow.metadata]
+isValidation = true
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
@@ -23,3 +47,7 @@ timeoutMs = 20000
 
 [userenv.shared]
 ADMIN_BOOTSTRAP_EMAIL = "teamgog3@gmail.com"
+
+[nix]
+channel = "stable-25_05"
+packages = ["chromium"]

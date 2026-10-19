@@ -27,6 +27,54 @@ test("previous and next lesson navigation cross month boundaries with safe first
   assert.equal(getLessonPosition(courses, "2-0")!.previous!.id, "1-9");
   assert.equal(getLessonPosition(courses, "6-9")!.next, undefined);
   assert.equal(getLessonPosition(courses, "missing"), null);
+  for (let month = 1; month < 6; month++) {
+    const last = getLessonPosition([...courses].reverse(), `${month}-9`)!;
+    const first = getLessonPosition(courses, `${month + 1}-0`)!;
+    assert.equal(last.next!.id, first.current.id);
+    assert.equal(first.previous!.id, last.current.id);
+    assert.equal(last.week, month * 4);
+    assert.equal(first.week, month * 4 + 1);
+    assert.equal(first.course.month, month + 1);
+    assert.equal(first.stage.id, stageForMonth(month + 1).id);
+  }
+});
+
+test("reloaded completion snapshots count a replayed pass once and resume at the next incomplete lesson", () => {
+  const snapshot = structuredClone(courses);
+  snapshot[0]!.lessons.forEach(l => { l.completed = true; });
+  snapshot[1]!.lessons[0]!.completed = true;
+  snapshot[0]!.completedCount = 999; // stale aggregate must never drive UI progress
+  const persisted = JSON.parse(JSON.stringify(snapshot)) as Course[];
+  for (let replay = 0; replay < 3; replay++) {
+    persisted[1]!.lessons[0]!.completed = true;
+    const path = buildLearningPath(persisted);
+    assert.equal(path.completed, 11);
+    assert.equal(path.percent, 18);
+    assert.equal(path.months[0]!.percent, 100);
+    assert.equal(path.months[1]!.completed, 1);
+    assert.equal(path.nextLesson!.id, "2-1");
+    assert.equal(getLessonPosition(persisted, "2-0")!.completed, 11);
+  }
+  assert.equal(buildLearningPath(courses).completed, 0, "fixtures must not share progress");
+});
+
+test("uneven and empty months preserve lesson order, unique week placement and navigation", () => {
+  const sparse = structuredClone(courses);
+  const sizes = [0, 1, 2, 3, 7, 10];
+  sparse.forEach((course, i) => { course.lessons = course.lessons.slice(0, sizes[i]); });
+  const original = JSON.stringify(sparse);
+  const path = buildLearningPath([...sparse].reverse());
+  assert.equal(path.total, 23);
+  assert.equal(path.months[0]!.percent, 0);
+  assert.deepEqual(path.months.flatMap(m => m.weeks.flatMap(w => w.lessons.map(l => l.id))),
+    sparse.flatMap(c => c.lessons.map(l => l.id)));
+  for (const [index, lesson] of path.lessons.entries()) {
+    const pos = getLessonPosition(sparse, lesson.id)!;
+    assert.equal(pos.index, index);
+    assert.equal(pos.previous?.id, path.lessons[index - 1]?.id);
+    assert.equal(pos.next?.id, path.lessons[index + 1]?.id);
+  }
+  assert.equal(JSON.stringify(sparse), original, "path helpers must not mutate cached courses");
 });
 test("progress and resume use real completion booleans rather than stale course counts", () => {
   const changed = structuredClone(courses);
