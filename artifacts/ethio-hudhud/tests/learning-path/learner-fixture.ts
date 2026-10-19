@@ -36,6 +36,7 @@ export const test = base.extend<{ learner: {
       if (path === '/api/profile') return json({ id: 'isolated-browser-learner', displayName: 'متعلّم', isGuest: true, language: 'ar' });
       if (path === '/api/admin/me') return json({ signedIn: false, role: null });
       if (path === '/api/app-settings') return json({ announcementAr: '', announcementEn: '', learningEnabled: true, aiEnabled: true });
+      if (path === '/api/billing/status') return json({ plan: 'complimentary', accessExpiresAt: null, reminder: null });
       if (path === '/api/favourites') return json([]);
       const match = path.match(/^\/api\/lessons\/([^/]+)(\/complete)?$/);
       if (match) {

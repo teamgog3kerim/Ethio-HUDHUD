@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
-import { ClerkProvider, Show, useClerk } from '@clerk/react';
+import { useMemo, type ReactNode } from 'react';
+import { ClerkProvider, Show } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { arSA, enUS } from '@clerk/localizations';
-import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ClerkQueryClientCacheInvalidator } from '@/components/clerk-query-cache-invalidator';
 import { Redirect, Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -101,21 +102,6 @@ function HomeRedirect() {
       <Show when="signed-out"><Landing /></Show>
     </>
   );
-}
-
-function ClerkQueryClientCacheInvalidator() {
-  const { addListener } = useClerk();
-  const qc = useQueryClient();
-  const prev = useRef<string | null | undefined>(undefined);
-  useEffect(() => {
-    const unsub = addListener(({ user }) => {
-      const id = user?.id ?? null;
-      if (prev.current !== undefined && prev.current !== id) qc.clear();
-      prev.current = id;
-    });
-    return unsub;
-  }, [addListener, qc]);
-  return null;
 }
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {

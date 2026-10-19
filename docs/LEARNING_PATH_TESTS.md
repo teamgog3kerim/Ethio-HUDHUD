@@ -10,7 +10,7 @@ This command fails on any failing layer. It runs:
 
 1. Existing API unit tests, including curriculum validation and the 75% quiz threshold for every seeded lesson.
 2. Shared learning-path tests (six months / 24 weeks, all month boundaries, empty/uneven months, immutable cache inputs, resume and completion totals).
-3. Twelve Playwright cases: six scenarios on desktop and again at 390 × 844 with Arabic RTL and reduced motion.
+3. Twenty Playwright cases: six learning-path and four favourites scenarios on desktop and again at 390 × 844 with Arabic RTL and reduced motion.
 4. The real Express completion-route integration test. This is explicitly enabled by the command, not silently skipped.
 
 ## Prerequisites
@@ -49,7 +49,7 @@ This command fails on any failing layer. It runs:
 
 The browser suite uses the **real Learn and Lesson pages, Shell, React Query
 hooks, Wouter links, language provider, timer, and production CSS**. Only Clerk
-hooks are replaced by a test-only guest adapter. Each browser test gets a new
+hooks are replaced by a test-only identity adapter. Each browser test gets a new
 browser context and its own in-memory API records, based on the real curriculum
 seed. The records survive that test's reloads but cannot reach any database or
 account. Every `/api/` request is intercepted; unexpected endpoints and browser
@@ -73,6 +73,44 @@ weekday distribution, paused-week freezing and overdue-versus-progress separatio
 The test server and guest adapters are not imported by the normal app entry.
 These checks do not cover Clerk sign-in, published deployment routing, or a
 single browser-to-database end-to-end session.
+
+## Favourites browser regressions
+
+```sh
+# Only saved-item browser checks; no database, credentials or live services
+pnpm run test:favourites
+```
+
+The four favourites scenarios run on both browser projects and also run as part
+of the full learning-path command:
+
+- Save a lesson and conversation from their real detail pages, retain pressed
+  states after reload, open Saved items, remove both there, and reload to confirm
+  the empty state. Assert exact PUT/DELETE IDs and that no ownership or completion
+  payload is sent.
+- Keep one browser and mounted query client alive across guest → account A →
+  actual sign-out confirmation → guest → account B → A → B transitions. Assert
+  guest/account separation, retained account saves on return, account B's own
+  distinct save, and no old links even while B's response is deliberately held.
+  Also switch identities while a saved conversation detail control is mounted.
+- Archive records in the fixture while Saved items remains open, advance the
+  browser clock past the production 30-second refresh interval, and verify each
+  link disappears without navigation, reload or a learner delete request.
+- Activate lesson and conversation save controls with Enter and Space; verify
+  accessible names, focus, pressed state, and removal with both keys in Saved.
+
+These use the production account-change cache handler. Clearing cache entries
+alone does not reset already-mounted query observers; the handler resets queries
+and refetches active views so another identity cannot retain their visible data.
+The test-only Clerk adapter emits listener events and persists its synthetic
+identity across reloads. A test-only cookie carries that identity to the strict
+in-memory route fixture; it is not an authentication cookie recognized by the app.
+Separate save sets for guest and each account and an independent archived set
+survive reloads within a test, never across tests. No real accounts or curriculum
+records are created, modified or archived. Backend identity/archive enforcement
+remains covered by the existing favourites integration tests; these browser
+checks are evidence of client/UI behavior, not real Clerk login or database
+persistence. Completion and lesson-navigation behavior are outside their scope.
 
 ## Focused commands and failure output
 
