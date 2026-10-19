@@ -1,4 +1,5 @@
 import type { LessonInput, WordTuple } from "./seed-data";
+import { practicalConversationInputs } from "./practical-conversations";
 
 // Additional pilot material. Arabic-script pronunciation is approximate;
 // qualified linguistic review and native recordings remain pending.
@@ -41,7 +42,7 @@ export const extraLessonInputs: LessonInput[] = [
   ]],
 ];
 
-type ConversationInput = {
+export type ConversationInput = {
   id: string; courseId: string; titleAr: string; titleEn: string; explanation: string;
   turns: [speakerAr: string, speakerEn: string, word: WordTuple][];
 };
@@ -106,4 +107,5 @@ export const conversationLessonInputs: ConversationInput[] = [
       ["الزميل الثاني", "Second colleague", ["ቢሮ ውስጥ ነው።", "إنه في المكتب.", "It is in the office.", "بِيرُو وِسْطْ نَوْ."]],
     ],
   },
+  ...practicalConversationInputs,
 ];
