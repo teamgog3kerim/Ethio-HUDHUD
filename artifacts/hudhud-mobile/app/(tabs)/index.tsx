@@ -1,14 +1,15 @@
-import { Image, View } from "react-native";
+import { View } from "react-native";
 import { router } from "expo-router";
 import { useGetProfile, useGetProgress, useGetCourses } from "@workspace/api-client-react";
 import { Action, Card, Failure, Loading, Screen, Txt, styles } from "@/components/LearningUI";
 import { useColors } from "@/hooks/useColors";
+import { AnimatedHudhud } from "@/components/AnimatedHudhud";
 export default function Home() {
   const profile = useGetProfile(); const progress = useGetProgress(); const courses = useGetCourses(); const c = useColors();
   const next = courses.data?.flatMap(course => course.lessons).find(l => !l.completed);
   return <Screen title={`أهلاً، ${profile.data?.displayName ?? "صديق هدهد"}`} subtitle="لنقترب اليوم خطوة من الأمهرية.">
     <Card style={{ backgroundColor: c.primary, borderWidth: 0 }}>
-      <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between" }}><View style={{ flex: 1 }}><Txt style={{ color: c.primaryForeground }}>كلمة تبدأ بها رحلتك</Txt><Txt style={[styles.fidel, { color: c.primaryForeground, textAlign: "right", marginVertical: 8 }]}>ሰላም</Txt><Txt style={{ color: c.primaryForeground }}>مرحباً · sälam</Txt></View><Image source={require("@/assets/images/icon.png")} style={{ width: 100, height: 100, borderRadius: 28 }} /></View>
+      <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between" }}><View style={{ flex: 1 }}><Txt style={{ color: c.primaryForeground }}>كلمة تبدأ بها رحلتك</Txt><Txt style={[styles.fidel, { color: c.primaryForeground, textAlign: "right", marginVertical: 8 }]}>ሰላም</Txt><Txt style={{ color: c.primaryForeground }}>مرحباً · sälam</Txt></View><AnimatedHudhud size={100} radius={28} /></View>
     </Card>
     {!profile.data?.onboardingComplete && <Action title="خصّص رحلتك الدراسية" secondary icon="sliders" onPress={() => router.push("/account")} />}
     {progress.isLoading ? <Loading /> : progress.isError ? <Failure retry={progress.refetch} /> : progress.data && <Card>

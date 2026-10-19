@@ -1,8 +1,9 @@
-import { Image, Platform, View } from "react-native";
+import { Platform, View } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "@clerk/expo";
 import { Redirect } from "expo-router";
 import { Action, Screen, Txt, styles } from "@/components/LearningUI";
+import { AnimatedHudhud } from "@/components/AnimatedHudhud";
 import { useColors } from "@/hooks/useColors";
 import * as WebBrowser from "expo-web-browser";
 
@@ -12,7 +13,7 @@ export default function Welcome() {
   if (isLoaded && isSignedIn) return <Redirect href="/" />;
   return <Screen title="لغة جديدة، صلة أقرب." subtitle="تعلّم الأمهرية. وتواصل مع إثيوبيا.">
     <View style={{ alignItems: "center", paddingVertical: 30, gap: 22 }}>
-      <Image source={require("@/assets/images/icon.png")} style={{ width: 180, height: 180, borderRadius: 42 }} />
+      <AnimatedHudhud size={180} radius={42} />
       <Txt style={[styles.fidel, { fontSize: 48, color: c.primary }]}>ሰላም</Txt>
       <Txt style={{ textAlign: "center", fontSize: 20 }}>مرحباً بك في هدهد</Txt>
     </View>
