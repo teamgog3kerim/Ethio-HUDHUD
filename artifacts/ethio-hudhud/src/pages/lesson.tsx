@@ -120,7 +120,7 @@ function LessonView({ id }: { id: string }) {
               )}
               {lesson.dialogue?.length ? (
                 <>
-                  <ConversationCard turns={lesson.dialogue} />
+                  <ConversationCard key={lesson.id} turns={lesson.dialogue} />
                   <div className="mt-5 flex justify-end">
                     <Btn variant="gold" onClick={() => setPhase('quiz')} data-testid="button-start-quiz">{t('ابدأ التمارين', 'Start exercises')}</Btn>
                   </div>
