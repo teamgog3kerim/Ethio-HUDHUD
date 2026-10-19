@@ -254,15 +254,11 @@ router.put("/profile", async (req, res) =>
  
 }
 
-  if (!/^\d
-{
-2
-}
-:\d
-{
-2
-}
-$/.test(parsed.data.reminderTime) || Number(parsed.data.reminderTime.slice(0, 2)) > 23 || Number(parsed.data.reminderTime.slice(3)) > 59) 
+  if (
+    !/^\d{2}:\d{2}$/.test(parsed.data.reminderTime)
+    || Number(parsed.data.reminderTime.slice(0, 2)) > 23
+    || Number(parsed.data.reminderTime.slice(3)) > 59
+  )
 {
 
     res.status(400).json(
@@ -519,13 +515,7 @@ router.post("/lessons/:id/complete", async (req, res) =>
  
 }
 
-  const keys = arabicAnswerKey(lesson.answerKey as 
-{
- correctIndex: number
-;
- explanation: string 
-}
-[])
+  const keys = arabicAnswerKey(lesson.answerKey as { correctIndex: number; explanation: string }[])
 ;
 
   const exercises = (lesson.content as LessonContent).exercises

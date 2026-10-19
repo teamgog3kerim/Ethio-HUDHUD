@@ -273,6 +273,15 @@ export interface StudyScheduleInput {
   paused: boolean;
   timezone: string;
 }
+
+export interface StudySchedule {
+  startDate: string;
+  studyDays: number[];
+  /** @nullable */
+  pausedOn: string | null;
+  pausedDays: number;
+}
+
 export type Profile = ProfileInput & ({
   studySchedule?: StudySchedule | null;
   id: string;
@@ -532,12 +541,3 @@ search?: string;
  */
 page?: number;
 };
-
-
-export interface StudySchedule {
-  startDate: string;
-  studyDays: number[];
-  /** @nullable */
-  pausedOn: string | null;
-  pausedDays: number;
-}
