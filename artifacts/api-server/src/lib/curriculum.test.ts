@@ -6,9 +6,9 @@ import { lessonContentSchema } from "./lesson-validation";
 import { gradeAnswers } from "./scoring";
 
 test("adds practical conversations without replacing existing lesson identifiers or sequence", () => {
-  assert.equal(lessonSeed.length, 42);
-  assert.equal(new Set(lessonSeed.map(l => l.id)).size, 42);
-  assert.equal(new Set(lessonSeed.map(l => l.sequence)).size, 42);
+  assert.equal(lessonSeed.length, 60);
+  assert.equal(new Set(lessonSeed.map(l => l.id)).size, 60);
+  assert.equal(new Set(lessonSeed.map(l => l.sequence)).size, 60);
   assert.deepEqual(lessonSeed.slice(0, 12).map(l => l.id), [
     "fidel-ha", "fidel-la", "greetings", "introductions", "numbers", "family",
     "questions", "daily-time", "coffee-food", "transport", "work", "days",
@@ -20,8 +20,8 @@ test("adds practical conversations without replacing existing lesson identifiers
   const additions: Record<string, number> = { everyday: 3, speaking: 2, travel: 4, professional: 3 };
   for (const course of courseSeed) {
     const lessons = lessonSeed.filter(l => l.courseId === course.id);
-    assert.equal(lessons.length, 5 + (additions[course.id] ?? 0), course.id);
-    assert.equal(lessons.filter(l => l.content.dialogue?.length).length, 1 + (additions[course.id] ?? 0));
+    assert.equal(lessons.length, 8 + (additions[course.id] ?? 0), course.id);
+    assert.equal(lessons.filter(l => l.content.dialogue?.length).length, 2 + (additions[course.id] ?? 0));
   }
 });
 
@@ -38,9 +38,9 @@ test("all lessons validate, stay pilot, and have unambiguous server-graded exerc
   }
 });
 
-test("all eighteen conversations preserve both roles, Amharic lines, Arabic meanings and Arabic pronunciation", () => {
+test("all twenty-four conversations preserve both roles, Amharic lines, Arabic meanings and Arabic pronunciation", () => {
   const conversations = lessonSeed.filter(l => l.content.dialogue?.length);
-  assert.equal(conversations.length, 18);
+  assert.equal(conversations.length, 24);
   for (const lesson of conversations) {
     const turns = lesson.content.dialogue!;
     assert.ok(turns.length >= (lesson.sequence > 30 ? 6 : 4));
@@ -59,7 +59,7 @@ test("all eighteen conversations preserve both roles, Amharic lines, Arabic mean
 });
 
 test("practical scenarios include all turns in review and four distinct quiz questions", () => {
-  const additions = lessonSeed.slice(30);
+  const additions = lessonSeed.slice(30, 42);
   assert.equal(additions.length, 12);
   assert.equal(additions.reduce((n, lesson) => n + lesson.content.dialogue!.length, 0), 74);
   for (const lesson of additions) {
@@ -67,6 +67,25 @@ test("practical scenarios include all turns in review and four distinct quiz que
     assert.equal(lesson.content.exercises.length, 4, lesson.id);
     assert.equal(new Set(lesson.content.dialogue!.map(t => t.amharic)).size, lesson.content.dialogue!.length, lesson.id);
     assert.equal(new Set(lesson.content.words.map(w => w.id)).size, lesson.content.words.length, lesson.id);
+  }
+});
+
+test("six-month extensions include two longer lessons and an eight-turn application per month", () => {
+  const extensions = lessonSeed.slice(42);
+  assert.equal(extensions.length, 18);
+  for (const course of courseSeed) {
+    assert.equal(course.level, course.month <= 2 ? "beginner" : course.month <= 4 ? "intermediate" : "advanced");
+    const content = extensions.filter(l => l.courseId === course.id);
+    assert.equal(content.length, 3);
+    const dialogue = content.find(l => l.content.dialogue)!;
+    assert.equal(dialogue.content.dialogue!.length, 8);
+    assert.equal(dialogue.content.exercises.length, 8);
+    for (const lesson of content) {
+      assert.ok(lesson.content.minutes >= 15);
+      assert.ok(lesson.content.explanation.length > 150);
+      assert.equal(lesson.content.words.length, lesson.content.exercises.length);
+      assert.ok(lesson.content.words.every(w => w.id.length <= 150));
+    }
   }
 });
 

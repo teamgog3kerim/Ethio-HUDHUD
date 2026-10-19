@@ -11,6 +11,16 @@ language; do not expand into Oromo or Tigrinya.
 **How to apply:** Keep curriculum, tutor instructions, marketing and future
 extensions within the Amharic-learning product.
 
+Organize the learning programme for six months with beginner, intermediate and
+advanced stages, including practical lessons and conversations, next/back
+navigation and tracked lesson completion.
+
+**Why:** The user explicitly requested this as the organisation of the Learn page.
+
+**How to apply:** Keep future curriculum additions consistent with that study
+path rather than turning the catalogue into an unstructured list. Treat the
+duration as a suggested study schedule, not a guarantee of fluency.
+
 Pronunciation guides for Amharic words and letters must use Arabic script
 throughout the app, not Latin transliteration.
 

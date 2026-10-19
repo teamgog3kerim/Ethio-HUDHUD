@@ -13,6 +13,7 @@ import { gradeAnswers, nextReviewInterval, boundedActiveSeconds } from "../lib/s
 import { getAuth } from "@clerk/express";
 import { getAppSettings, getAccessState } from "../lib/app-settings";
 import { arabicAnswerKey } from "@workspace/db/pronunciation";
+import { buildStudyPlan } from "../lib/study-plan";
 
 const router: IRouter = Router();
 router.get("/profile", async (req, res) => {
@@ -88,17 +89,7 @@ router.get("/progress/summary", async (req, res) => {
 router.get("/study-plan", async (req, res) => {
   const learner = await getLearner(req, res);
   const catalog = await getCatalog(learner.id);
-  const goals = learner.preferences.goals.join(" ").toLowerCase();
-  const preferred = /travel|سفر/.test(goals) ? "travel" : /work|عمل/.test(goals) ? "professional" : /reading|قراءة/.test(goals) ? "reading" : /family|عائلة/.test(goals) ? "reading" : "speaking";
-  const ordered = [...catalog.slice(0, 2), ...catalog.slice(2).sort((a, b) => Number(b.id === preferred) - Number(a.id === preferred))];
-  const plan = Array.from({ length: 180 }, (_, i) => {
-    const month = Math.floor(i / 30) + 1;
-    const course = ordered[month - 1]!;
-    const day = i % 30;
-    const lesson = course.lessons[day % course.lessons.length];
-    const isNew = day < course.lessons.length;
-    return { day: i + 1, month, title: isNew ? lesson!.titleAr : day % 7 === 6 ? "مراجعة أسبوعية وتقييم ذاتي" : `مراجعة وتطبيق: ${lesson!.titleAr}`, lessonId: lesson?.id ?? null, type: isNew ? "lesson" : "review", completed: isNew && !!lesson?.completed };
-  });
+  const plan = buildStudyPlan(catalog);
   res.json(GetStudyPlanResponse.parse(plan));
 });
 router.get("/vocabulary", async (req, res) => {

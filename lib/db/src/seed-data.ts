@@ -1,6 +1,8 @@
 // Pilot content, not represented as professionally reviewed or native-speaker approved.
+import { createHash } from "node:crypto";
 import { arabicLessonContent, arabicLearningText, arabicPronunciation } from "./pronunciation";
 import { extraLessonInputs, conversationLessonInputs } from "./extra-curriculum";
+import { extendedLessonInputs, extendedConversationInputs } from "./extended-curriculum";
 export type SeedWord = { id: string; amharic: string; arabic: string; english: string; transliteration: string; due: boolean; interval: number };
 export type SeedExercise = { id: string; prompt: string; options: string[]; type: string };
 export type LessonContent = {
@@ -11,16 +13,17 @@ export type LessonContent = {
 export type WordTuple = [string, string, string, string];
 export type LessonInput = [string, string, string, string, string, WordTuple[]];
 const makeWord = (w: WordTuple): SeedWord => ({
-  id: Buffer.from(w[0]).toString("hex"), amharic: w[0], arabic: arabicLearningText(w[1]),
+  id: Buffer.byteLength(w[0]) * 2 <= 150 ? Buffer.from(w[0]).toString("hex") : createHash("sha256").update(w[0]).digest("hex"),
+  amharic: w[0], arabic: arabicLearningText(w[1]),
   english: w[2], transliteration: arabicPronunciation(w[3]), due: true, interval: 0,
 });
 export const courseSeed = [
   { id: "fidel", titleAr: "الفيدل وأصوات الأمهرية", titleEn: "Fidel & pronunciation", description: "تعرّف على حروف الفيدل واقرأ كلماتك الأولى.", level: "beginner", category: "fidel", month: 1 },
   { id: "everyday", titleAr: "المحادثة اليومية", titleEn: "Everyday conversation", description: "ابدأ التحية وقدّم نفسك بثقة.", level: "beginner", category: "conversation", month: 2 },
-  { id: "reading", titleAr: "القراءة والكتابة", titleEn: "Reading & writing", description: "اقرأ الأعداد والكلمات الأساسية من حولك.", level: "beginner", category: "reading", month: 3 },
+  { id: "reading", titleAr: "القراءة والكتابة", titleEn: "Reading & writing", description: "اقرأ الأعداد والكلمات الأساسية من حولك.", level: "intermediate", category: "reading", month: 3 },
   { id: "speaking", titleAr: "التواصل العملي", titleEn: "Practical communication", description: "مفردات مفيدة للسؤال والحديث عن يومك.", level: "intermediate", category: "speaking", month: 4 },
-  { id: "travel", titleAr: "السفر والثقافة الإثيوبية", titleEn: "Travel & Ethiopian culture", description: "كلمات للمطاعم والتنقل واكتشاف إثيوبيا.", level: "intermediate", category: "travel", month: 5 },
-  { id: "professional", titleAr: "الأمهرية في العمل", titleEn: "Amharic at work", description: "مفردات العمل والأوقات للتواصل المهني.", level: "intermediate", category: "work", month: 6 },
+  { id: "travel", titleAr: "السفر والثقافة الإثيوبية", titleEn: "Travel & Ethiopian culture", description: "كلمات للمطاعم والتنقل واكتشاف إثيوبيا.", level: "advanced", category: "travel", month: 5 },
+  { id: "professional", titleAr: "الأمهرية في العمل", titleEn: "Amharic at work", description: "مفردات العمل والأوقات للتواصل المهني.", level: "advanced", category: "work", month: 6 },
 ];
 const inputs: LessonInput[] = [
   ["fidel-ha", "fidel", "عائلة الحرف ሀ", "The ሀ letter family", "تعرّف على أشكال الحرف الأساسية. الحروف هنا مقاطع صوتية وليست حروفاً عربية؛ النقل اللاتيني تقريب مساعد وليس بديلاً عن سماع متحدث مؤهل.", [
@@ -60,17 +63,23 @@ const inputs: LessonInput[] = [
     ["ሰኞ", "الاثنين", "Monday", "säñño"], ["ማክሰኞ", "الثلاثاء", "Tuesday", "maksäñño"], ["ረቡዕ", "الأربعاء", "Wednesday", "räbuʿ"], ["ሐሙስ", "الخميس", "Thursday", "hamus"], ["ዓርብ", "الجمعة", "Friday", "arb"],
   ]],
 ];
+const allConversations = [...conversationLessonInputs, ...extendedConversationInputs];
 const allInputs: LessonInput[] = [
   ...inputs, ...extraLessonInputs,
   ...conversationLessonInputs.map(c => [
     c.id, c.courseId, c.titleAr, c.titleEn, c.explanation, c.turns.map(t => t[2]),
   ] satisfies LessonInput),
+  ...extendedLessonInputs,
+  ...extendedConversationInputs.map(c => [
+    c.id, c.courseId, c.titleAr, c.titleEn, c.explanation, c.turns.map(t => t[2]),
+  ] satisfies LessonInput),
 ];
 export const lessonSeed = allInputs.map(([id, courseId, titleAr, titleEn, explanation, rawWords], n) => {
   const words = rawWords.map(makeWord);
-  const conversation = conversationLessonInputs.find(c => c.id === id);
-  const answers = words.slice(0, 4).map((w, i) => {
-    const options = words.slice(0, 4).map(v => v.arabic);
+  const conversation = allConversations.find(c => c.id === id);
+  const exerciseWords = words.slice(0, n >= 42 ? 8 : 4);
+  const answers = exerciseWords.map((w, i) => {
+    const options = exerciseWords.map(v => v.arabic);
     // Rotate options so the answer is not always in the same position.
     const rotated = [...options.slice(i % 3), ...options.slice(0, i % 3)];
     return { exercise: { id: `${id}-${i}`, prompt: `ما معنى ${w.amharic}؟`, options: rotated, type: courseId === "fidel" ? "fidel" : "vocabulary" }, correctIndex: rotated.indexOf(w.arabic), explanation: `${w.amharic} تعني ${w.arabic}. النقل التقريبي: ${w.transliteration}.` };
@@ -78,7 +87,7 @@ export const lessonSeed = allInputs.map(([id, courseId, titleAr, titleEn, explan
   return {
     id, courseId, sequence: n + 1, reviewStatus: "pilot",
     content: arabicLessonContent({
-      titleAr, titleEn, titleAm: words[0]!.amharic, minutes: 10,
+      titleAr, titleEn, titleAm: words[0]!.amharic, minutes: n >= 42 ? (conversation ? 20 : 15) : 10,
       objective: conversation ? "اقرأ الحوار، ثم تبادل الأدوار واختبر فهمك لمعاني جمله." : `تعرّف على ${words.length} مفردات أو مقاطع جديدة واختبر فهمك.`,
       explanation, words, exercises: answers.map(a => a.exercise),
       ...(conversation ? { dialogue: conversation.turns.map(([speakerAr, speakerEn, word]) => ({

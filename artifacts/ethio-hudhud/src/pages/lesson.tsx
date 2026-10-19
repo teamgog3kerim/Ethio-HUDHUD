@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useParams } from 'wouter';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useParams } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
 import { Check, Eye, EyeOff, ChevronLeft, ChevronRight, RotateCw, Timer, X } from 'lucide-react';
 import {
   getGetCoursesQueryKey, getGetLessonQueryKey, getGetProgressQueryKey, getGetStudyPlanQueryKey,
-  getGetVocabularyQueryKey, useCompleteLesson, useGetLesson, type LessonResult,
+  getGetVocabularyQueryKey, getLessonPosition, useCompleteLesson, useGetCourses, useGetLesson, type LessonResult,
 } from '@workspace/api-client-react';
 import { Am, Btn, Card, ErrorState, LinkBtn, PilotNote, ProgressBar, Skeleton } from '@/components/bits';
 import { Shell } from '@/components/shell';
@@ -19,9 +19,17 @@ type Phase = 'vocab' | 'quiz' | 'result';
 
 export default function LessonPage() {
   const { id = '' } = useParams<{ id: string }>();
+  return <LessonView key={id} id={id} />;
+}
+
+function LessonView({ id }: { id: string }) {
   const { t, lang } = useApp();
   const qc = useQueryClient();
   const q = useGetLesson(id);
+  const courses = useGetCourses();
+  const pos = courses.data ? getLessonPosition(courses.data, id) : null;
+  const alive = useRef(true);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const [phase, setPhase] = useState<Phase>('vocab');
   const [vi, setVi] = useState(0);
   const [qi, setQi] = useState(0);
@@ -54,6 +62,7 @@ export default function LessonPage() {
     const next = [...answers.slice(0, qi), opt];
     setAnswers(next);
     window.setTimeout(() => {
+      if (!alive.current) return;
       if (qi + 1 < lesson.exercises.length) setQi(qi + 1);
       else submit(next);
     }, 320);
@@ -86,6 +95,18 @@ export default function LessonPage() {
               <Timer className="size-4 text-primary" />{mm}:{ss}
             </span>
           </div>
+          {pos && (
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground" data-testid="lesson-position">
+              <span data-testid="text-lesson-position">{lang === 'ar' ? pos.stage.titleAr : pos.stage.titleEn} · {t('الشهر', 'Month')} {pos.course.month} · {t('الأسبوع', 'Week')} {pos.week} · {t('الدرس', 'Lesson')} <bdi dir="ltr">{pos.index + 1} / {pos.total}</bdi></span>
+              <span className="tabular-nums" data-testid="text-path-progress"><bdi dir="ltr">{pos.completed} / {pos.total}</bdi> {t('مكتمل', 'completed')} (<bdi dir="ltr">{pos.total ? Math.round(pos.completed / pos.total * 100) : 0}%</bdi>)</span>
+            </div>
+          )}
+          {pos && (
+            <div className="mb-4 flex justify-between gap-2 text-sm">
+              {pos.previous ? <Link href={`/lesson/${pos.previous.id}`} data-testid="link-prev-lesson" className="press inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5"><PrevIcon className="size-4" />{t('الدرس السابق', 'Previous lesson')}</Link> : <span />}
+              {pos.next ? <Link href={`/lesson/${pos.next.id}`} data-testid="link-next-lesson-top" className="press inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5">{t('الدرس التالي', 'Next lesson')}<NextIcon className="size-4" /></Link> : <span />}
+            </div>
+          )}
           <ProgressBar value={(done / total) * 100} className="mb-6" />
 
           {phase === 'vocab' && (
@@ -107,8 +128,8 @@ export default function LessonPage() {
               ) : <>
               {lesson.words[vi] && (
                 <Card className="py-10 text-center" data-testid={`card-word-${lesson.words[vi].id}`}>
-                  <p className="mb-3 text-xs text-muted-foreground">{vi + 1} / {lesson.words.length}</p>
-                  <Am className="block text-6xl font-bold text-primary sm:text-7xl">{lesson.words[vi].amharic}</Am>
+                  <p className="mb-3 text-xs text-muted-foreground"><bdi dir="ltr">{vi + 1} / {lesson.words.length}</bdi></p>
+                  <Am className={cn('block break-words font-bold leading-relaxed text-primary', lesson.words[vi].amharic.length > 18 ? 'text-3xl sm:text-4xl' : 'text-6xl sm:text-7xl')}>{lesson.words[vi].amharic}</Am>
                   {showTr && <p className="pop mt-3 text-lg leading-loose text-muted-foreground" dir="rtl" lang="ar" data-testid="text-transliteration">{lesson.words[vi].transliteration}</p>}
                   <p className="font-display mt-5 text-3xl font-bold">{lesson.words[vi].arabic}</p>
                   <p className="text-muted-foreground" dir="ltr">{lesson.words[vi].english}</p>
@@ -133,7 +154,7 @@ export default function LessonPage() {
 
           {phase === 'quiz' && lesson.exercises[qi] && (
             <div key={qi} className="rise">
-              <p className="mb-2 text-sm text-muted-foreground">{t('تمرين', 'Exercise')} {qi + 1} / {lesson.exercises.length}</p>
+              <p className="mb-2 text-sm text-muted-foreground">{t('تمرين', 'Exercise')} <bdi dir="ltr">{qi + 1} / {lesson.exercises.length}</bdi></p>
               <Card>
                 <p className="font-display text-xl font-bold leading-relaxed" dir="auto">{lesson.exercises[qi].prompt}</p>
               </Card>
@@ -159,7 +180,7 @@ export default function LessonPage() {
 
           {phase === 'result' && result && (
             <div className="rise space-y-4" data-testid="panel-result">
-              <Card className={cn('text-center', result.passed ? 'border-primary' : 'border-destructive/50')}>
+              <Card className={cn('pop text-center', result.passed ? 'border-primary' : 'border-destructive/50')}>
                 <p className="font-display text-5xl font-extrabold" data-testid="text-score">{Math.round(result.score <= 1 ? result.score * 100 : result.score)}%</p>
                 <p className="mt-2 text-lg font-semibold">{result.passed ? t('أحسنت، نجحت في الدرس', 'Well done, lesson passed') : t('لم تصل إلى حدّ النجاح بعد', 'Not at the pass mark yet')}</p>
                 {result.passed && <p className="mt-1 text-sm text-primary">+{result.xpEarned} XP</p>}
@@ -183,6 +204,7 @@ export default function LessonPage() {
                 );
               })}
               <div className="flex flex-wrap gap-3">
+                {result.passed && pos?.next && <LinkBtn href={`/lesson/${pos.next.id}`} variant="gold" testId="link-next-lesson">{t('الدرس التالي', 'Next lesson')}<NextIcon className="size-4" /></LinkBtn>}
                 {!result.passed && <Btn onClick={retry} data-testid="button-retry-lesson"><RotateCw className="size-4" />{t('أعد المحاولة', 'Try again')}</Btn>}
                 <LinkBtn href="/learn" variant={result.passed ? 'primary' : 'outline'} testId="link-back-learn">{t('العودة إلى الدروس', 'Back to lessons')}</LinkBtn>
                 {result.passed && <LinkBtn href="/review" variant="gold" testId="link-to-review">{t('راجع الكلمات', 'Review words')}</LinkBtn>}
