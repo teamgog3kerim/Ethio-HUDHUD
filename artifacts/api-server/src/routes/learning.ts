@@ -543,25 +543,29 @@ router.post("/lessons/:id/complete", async (req, res) =>
  = gradeAnswers(body.data.answers, keys)
 ;
 
-  const [start] = await db.select().from(lessonStarts).where(and(eq(lessonStarts.learnerId, learner.id), eq(lessonStarts.lessonId, lesson.id)))
+  let xpEarned = 0
+;
+
+  await db.transaction(async tx =>
+{
+  // Serialize submissions for this learner before reading the duplicate guard
+  // and timer. Completion/review uniqueness alone cannot protect study time.
+  await tx.select({ id: learners.id }).from(learners).where(eq(learners.id, learner.id)).for("update")
+;
+
+  const [start] = await tx.select().from(lessonStarts).where(and(eq(lessonStarts.learnerId, learner.id), eq(lessonStarts.lessonId, lesson.id)))
 ;
 
   const activeSeconds = boundedActiveSeconds(body.data.activeSeconds, start?.startedAt)
 ;
 
-  const [last] = await db.select().from(attempts).where(and(eq(attempts.learnerId, learner.id), eq(attempts.lessonId, lesson.id))).orderBy(desc(attempts.createdAt)).limit(1)
+  const [last] = await tx.select().from(attempts).where(and(eq(attempts.learnerId, learner.id), eq(attempts.lessonId, lesson.id))).orderBy(desc(attempts.createdAt)).limit(1)
 ;
 
   const duplicate = last && Date.now() - last.createdAt.getTime() < 10_000 && JSON.stringify(last.answers) === JSON.stringify(body.data.answers)
 ;
 
-  let xpEarned = 0
-;
-
-  if (!duplicate) 
-{
-
-    await db.transaction(async tx => 
+  if (!duplicate)
 {
 
       await tx.insert(attempts).values(
@@ -609,11 +613,10 @@ router.post("/lessons/:id/complete", async (req, res) =>
 
     
 }
+
+}
 )
 ;
-
-  
-}
 
   res.json(CompleteLessonResponse.parse(
 {

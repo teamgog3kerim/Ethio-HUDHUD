@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 import express from "express";
 import { and, eq } from "drizzle-orm";
-import { db, pool, learners, lessons, completions, attempts, reviews } from "@workspace/db";
+import { db, pool, learners, lessons, lessonStarts, completions, attempts, reviews } from "@workspace/db";
 import type { LessonContent } from "@workspace/db";
 import learningRouter from "../routes/learning";
 import { defaultPreferences } from "./learner";
@@ -103,13 +103,36 @@ test("real completion routes: browsing, failure, retry, reload and one-time cred
   // Immediate same-answer retries are deduplicated and still cannot award credit.
   assert.equal(CompleteLessonResponse.parse(await (await post(lessonId, { answers: incorrect, activeSeconds: 15 })).json()).xpEarned, 0);
   await counts(0, 1, 0);
-  const passed = await post(lessonId, { answers: correct, activeSeconds: 15 });
-  assert.equal(passed.status, 200);
-  const success = CompleteLessonResponse.parse(await passed.json());
-  assert.equal(success.passed, true);
-  assert.equal(success.score, 100);
-  assert.equal(success.xpEarned, 30);
+  // Give only this UUID learner a measurable study interval without sleeping.
+  // All requests below represent the same passing submission arriving together.
+  const beforePassing = await db.select().from(attempts).where(eq(attempts.learnerId, learner.id));
+  const expectedStudySeconds = beforePassing.reduce((seconds, attempt) => seconds + attempt.activeSeconds, 0) + 15;
+  await db.update(lessonStarts).set({ startedAt: new Date(Date.now() - 60_000) })
+    .where(and(eq(lessonStarts.learnerId, learner.id), eq(lessonStarts.lessonId, lessonId)));
+  const passingResponses = await Promise.all(Array.from({ length: 4 }, () =>
+    post(lessonId, { answers: correct, activeSeconds: 15 })));
+  const successes = await Promise.all(passingResponses.map(async response => {
+    assert.equal(response.status, 200);
+    return CompleteLessonResponse.parse(await response.json());
+  }));
+  assert.ok(successes.every(success => success.passed && success.score === 100));
+  assert.equal(successes.reduce((xp, success) => xp + success.xpEarned, 0), 30,
+    "simultaneous passing submissions award exactly 30 XP in total");
+  assert.equal(successes.filter(success => success.xpEarned === 30).length, 1,
+    "only one response awards completion credit");
   await counts(1, 2, wordCount);
+  const savedReviews = await db.select().from(reviews).where(eq(reviews.learnerId, learner.id));
+  assert.deepEqual(new Set(savedReviews.map(review => review.wordId)),
+    new Set((source.content as LessonContent).words.map(word => word.id)),
+    "each lesson word has exactly one review");
+  const assertStudyTime = async () => {
+    const savedAttempts = await db.select().from(attempts).where(eq(attempts.learnerId, learner.id));
+    assert.equal(savedAttempts.reduce((seconds, attempt) => seconds + attempt.activeSeconds, 0), expectedStudySeconds,
+      "concurrent submissions and immediate retries count the study interval once");
+    assert.equal(GetProgressResponse.parse(await get("/progress/summary")).totalMinutes, Math.round(expectedStudySeconds / 6) / 10,
+      "reported study time matches the single saved interval");
+  };
+  await assertStudyTime();
   assert.equal(GetLessonResponse.parse(await get(`/lessons/${lessonId}`)).completed, true);
   const refreshed = GetCoursesResponse.parse(await get("/courses"));
   assert.equal(refreshed.flatMap(c => c.lessons).find(l => l.id === lessonId)!.completed, true);
@@ -118,6 +141,7 @@ test("real completion routes: browsing, failure, retry, reload and one-time cred
   assert.ok(original);
   assert.equal(CompleteLessonResponse.parse(await (await post(lessonId, { answers: correct, activeSeconds: 15 })).json()).xpEarned, 0);
   await counts(1, 2, wordCount);
+  await assertStudyTime();
   // Also exercise a genuinely new passing attempt, not only the 10s duplicate
   // guard. Age only our test learner's attempt (no sleep and no real data).
   await db.update(attempts).set({ createdAt: new Date(Date.now() - 20_000) })
