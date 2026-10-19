@@ -362,13 +362,45 @@ export const ClearChatResponse = zod.object({
 })
 
 
+export const getBillingStatusResponseTrialDaysRemainingMin = 0;
+export const getBillingStatusResponseTrialDaysRemainingMax = 2;
+
+export const getBillingStatusResponseReminderOneDaysRemainingMin = 0;
+export const getBillingStatusResponseReminderOneDaysRemainingMax = 4;
+
+
+
 export const GetBillingStatusResponse = zod.object({
   "plan": zod.string(),
   "configured": zod.boolean(),
   "message": zod.string(),
   "dailyAiLimit": zod.number().int().optional(),
   "accessExpiresAt": zod.string().nullish(),
-  "source": zod.enum(['none', 'admin_grant']).optional()
+  "source": zod.enum(['none', 'admin_grant']).optional(),
+  "isGuest": zod.boolean(),
+  "enforcementEnabled": zod.boolean(),
+  "fullCourseAccess": zod.boolean(),
+  "trial": zod.object({
+  "state": zod.enum(['active', 'expired']),
+  "startedAt": zod.coerce.date(),
+  "endsAt": zod.coerce.date(),
+  "daysRemaining": zod.number().int().min(getBillingStatusResponseTrialDaysRemainingMin).max(getBillingStatusResponseTrialDaysRemainingMax)
+}),
+  "offers": zod.array(zod.object({
+  "id": zod.enum(['monthly', 'six_month']),
+  "priceUsd": zod.number().int(),
+  "durationMonths": zod.number().int(),
+  "billing": zod.enum(['monthly', 'one_time']),
+  "sixMonthTotalUsd": zod.number().int(),
+  "savingsUsd": zod.number().int(),
+  "savingsPercent": zod.number()
+})),
+  "reminder": zod.union([zod.object({
+  "kind": zod.enum(['complimentary_expiring', 'renewal_due', 'course_expiring']),
+  "expiresAt": zod.coerce.date(),
+  "daysRemaining": zod.number().int().min(getBillingStatusResponseReminderOneDaysRemainingMin).max(getBillingStatusResponseReminderOneDaysRemainingMax),
+  "delivery": zod.enum(['in_app'])
+}),zod.null()])
 })
 
 

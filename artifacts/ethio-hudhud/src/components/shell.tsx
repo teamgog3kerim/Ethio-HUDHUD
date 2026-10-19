@@ -9,6 +9,7 @@ import {
 import {
   getGetProfileQueryKey, useGetAdminAccess, useGetProfile, useSaveProfile, useGetPublicSettings,
 } from '@workspace/api-client-react';
+import { BillingNotice } from '@/components/billing-notice';
 import { PlatformNotices } from '@/components/admin/notices';
 import { SignOutAction } from '@/components/sign-out';
 import { Logo } from '@/components/logo';
@@ -149,7 +150,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </header>
 
       <main className="mx-auto w-full max-w-5xl px-4 pb-28 pt-6 sm:px-8 lg:ms-64 lg:w-[calc(100%_-_16rem)] lg:max-w-none lg:px-12 lg:pb-12 lg:pt-10">
-        <div className="mx-auto max-w-5xl"><PlatformNotices />{children}</div>
+        <div className="mx-auto max-w-5xl"><PlatformNotices /><BillingNotice />{children}</div>
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-7 border-t border-border bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">

@@ -23,7 +23,7 @@ function Doc({ title, titleEn, secs, children }: { title: string; titleEn: strin
 
 export function Privacy() {
   return <Doc title="سياسة الخصوصية" titleEn="Privacy Policy" secs={[
-    ['ما نخزّنه', 'What we store', 'ملفك التعليمي: الاسم، المستوى، الأهداف، التقدّم، المراجعات، وسجل المعلّم إن فعّلته. للضيوف نستخدم ملف تعريف ارتباط آمن.', 'Your learning profile: name, level, goals, progress, reviews, and tutor chat if enabled. Guests use a secure cookie.'],
+    ['ما نخزّنه', 'What we store', 'ملفك التعليمي: الاسم، المستوى، الأهداف، التقدّم، المراجعات، وسجل المعلّم إن فعّلته، ووقت بدء تجربة اليومين. للضيوف نستخدم ملف تعريف ارتباط آمن. عند تسجيل الدخول من المتصفح نفسه يبقى وقت بدء التجربة الأقدم لمنع إعادة تشغيلها؛ لا تنتقل الدروس أو المفضلة أو المحادثات تلقائيًا.', 'Your learning profile: name, level, goals, progress, reviews, tutor chat if enabled, and the start of your two-day trial. Guests use a secure cookie. Signing in from the same browser preserves the earlier trial start so it does not restart; lessons, favourites, and conversations do not transfer automatically.'],
     ['المعلّم الآلي', 'AI tutor', 'تُرسل رسائلك إلى نموذج ذكاء اصطناعي للرد. لا تكتب معلومات حساسة.', 'Your messages are sent to an AI model to reply. Do not write sensitive information.'],
     ['التحكم في بياناتك', 'Your control', 'يمكنك من صفحة الحساب تصدير بياناتك أو حذفها، وإيقاف حفظ سجل المحادثة.', 'In Account you can export or delete your data and switch off chat retention.'],
     ['حدود الحذف', 'Deletion scope', 'إجراء الحذف يزيل بيانات التعلّم فقط. يبقى حساب تسجيل الدخول منفصلاً. يُحتفظ بعدّادات استخدام لا تحتوي نصوص المحادثات عند إيقاف حفظ السجل.', 'Deletion removes learning data only; the sign-in identity remains separate. Content-free usage counters remain when chat retention is disabled.'],
@@ -34,6 +34,6 @@ export function Terms() {
   return <Doc title="شروط الاستخدام" titleEn="Terms of Use" secs={[
     ['طبيعة المحتوى', 'Nature of content', 'المحتوى تجريبي وينتظر مراجعة مؤهلة وقد يحتوي أخطاء. الصوت غير متوفر بعد.', 'Content is pilot material awaiting qualified review and may contain errors. Audio is not yet available.'],
     ['لا ضمان', 'No guarantee', 'الخدمة تُقدَّم كما هي دون وعد بنتائج أو إتقان.', 'The service is provided as is, with no promise of results or fluency.'],
-    ['الدفع', 'Payments', 'لا توجد اشتراكات مدفوعة حاليًا.', 'There are no paid subscriptions at present.'],
+    ['الدفع', 'Payments', 'خلال المرحلة التجريبية لا توجد رسوم ولا دفع، وكل التعلّم مفتوح. الأسعار المقترحة: 29 دولارًا شهريًا (174 دولارًا لستة أشهر) أو 149 دولارًا مرة واحدة لوصول ستة أشهر. تجربة مجانية مدة 48 ساعة. مزوّد الدفع Polar قيد الانتظار ولم يُفعَّل الدفع. قد تُضاف لاحقًا تنبيهات داخل التطبيق قبل 4 أيام من الانتهاء. لا نَعِد بتجديد تلقائي أو استرداد لم يُقرَّر بعد.', 'During the pilot there are no charges or payments and all learning is open. Proposed prices: $29 per month ($174 over six months) or $149 once for six months of access. A free 48-hour trial applies. The Polar payment provider is pending and checkout is not enabled. In-app reminders may be added about 4 days before expiry. We do not promise automatic billing or refunds that are not yet established.'],
   ]} />;
 }

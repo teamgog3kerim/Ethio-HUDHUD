@@ -5,6 +5,9 @@
  * OpenAPI spec version: 1.0.0
  */
 
+export * from './accessReminder';
+export * from './accessReminderDelivery';
+export * from './accessReminderKind';
 export * from './activity';
 export * from './adminAccess';
 export * from './adminAccessGrant';
@@ -33,6 +36,11 @@ export * from './chatInput';
 export * from './chatMessage';
 export * from './chatMessageRole';
 export * from './course';
+export * from './courseOffer';
+export * from './courseOfferBilling';
+export * from './courseOfferId';
+export * from './courseTrial';
+export * from './courseTrialState';
 export * from './dialogueTurn';
 export * from './exercise';
 export * from './exportAccount200';

@@ -406,6 +406,78 @@ export const BillingStatusSource = {
   admin_grant: 'admin_grant',
 } as const;
 
+export type CourseTrialState = typeof CourseTrialState[keyof typeof CourseTrialState];
+
+
+export const CourseTrialState = {
+  active: 'active',
+  expired: 'expired',
+} as const;
+
+export interface CourseTrial {
+  state: CourseTrialState;
+  startedAt: string;
+  endsAt: string;
+  /**
+     * @minimum 0
+     * @maximum 2
+     */
+  daysRemaining: number;
+}
+
+export type CourseOfferId = typeof CourseOfferId[keyof typeof CourseOfferId];
+
+
+export const CourseOfferId = {
+  monthly: 'monthly',
+  six_month: 'six_month',
+} as const;
+
+export type CourseOfferBilling = typeof CourseOfferBilling[keyof typeof CourseOfferBilling];
+
+
+export const CourseOfferBilling = {
+  monthly: 'monthly',
+  one_time: 'one_time',
+} as const;
+
+export interface CourseOffer {
+  id: CourseOfferId;
+  priceUsd: number;
+  durationMonths: number;
+  billing: CourseOfferBilling;
+  sixMonthTotalUsd: number;
+  savingsUsd: number;
+  savingsPercent: number;
+}
+
+export type AccessReminderKind = typeof AccessReminderKind[keyof typeof AccessReminderKind];
+
+
+export const AccessReminderKind = {
+  complimentary_expiring: 'complimentary_expiring',
+  renewal_due: 'renewal_due',
+  course_expiring: 'course_expiring',
+} as const;
+
+export type AccessReminderDelivery = typeof AccessReminderDelivery[keyof typeof AccessReminderDelivery];
+
+
+export const AccessReminderDelivery = {
+  in_app: 'in_app',
+} as const;
+
+export interface AccessReminder {
+  kind: AccessReminderKind;
+  expiresAt: string;
+  /**
+     * @minimum 0
+     * @maximum 4
+     */
+  daysRemaining: number;
+  delivery: AccessReminderDelivery;
+}
+
 export interface BillingStatus {
   plan: string;
   configured: boolean;
@@ -414,6 +486,12 @@ export interface BillingStatus {
   /** @nullable */
   accessExpiresAt?: string | null;
   source?: BillingStatusSource;
+  isGuest: boolean;
+  enforcementEnabled: boolean;
+  fullCourseAccess: boolean;
+  trial: CourseTrial;
+  offers: CourseOffer[];
+  reminder: AccessReminder | null;
 }
 
 export type ExportAccount200 = { [key: string]: unknown };

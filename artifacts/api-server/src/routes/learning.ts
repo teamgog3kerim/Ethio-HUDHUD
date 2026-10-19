@@ -11,9 +11,9 @@ import { getLearner, profileOf } from "../lib/learner";
 import { getCatalog, getWordQueue, progressSummary } from "../lib/learning";
 import { gradeAnswers, nextReviewInterval, boundedActiveSeconds } from "../lib/scoring";
 import { getAuth } from "@clerk/express";
-import { getAppSettings, getAccessState } from "../lib/app-settings";
 import { arabicAnswerKey } from "@workspace/db/pronunciation";
 import { buildStudyPlan } from "../lib/study-plan";
+import { billingStatus } from "../lib/billing-status";
 
 const router: IRouter = Router();
 router.get("/favourites", async (req, res) => {
@@ -136,11 +136,9 @@ router.post("/vocabulary/:id/review", async (req, res) => {
   res.json(ReviewVocabularyResponse.parse({ ...word, interval, due: false }));
 });
 router.get("/billing/status", async (req, res) => {
-  const settings = await getAppSettings();
-  const access = await getAccessState(getAuth(req).userId, settings);
-  res.json(GetBillingStatusResponse.parse({ ...access, configured: false, message: access.plan === "complimentary"
-    ? "لديك وصول مجاني مؤقت من الإدارة، وليس اشتراكاً مدفوعاً. لا يتم تحصيل أي رسوم."
-    : "الاشتراك المدفوع غير مفعّل. لا يتم تحصيل أي رسوم. يلزم إعداد Polar والتحقق من الدفع قبل تفعيل Premium." }));
+  res.setHeader("Cache-Control", "private, no-store");
+  const learner = await getLearner(req, res);
+  res.json(GetBillingStatusResponse.parse(await billingStatus(learner.id, getAuth(req).userId, req.signedCookies?.hudhud_guest)));
 });
 router.get("/account/export", async (req, res) => {
   const learner = await getLearner(req, res);

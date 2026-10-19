@@ -639,7 +639,7 @@ components:
         createdAt: { type: string }
     BillingStatus:
       type: object
-      required: [plan, configured, message]
+      required: [plan, configured, message, trial, offers, enforcementEnabled, fullCourseAccess, reminder, isGuest]
       properties:
         plan: { type: string }
         configured: { type: boolean }
@@ -647,3 +647,41 @@ components:
         dailyAiLimit: { type: integer }
         accessExpiresAt: { type: [string, "null"] }
         source: { type: string, enum: [none, admin_grant] }
+        isGuest: { type: boolean }
+        enforcementEnabled: { type: boolean }
+        fullCourseAccess: { type: boolean }
+        trial: { $ref: "#/components/schemas/CourseTrial" }
+        offers:
+          type: array
+          items: { $ref: "#/components/schemas/CourseOffer" }
+        reminder:
+          oneOf:
+            - { $ref: "#/components/schemas/AccessReminder" }
+            - { type: "null" }
+    CourseTrial:
+      type: object
+      required: [state, startedAt, endsAt, daysRemaining]
+      properties:
+        state: { type: string, enum: [active, expired] }
+        startedAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        daysRemaining: { type: integer, minimum: 0, maximum: 2 }
+    CourseOffer:
+      type: object
+      required: [id, priceUsd, durationMonths, billing, sixMonthTotalUsd, savingsUsd, savingsPercent]
+      properties:
+        id: { type: string, enum: [monthly, six_month] }
+        priceUsd: { type: integer }
+        durationMonths: { type: integer }
+        billing: { type: string, enum: [monthly, one_time] }
+        sixMonthTotalUsd: { type: integer }
+        savingsUsd: { type: integer }
+        savingsPercent: { type: number }
+    AccessReminder:
+      type: object
+      required: [kind, expiresAt, daysRemaining, delivery]
+      properties:
+        kind: { type: string, enum: [complimentary_expiring, renewal_due, course_expiring] }
+        expiresAt: { type: string, format: date-time }
+        daysRemaining: { type: integer, minimum: 0, maximum: 4 }
+        delivery: { type: string, enum: [in_app] }

@@ -4,7 +4,10 @@
  * Api
  * OpenAPI spec version: 1.0.0
  */
+import type { AccessReminder } from './accessReminder';
 import type { BillingStatusSource } from './billingStatusSource';
+import type { CourseOffer } from './courseOffer';
+import type { CourseTrial } from './courseTrial';
 
 export interface BillingStatus {
   plan: string;
@@ -14,4 +17,10 @@ export interface BillingStatus {
   /** @nullable */
   accessExpiresAt?: string | null;
   source?: BillingStatusSource;
+  isGuest: boolean;
+  enforcementEnabled: boolean;
+  fullCourseAccess: boolean;
+  trial: CourseTrial;
+  offers: CourseOffer[];
+  reminder: AccessReminder | null;
 }
