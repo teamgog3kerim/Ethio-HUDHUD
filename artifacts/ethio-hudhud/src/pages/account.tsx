@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useApp } from '@/lib/app';
 import { toInput } from '@/lib/options';
 import { cn } from '@/lib/utils';
+import { AnalyticsPreference } from '@/components/analytics-preference';
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
@@ -65,6 +66,7 @@ export default function Account() {
   return (
     <Shell>
       <PageHead eyebrow={q.data?.isGuest ? t('جلسة ضيف', 'Guest session') : t('حسابي', 'My account')} title={t('الإعدادات', 'Settings')} />
+      <AnalyticsPreference />
       {q.isLoading && <Skeleton className="h-96" />}
       {q.isError && <ErrorState onRetry={() => q.refetch()} />}
       {f && q.data && (

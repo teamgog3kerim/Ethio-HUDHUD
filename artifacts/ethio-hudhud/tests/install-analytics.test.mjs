@@ -19,6 +19,11 @@ function load(code, globals, imports = {}) {
 }
 
 function analytics(window) {
+  if (window) {
+    window.addEventListener ??= () => {};
+    window.dispatchEvent ??= () => {};
+    vm.runInNewContext(source('../public/analytics-privacy.js'), { window, Event });
+  }
   return load(source('../src/lib/analytics.ts'), { window }).trackEvent;
 }
 

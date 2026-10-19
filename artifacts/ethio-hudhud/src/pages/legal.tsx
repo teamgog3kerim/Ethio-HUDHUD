@@ -1,9 +1,11 @@
 import { PublicFrame } from '@/components/shell';
 import { useApp } from '@/lib/app';
+import { AnalyticsPreference } from '@/components/analytics-preference';
+import type { ReactNode } from 'react';
 
 type Sec = [string, string, string, string];
 
-function Doc({ title, titleEn, secs }: { title: string; titleEn: string; secs: Sec[] }) {
+function Doc({ title, titleEn, secs, children }: { title: string; titleEn: string; secs: Sec[]; children?: ReactNode }) {
   const { t } = useApp();
   return (
     <PublicFrame>
@@ -14,6 +16,7 @@ function Doc({ title, titleEn, secs }: { title: string; titleEn: string; secs: S
           <section key={i}><h2 className="font-display mb-1 text-lg font-bold">{t(s[0], s[1])}</h2><p className="leading-relaxed text-muted-foreground">{t(s[2], s[3])}</p></section>
         ))}
       </div>
+      {children}
     </PublicFrame>
   );
 }
@@ -24,7 +27,7 @@ export function Privacy() {
     ['المعلّم الآلي', 'AI tutor', 'تُرسل رسائلك إلى نموذج ذكاء اصطناعي للرد. لا تكتب معلومات حساسة.', 'Your messages are sent to an AI model to reply. Do not write sensitive information.'],
     ['التحكم في بياناتك', 'Your control', 'يمكنك من صفحة الحساب تصدير بياناتك أو حذفها، وإيقاف حفظ سجل المحادثة.', 'In Account you can export or delete your data and switch off chat retention.'],
     ['حدود الحذف', 'Deletion scope', 'إجراء الحذف يزيل بيانات التعلّم فقط. يبقى حساب تسجيل الدخول منفصلاً. يُحتفظ بعدّادات استخدام لا تحتوي نصوص المحادثات عند إيقاف حفظ السجل.', 'Deletion removes learning data only; the sign-in identity remains separate. Content-free usage counters remain when chat retention is disabled.'],
-  ]} />;
+  ]}><AnalyticsPreference /></Doc>;
 }
 
 export function Terms() {

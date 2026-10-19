@@ -1,17 +1,38 @@
 type AnalyticsData = Record<string, string | number | boolean>;
 
+export type AnalyticsPrivacyState = {
+  enabled: boolean;
+  reason: 'browser' | 'tracker' | 'preference' | 'storage' | null;
+};
+
 declare global {
   interface Window {
+    hudhudAnalyticsPrivacy?: {
+      getState(): AnalyticsPrivacyState;
+      setEnabled(enabled: boolean): boolean;
+    };
     umami?: {
       track(name: string, data?: AnalyticsData): void | Promise<unknown>;
     };
   }
 }
 
+export function getAnalyticsPrivacy(): AnalyticsPrivacyState {
+  if (typeof window === 'undefined' || !window.hudhudAnalyticsPrivacy) {
+    return { enabled: false, reason: 'storage' };
+  }
+  return window.hudhudAnalyticsPrivacy.getState();
+}
+
+export function setAnalyticsEnabled(enabled: boolean): boolean {
+  return window.hudhudAnalyticsPrivacy?.setEnabled(enabled) ?? false;
+}
+
 /** Use only the platform-injected tracker; never queue events before consent. */
 export function trackEvent(name: string, data?: AnalyticsData): void {
   if (typeof window === 'undefined') return;
   try {
+    if (!getAnalyticsPrivacy().enabled) return;
     const privacy = window.navigator as Navigator & { globalPrivacyControl?: boolean };
     if (privacy.doNotTrack === '1' || privacy.globalPrivacyControl === true) return;
     if (window.localStorage.getItem('umami.disabled')) return;
