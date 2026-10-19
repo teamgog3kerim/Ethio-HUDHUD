@@ -3,8 +3,10 @@ import { buildLearningPath, learningStages, useGetCourses } from "@workspace/api
 import { Action, Card, Failure, Loading, Screen, Txt, styles } from "@/components/LearningUI";
 import { useColors } from "@/hooks/useColors";
 import { useState } from "react";
+import { FavouriteButton, SavedItems } from "@/components/Favourites";
 export default function Learn() {
   const query = useGetCourses();
+  const [savedView, setSavedView] = useState(false);
   const c = useColors();
   const [kind, setKind] = useState<"all" | "lessons" | "conversations">("all");
   const [month, setMonth] = useState<number | null>(null);
@@ -13,7 +15,9 @@ export default function Learn() {
   const current = path?.months.find(m => m.course.month === month) ?? suggested ?? path?.months[0];
   const open = (id: string) => router.push({ pathname: "/lesson/[id]", params: { id } });
   return <Screen title="برنامج الأمهرية في ستة أشهر" subtitle="٢٤ أسبوعاً مقترحاً، بوتيرتك أنت. المراحل دراسية وليست شهادة طلاقة.">
-    {query.isLoading ? <Loading /> : query.isError ? <Failure retry={query.refetch} /> : path && <>
+    <Action title="البرنامج" secondary={savedView} onPress={() => setSavedView(false)} />
+    <Action title="المحفوظات" icon="bookmark" secondary={!savedView} onPress={() => setSavedView(true)} />
+    {savedView ? <SavedItems /> : query.isLoading ? <Loading /> : query.isError ? <Failure retry={query.refetch} /> : path && <>
       <Card>
         <Txt style={styles.subheading}>تقدمك في البرنامج</Txt>
         <Txt>{path.completed} / {path.total} مكتمل · {path.percent}%</Txt>
@@ -35,7 +39,7 @@ export default function Learn() {
         {current.weeks.map(week => {
           const lessons = week.lessons.filter(l => kind === "all" || (kind === "conversations" ? !!l.dialogue?.length : !l.dialogue?.length));
           return <Card key={week.number}><Txt style={{ color: c.primary }}>الأسبوع المقترح {week.number} / 24</Txt>
-            {lessons.length ? lessons.map(l => <Action key={l.id} title={`${l.completed ? "مكتمل · مراجعة: " : ""}${l.titleAr}`} onPress={() => open(l.id)} secondary={l.completed} icon={l.completed ? "check" : l.dialogue?.length ? "message-circle" : "arrow-left"} />) : <Txt>لا مواد من هذا النوع في هذا الأسبوع؛ جرّب الكل.</Txt>}
+            {lessons.length ? lessons.map(l => <Card key={l.id}><Action title={`${l.completed ? "مكتمل · مراجعة: " : ""}${l.titleAr}`} onPress={() => open(l.id)} secondary={l.completed} icon={l.completed ? "check" : l.dialogue?.length ? "message-circle" : "arrow-left"} /><FavouriteButton id={l.id} /></Card>) : <Txt>لا مواد من هذا النوع في هذا الأسبوع؛ جرّب الكل.</Txt>}
           </Card>;
         })}
       </Card>}

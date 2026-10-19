@@ -45,6 +45,35 @@ paths:
           content:
             application/json:
               schema: { type: array, items: { $ref: "#/components/schemas/Course" } }
+  /favourites:
+    get:
+      operationId: getFavourites
+      tags: [Learning]
+      description: Active saved lessons for the current account or signed guest session only.
+      responses:
+        "200":
+          description: Saved lessons and conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Lesson" }
+  /favourites/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, minLength: 1 } }
+    put:
+      operationId: saveFavourite
+      tags: [Learning]
+      description: Idempotently save an active lesson under the server-resolved learner identity.
+      responses:
+        "204": { description: Saved }
+        "404": { description: Lesson unavailable }
+    delete:
+      operationId: removeFavourite
+      tags: [Learning]
+      description: Idempotently remove this learner's save, including for an archived lesson.
+      responses:
+        "204": { description: Removed }
   /lessons/{id}:
     get:
       operationId: getLesson

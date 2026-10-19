@@ -6,6 +6,7 @@ import { Am, Card, Empty, ErrorState, PageHead, PilotNote, ProgressBar, Skeleton
 import { Shell } from '@/components/shell';
 import { useApp } from '@/lib/app';
 import { cn } from '@/lib/utils';
+import { FavouriteButton, SavedItems } from '@/components/favourites';
 
 type View = 'all' | 'courses' | 'conversations';
 
@@ -13,6 +14,7 @@ export default function Learn() {
   const { t, lang } = useApp();
   const ar = lang === 'ar';
   const q = useGetCourses();
+  const [savedView, setSavedView] = useState(() => new URLSearchParams(window.location.search).get('view') === 'saved');
   const [sel, setSel] = useState<number | null>(() => {
     const month = Number(new URLSearchParams(window.location.search).get('month'));
     return month >= 1 && month <= 6 && Number.isInteger(month) ? month : null;
@@ -36,6 +38,11 @@ export default function Learn() {
     <Shell>
       <PageHead eyebrow={t('برنامج ستة أشهر', 'Six-month programme')} title={t('رحلتك في الأمهرية', 'Your Amharic path')}
         sub={t('أربعة وعشرون أسبوعًا مقترحًا، بوتيرتك أنت: ثلاث مراحل، ستة أشهر، ودروس ومحادثات. المرحلة المتقدمة دراسة داخلية وليست شهادة طلاقة.', 'Twenty-four suggested weeks at your own pace: three stages, six months, lessons and conversations. The advanced stage is internal study, not certified fluency.')} />
+      <div className="mb-4 flex gap-2" role="group" aria-label={t('عرض المواد', 'Browse materials')}>
+        <button className={btnClass(savedView ? 'outline' : 'primary')} aria-pressed={!savedView} onClick={() => setSavedView(false)}>{t('البرنامج', 'Programme')}</button>
+        <button className={btnClass(savedView ? 'primary' : 'outline')} aria-pressed={savedView} onClick={() => setSavedView(true)} data-testid="button-saved-items">{t('المحفوظات', 'Saved items')}</button>
+      </div>
+      {savedView ? <SavedItems /> : <>
       {q.isLoading && <div className="grid gap-3 md:grid-cols-[1fr_1.6fr]"><Skeleton className="h-80" /><Skeleton className="h-80" /></div>}
       {q.isError && <ErrorState onRetry={() => q.refetch()} what={t('المقررات', 'courses')} />}
       {path && months.length === 0 && <Empty icon={<BookOpen />} title={t('لا مقررات بعد', 'No courses yet')} />}
@@ -115,8 +122,8 @@ export default function Learn() {
                         {items.map(l => {
                           const conv = isConv(l);
                           return (
-                            <li key={l.id}>
-                              <Link href={`/lesson/${l.id}`} data-testid={conv ? `conversation-link-${l.id}` : `link-lesson-${l.id}`} className="lift flex items-center gap-3 rounded-2xl border border-border bg-background p-4">
+                            <li key={l.id} className="flex items-center gap-2">
+                              <Link href={`/lesson/${l.id}`} data-testid={conv ? `conversation-link-${l.id}` : `link-lesson-${l.id}`} className="lift flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-border bg-background p-4">
                                 {l.completed ? <CheckCircle2 className="pop size-6 shrink-0 text-primary" /> : <Circle className="size-6 shrink-0 text-muted-foreground" />}
                                 <div className="min-w-0 flex-1">
                                   <p className="font-semibold">{title(l)}</p>
@@ -125,6 +132,7 @@ export default function Learn() {
                                 </div>
                                 <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock className="size-3.5" />{l.minutes}{t(' د', 'm')}</span>
                               </Link>
+                              <FavouriteButton id={l.id} />
                             </li>
                           );
                         })}
@@ -140,6 +148,7 @@ export default function Learn() {
           </div>
         </>
       )}
+      </>}
       <PilotNote className="mt-6" />
     </Shell>
   );

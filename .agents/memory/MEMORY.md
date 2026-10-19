@@ -3,3 +3,4 @@
 - [Web-first distribution](web-distribution.md) — domain-hosted web app with Android/iOS installation; the same mobile-friendly web app serves learners and admins.
 - [Deleted identity tokens](deleted-session-tokens.md) — provider deletion does not instantly invalidate old JWTs; tombstones must block data recreation.
 - [Shared React contexts](shared-react-contexts.md) — pnpm peer splits can duplicate context libraries in production even when preview works; verify bundle deduplication.
+- [Favourite identity boundaries](favourite-identity-boundaries.md) — guest saves stay separate from account saves; any future transfer needs explicit learner consent.

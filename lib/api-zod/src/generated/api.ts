@@ -135,6 +135,72 @@ export const GetCoursesResponseItem = zod.object({
 export const GetCoursesResponse = zod.array(GetCoursesResponseItem)
 
 
+/**
+ * Active saved lessons for the current account or signed guest session only.
+ */
+export const GetFavouritesResponseItem = zod.object({
+  "id": zod.string(),
+  "courseId": zod.string(),
+  "titleAr": zod.string(),
+  "titleEn": zod.string(),
+  "titleAm": zod.string(),
+  "dialogue": zod.array(zod.object({
+  "speakerAr": zod.string(),
+  "speakerEn": zod.string(),
+  "amharic": zod.string(),
+  "arabic": zod.string(),
+  "transliteration": zod.string().describe('Approximate pronunciation in Arabic script')
+})).optional(),
+  "minutes": zod.number().int(),
+  "objective": zod.string(),
+  "explanation": zod.string(),
+  "words": zod.array(zod.object({
+  "id": zod.string(),
+  "amharic": zod.string(),
+  "arabic": zod.string(),
+  "english": zod.string(),
+  "transliteration": zod.string(),
+  "due": zod.boolean(),
+  "interval": zod.number().int()
+})),
+  "exercises": zod.array(zod.object({
+  "id": zod.string(),
+  "prompt": zod.string(),
+  "options": zod.array(zod.string()),
+  "type": zod.string()
+})),
+  "reviewStatus": zod.string(),
+  "completed": zod.boolean()
+})
+export const GetFavouritesResponse = zod.array(GetFavouritesResponseItem)
+
+
+/**
+ * Idempotently save an active lesson under the server-resolved learner identity.
+ */
+
+
+
+export const SaveFavouriteParams = zod.object({
+  "id": zod.coerce.string().min(1)
+})
+
+export const SaveFavouriteResponse = zod.void()
+
+
+/**
+ * Idempotently remove this learner's save, including for an archived lesson.
+ */
+
+
+
+export const RemoveFavouriteParams = zod.object({
+  "id": zod.coerce.string().min(1)
+})
+
+export const RemoveFavouriteResponse = zod.void()
+
+
 export const GetLessonParams = zod.object({
   "id": zod.coerce.string()
 })

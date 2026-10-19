@@ -39,6 +39,12 @@ export const chatMessages = pgTable("ai_messages", {
 }, t => [index("messages_learner_idx").on(t.learnerId, t.createdAt)]);
 export const insertAttemptSchema = createInsertSchema(attempts);
 
+export const favourites = pgTable("lesson_favourites", {
+  learnerId: uuid("learner_id").notNull().references(() => learners.id, { onDelete: "cascade" }),
+  lessonId: text("lesson_id").notNull().references(() => lessons.id, { onDelete: "cascade" }),
+  savedAt: timestamp("saved_at", { withTimezone: true }).defaultNow().notNull(),
+}, t => [uniqueIndex("favourite_unique").on(t.learnerId, t.lessonId)]);
+
 export const aiUsage = pgTable("ai_usage", {
   id: uuid("id").defaultRandom().primaryKey(),
   learnerId: uuid("learner_id").notNull().references(() => learners.id, { onDelete: "cascade" }),

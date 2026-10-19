@@ -3,7 +3,7 @@ import { Link, useParams } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
 import { Check, Eye, EyeOff, ChevronLeft, ChevronRight, RotateCw, Timer, X } from 'lucide-react';
 import {
-  getGetCoursesQueryKey, getGetLessonQueryKey, getGetProgressQueryKey, getGetStudyPlanQueryKey,
+  getGetCoursesQueryKey, getGetLessonQueryKey, getGetProgressQueryKey, getGetStudyPlanQueryKey, getGetFavouritesQueryKey,
   getGetVocabularyQueryKey, getLessonPosition, useCompleteLesson, useGetCourses, useGetLesson, type LessonResult,
 } from '@workspace/api-client-react';
 import { Am, Btn, Card, ErrorState, LinkBtn, PilotNote, ProgressBar, Skeleton } from '@/components/bits';
@@ -14,6 +14,7 @@ import { isEthiopic } from '@/lib/options';
 import { cn } from '@/lib/utils';
 import { PronunciationNote } from '@/components/pronunciation-note';
 import { ConversationCard } from '@/components/conversation-card';
+import { FavouriteButton } from '@/components/favourites';
 
 type Phase = 'vocab' | 'quiz' | 'result';
 
@@ -49,6 +50,7 @@ function LessonView({ id }: { id: string }) {
         qc.invalidateQueries({ queryKey: getGetLessonQueryKey(id) });
         qc.invalidateQueries({ queryKey: getGetVocabularyQueryKey() });
         qc.invalidateQueries({ queryKey: getGetStudyPlanQueryKey() });
+        qc.invalidateQueries({ queryKey: getGetFavouritesQueryKey() });
       },
     },
   });
@@ -95,6 +97,7 @@ function LessonView({ id }: { id: string }) {
               <Timer className="size-4 text-primary" />{mm}:{ss}
             </span>
           </div>
+          <div className="mb-3"><FavouriteButton id={id} /></div>
           {pos && (
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground" data-testid="lesson-position">
               <span data-testid="text-lesson-position">{lang === 'ar' ? pos.stage.titleAr : pos.stage.titleEn} · {t('الشهر', 'Month')} {pos.course.month} · {t('الأسبوع', 'Week')} {pos.week} · {t('الدرس', 'Lesson')} <bdi dir="ltr">{pos.index + 1} / {pos.total}</bdi></span>

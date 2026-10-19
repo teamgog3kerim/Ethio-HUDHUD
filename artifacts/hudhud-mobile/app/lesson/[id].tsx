@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AppState, Pressable, View } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { FavouriteButton } from "@/components/Favourites";
 import { useGetLesson, getGetLessonQueryKey, getLessonPosition, useGetCourses, useCompleteLesson, type LessonResult } from "@workspace/api-client-react";
 import { Action, Card, Failure, Loading, PronunciationNote, Screen, Txt, styles } from "@/components/LearningUI";
 import { useColors } from "@/hooks/useColors";
@@ -37,6 +38,7 @@ function LessonView({ id }: { id: string }) {
   };
   return <Screen title={lesson.data?.titleAr ?? "درسك اليوم"} subtitle={exerciseMode ? "اختبر فهمك" : "اقرأ، تذكّر، ثم جرّب."}>
     {lesson.isLoading ? <Loading /> : lesson.isError ? <Failure retry={lesson.refetch} /> : lesson.data && <View onTouchStart={() => { lastTouch.current = Date.now(); }} style={{ gap: 18 }}>
+      <FavouriteButton id={id} />
       {position && <Card>
         <Txt>{position.stage.titleAr} · الشهر {position.course.month} · الأسبوع {position.week}</Txt>
         <Txt>الدرس {position.index + 1} / {position.total} · {position.completed} مكتمل</Txt>

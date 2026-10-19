@@ -1,11 +1,11 @@
 import { Router, type IRouter } from "express";
-import { db, learners, lessons, completions, attempts, reviews, chatMessages, lessonStarts, type LessonContent } from "@workspace/db";
+import { db, learners, lessons, completions, attempts, reviews, chatMessages, lessonStarts, favourites, type LessonContent } from "@workspace/db";
 import { eq, and, desc, asc } from "drizzle-orm";
 import {
   GetProfileResponse, SaveProfileBody, GetCoursesResponse, GetLessonParams, GetLessonResponse,
   CompleteLessonBody, CompleteLessonParams, CompleteLessonResponse, GetProgressResponse,
   GetStudyPlanResponse, GetVocabularyResponse, ReviewVocabularyBody, ReviewVocabularyParams,
-  ReviewVocabularyResponse, GetBillingStatusResponse,
+  ReviewVocabularyResponse, GetBillingStatusResponse, GetFavouritesResponse, SaveFavouriteParams, RemoveFavouriteParams,
 } from "@workspace/api-zod";
 import { getLearner, profileOf } from "../lib/learner";
 import { getCatalog, getWordQueue, progressSummary } from "../lib/learning";
@@ -16,6 +16,31 @@ import { arabicAnswerKey } from "@workspace/db/pronunciation";
 import { buildStudyPlan } from "../lib/study-plan";
 
 const router: IRouter = Router();
+router.get("/favourites", async (req, res) => {
+  const learner = await getLearner(req, res);
+  const [saved, catalog] = await Promise.all([
+    db.select().from(favourites).where(eq(favourites.learnerId, learner.id)).orderBy(desc(favourites.savedAt)),
+    getCatalog(learner.id),
+  ]);
+  const active = new Map(catalog.flatMap(c => c.lessons).map(l => [l.id, l]));
+  res.json(GetFavouritesResponse.parse(saved.flatMap(s => active.has(s.lessonId) ? [active.get(s.lessonId)!] : [])));
+});
+router.put("/favourites/:id", async (req, res) => {
+  const p = SaveFavouriteParams.safeParse(req.params);
+  if (!p.success) { res.status(400).json({ error: "Invalid lesson" }); return; }
+  const learner = await getLearner(req, res);
+  const [lesson] = await db.select({ id: lessons.id }).from(lessons).where(and(eq(lessons.id, p.data.id), eq(lessons.active, true)));
+  if (!lesson) { res.status(404).json({ error: "الدرس غير متاح." }); return; }
+  await db.insert(favourites).values({ learnerId: learner.id, lessonId: lesson.id }).onConflictDoNothing();
+  res.sendStatus(204);
+});
+router.delete("/favourites/:id", async (req, res) => {
+  const p = RemoveFavouriteParams.safeParse(req.params);
+  if (!p.success) { res.status(400).json({ error: "Invalid lesson" }); return; }
+  const learner = await getLearner(req, res);
+  await db.delete(favourites).where(and(eq(favourites.learnerId, learner.id), eq(favourites.lessonId, p.data.id)));
+  res.sendStatus(204);
+});
 router.get("/profile", async (req, res) => {
   res.json(GetProfileResponse.parse(profileOf(await getLearner(req, res))));
 });
@@ -119,12 +144,15 @@ router.get("/billing/status", async (req, res) => {
 });
 router.get("/account/export", async (req, res) => {
   const learner = await getLearner(req, res);
-  const [history, vocabulary, messages] = await Promise.all([
+  const [history, vocabulary, messages, saved] = await Promise.all([
     db.select().from(attempts).where(eq(attempts.learnerId, learner.id)),
     db.select().from(reviews).where(eq(reviews.learnerId, learner.id)),
     db.select().from(chatMessages).where(eq(chatMessages.learnerId, learner.id)).orderBy(asc(chatMessages.createdAt)),
+    db.select({ lessonId: favourites.lessonId, savedAt: favourites.savedAt }).from(favourites)
+      .innerJoin(lessons, and(eq(favourites.lessonId, lessons.id), eq(lessons.active, true)))
+      .where(eq(favourites.learnerId, learner.id)),
   ]);
-  res.json({ profile: profileOf(learner), progress: await progressSummary(learner.id, learner.preferences.timezone), history, vocabulary, messages });
+  res.json({ profile: profileOf(learner), progress: await progressSummary(learner.id, learner.preferences.timezone), history, vocabulary, messages, favourites: saved });
 });
 router.delete("/account", async (req, res) => {
   const learner = await getLearner(req, res);

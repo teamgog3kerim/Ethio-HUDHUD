@@ -370,6 +370,222 @@ export function useGetCourses<TData = Awaited<ReturnType<typeof getCourses>>, TE
 
 
 
+export const getGetFavouritesUrl = () => {
+
+
+
+
+  return `/api/favourites`
+}
+
+/**
+ * Active saved lessons for the current account or signed guest session only.
+ */
+export const getFavourites = async ( options?: Parameters<typeof customFetch>[1]): Promise<Lesson[]> => {
+
+  return customFetch<Lesson[]>(getGetFavouritesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFavouritesQueryKey = () => {
+    return [
+    `/api/favourites`
+    ] as const;
+    }
+
+
+export const getGetFavouritesQueryOptions = <TData = Awaited<ReturnType<typeof getFavourites>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFavourites>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFavouritesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFavourites>>> = ({ signal }) => getFavourites({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFavourites>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetFavouritesQueryResult = NonNullable<Awaited<ReturnType<typeof getFavourites>>>
+export type GetFavouritesQueryError = ErrorType<unknown>
+
+
+
+export function useGetFavourites<TData = Awaited<ReturnType<typeof getFavourites>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFavourites>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetFavouritesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveFavouriteUrl = (id: string,) => {
+
+
+
+
+  return `/api/favourites/${id}`
+}
+
+/**
+ * Idempotently save an active lesson under the server-resolved learner identity.
+ */
+export const saveFavourite = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getSaveFavouriteUrl(id),
+  {
+    ...options,
+    method: 'PUT'
+
+
+  }
+);}
+
+
+
+
+
+export const getSaveFavouriteMutationKey = () => ['saveFavourite'] as const;
+
+export const getSaveFavouriteMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveFavourite>>, TError,SaveFavouriteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveFavourite>>, TError,SaveFavouriteMutationVariables, TContext> => {
+
+const mutationKey = getSaveFavouriteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveFavourite>>, SaveFavouriteMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  saveFavourite(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveFavouriteMutationResult = NonNullable<Awaited<ReturnType<typeof saveFavourite>>>
+
+    export type SaveFavouriteMutationError = ErrorType<void>
+    export type SaveFavouriteMutationVariables = {id: string}
+
+    export const useSaveFavourite = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveFavourite>>, TError,SaveFavouriteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveFavourite>>,
+        TError,
+        SaveFavouriteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSaveFavouriteMutationOptions(options));
+    }
+
+export const getRemoveFavouriteUrl = (id: string,) => {
+
+
+
+
+  return `/api/favourites/${id}`
+}
+
+/**
+ * Idempotently remove this learner's save, including for an archived lesson.
+ */
+export const removeFavourite = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getRemoveFavouriteUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getRemoveFavouriteMutationKey = () => ['removeFavourite'] as const;
+
+export const getRemoveFavouriteMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeFavourite>>, TError,RemoveFavouriteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeFavourite>>, TError,RemoveFavouriteMutationVariables, TContext> => {
+
+const mutationKey = getRemoveFavouriteMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeFavourite>>, RemoveFavouriteMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  removeFavourite(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveFavouriteMutationResult = NonNullable<Awaited<ReturnType<typeof removeFavourite>>>
+
+    export type RemoveFavouriteMutationError = ErrorType<unknown>
+    export type RemoveFavouriteMutationVariables = {id: string}
+
+    export const useRemoveFavourite = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeFavourite>>, TError,RemoveFavouriteMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof removeFavourite>>,
+        TError,
+        RemoveFavouriteMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRemoveFavouriteMutationOptions(options));
+    }
+
 export const getGetLessonUrl = (id: string,) => {
 
 
