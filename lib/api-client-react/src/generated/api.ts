@@ -40,6 +40,7 @@ import type {
   LessonResult,
   LessonSubmission,
   PlanDay,
+  PlanSelectionInput,
   Profile,
   ProfileInput,
   Progress,
@@ -1338,6 +1339,94 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getClearChatMutationOptions(options));
+    }
+
+export const getSelectCoursePlanUrl = () => {
+
+
+
+
+  return `/api/billing/selection`
+}
+
+/**
+ * @summary Save a signed-in learner's plan preference without activating payment or restarting trial
+ */
+export const selectCoursePlan = async (planSelectionInput: PlanSelectionInput, options?: Parameters<typeof customFetch>[1]): Promise<BillingStatus> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<BillingStatus>(getSelectCoursePlanUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(planSelectionInput)
+  }
+);}
+
+
+
+
+
+export const getSelectCoursePlanMutationKey = () => ['selectCoursePlan'] as const;
+
+export const getSelectCoursePlanMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof selectCoursePlan>>, TError,SelectCoursePlanMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof selectCoursePlan>>, TError,SelectCoursePlanMutationVariables, TContext> => {
+
+const mutationKey = getSelectCoursePlanMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof selectCoursePlan>>, SelectCoursePlanMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  selectCoursePlan(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SelectCoursePlanMutationResult = NonNullable<Awaited<ReturnType<typeof selectCoursePlan>>>
+    export type SelectCoursePlanMutationBody = BodyType<PlanSelectionInput>
+    export type SelectCoursePlanMutationError = ErrorType<void>
+    export type SelectCoursePlanMutationVariables = {data: BodyType<PlanSelectionInput>}
+
+    /**
+ * @summary Save a signed-in learner's plan preference without activating payment or restarting trial
+ */
+export const useSelectCoursePlan = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof selectCoursePlan>>, TError,SelectCoursePlanMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof selectCoursePlan>>,
+        TError,
+        SelectCoursePlanMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSelectCoursePlanMutationOptions(options));
     }
 
 export const getGetBillingStatusUrl = () => {

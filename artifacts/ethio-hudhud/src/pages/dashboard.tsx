@@ -5,6 +5,7 @@ import {
 } from '@workspace/api-client-react';
 import { Card, ErrorState, LinkBtn, PilotNote, ProgressBar, Skeleton, Am } from '@/components/bits';
 import { AiAllowance } from '@/components/admin/notices';
+import { CoursePlans } from '@/components/course-plans';
 import { Shell } from '@/components/shell';
 import { useApp } from '@/lib/app';
 
@@ -125,6 +126,7 @@ export default function Dashboard() {
           <LinkBtn href="/fidel" variant="outline" size="sm" className="mt-3" testId="button-fidel">{t('تعلّم الفيدل', 'Learn Fidel')}</LinkBtn>
         </Card>
       </div>
+      <div className="mt-6"><CoursePlans /></div>
       <AiAllowance />
       <PilotNote className="mt-3" />
       <PilotNote kind="audio" className="mt-3" />

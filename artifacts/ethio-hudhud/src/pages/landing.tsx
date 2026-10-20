@@ -6,6 +6,7 @@ import { Am, ErrorState, LinkBtn, PilotNote, ProgressBar, Skeleton } from '@/com
 import { Brand, Footer, Toggles } from '@/components/shell';
 import { useApp } from '@/lib/app';
 import { FIDEL_FAMILIES, fidelForms } from '@/lib/options';
+import { CoursePlans } from '@/components/course-plans';
 import { PronunciationNote } from '@/components/pronunciation-note';
 
 export default function Landing() {
@@ -38,6 +39,7 @@ export default function Landing() {
             {t('ابدأ من الفيدل — أحرف الأمهرية — ثم انتقل إلى كلمات وجمل تستعملها فعلًا، مع مراجعة متباعدة وخطة لستة أشهر.', 'Start from Fidel, the Amharic script, then move to words and phrases you will actually use — with spaced review and a six-month plan.')}
           </p>
           <div className="rise mt-8 flex flex-wrap gap-3" style={{ animationDelay: '.24s' }}>
+            <a href="#course-plans" className="press inline-flex items-center rounded-2xl border border-white/30 px-5 py-3 font-semibold text-white hover:bg-white/10" data-testid="link-home-plans">{t('عرض الخطط', 'View plans')}</a>
             <LinkBtn href="/dashboard" variant="gold" size="lg" testId="button-guest">
               {t('جرّب كضيف', 'Try as a guest')} <Arrow className="size-5" />
             </LinkBtn>
@@ -122,6 +124,8 @@ export default function Landing() {
           <PilotNote kind="audio" className="mt-3" />
         </div>
       </section>
+
+      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-8"><CoursePlans /></div>
 
       <section className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-8">
         <h2 className="font-display text-3xl font-extrabold">{t('ابدأ بحرف واحد اليوم', 'Begin with one letter today')}</h2>

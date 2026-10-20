@@ -2,6 +2,7 @@ import { db, courseTrials, learners } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { getAppSettings, getAccessState } from "./app-settings";
 import { BILLING_CONFIGURED, COURSE_OFFERS, courseTrial, accessReminder } from "./billing-policy";
+import { selectedCoursePlan } from "./billing-selection";
 
 export async function billingStatus(learnerId: string, userId: string | null, guestId?: unknown) {
   // Carry only the trial clock across guest -> account sign-in. This does not
@@ -19,8 +20,10 @@ export async function billingStatus(learnerId: string, userId: string | null, gu
   const [trial] = await db.select().from(courseTrials).where(eq(courseTrials.learnerId, learnerId));
   if (!trial) throw new Error("Unable to initialize course trial");
   const access = await getAccessState(userId, await getAppSettings());
+  const [learner] = await db.select({ preferences: learners.preferences }).from(learners).where(eq(learners.id, learnerId));
   return {
     ...access,
+    selectedPlan: selectedCoursePlan(learner?.preferences),
     configured: BILLING_CONFIGURED,
     enforcementEnabled: false,
     fullCourseAccess: true,

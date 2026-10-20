@@ -433,6 +433,32 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+export type PlanSelectionInputPlan = typeof PlanSelectionInputPlan[keyof typeof PlanSelectionInputPlan];
+
+
+export const PlanSelectionInputPlan = {
+  trial: 'trial',
+  monthly: 'monthly',
+  six_month: 'six_month',
+} as const;
+
+export interface PlanSelectionInput {
+  plan: PlanSelectionInputPlan;
+}
+
+/**
+ * Learner preference only, never proof of a paid subscription
+ * @nullable
+ */
+export type BillingStatusSelectedPlan = typeof BillingStatusSelectedPlan[keyof typeof BillingStatusSelectedPlan] | null;
+
+
+export const BillingStatusSelectedPlan = {
+  trial: 'trial',
+  monthly: 'monthly',
+  six_month: 'six_month',
+} as const;
+
 export type BillingStatusSource = typeof BillingStatusSource[keyof typeof BillingStatusSource];
 
 
@@ -515,6 +541,11 @@ export interface AccessReminder {
 
 export interface BillingStatus {
   plan: string;
+  /**
+     * Learner preference only, never proof of a paid subscription
+     * @nullable
+     */
+  selectedPlan?: BillingStatusSelectedPlan;
   configured: boolean;
   message: string;
   dailyAiLimit?: number;

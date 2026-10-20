@@ -43,6 +43,16 @@ test("trial persists, signup inherits only the guest clock, and pilot access rem
     assert.equal((await billingStatus(account.id, userId)).trial.startedAt, earlierStart.toISOString());
     const [unchanged] = await db.select().from(learners).where(eq(learners.id, account.id));
     assert.deepEqual(unchanged?.preferences, {});
+    for (const choice of ["monthly", "six_month", "trial"]) {
+      await db.update(learners).set({ preferences: { selectedPlan: choice } }).where(eq(learners.id, account.id));
+      const status = GetBillingStatusResponse.parse(await billingStatus(account.id, userId));
+      assert.equal(status.selectedPlan, choice);
+      assert.equal(status.plan, "free");
+      assert.equal(status.configured, false);
+      assert.equal(status.enforcementEnabled, false);
+      assert.equal(status.trial.startedAt.toISOString(), earlierStart.toISOString());
+      assert.equal((await billingStatus(guest.id, null)).selectedPlan, null);
+    }
   } finally {
     await db.delete(learners).where(inArray(learners.id, created.map(l => l.id)));
   }

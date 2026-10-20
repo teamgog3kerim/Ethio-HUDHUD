@@ -23,6 +23,7 @@ export default function Premium() {
           <Card data-testid="card-billing">
             <dl className="space-y-3 text-sm">
               <div className="flex justify-between"><dt className="text-muted-foreground">{t('الخطة', 'Plan')}</dt><dd className="font-semibold" data-testid="text-plan">{b.plan}</dd></div>
+              {b.selectedPlan && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">{t('اختيارك المحفوظ (ليس اشتراكًا مدفوعًا)', 'Saved choice (not a paid subscription)')}</dt><dd className="font-semibold" data-testid="text-selected-plan">{b.selectedPlan === 'trial' ? t('تجربة مجانية', 'Free trial') : b.selectedPlan === 'monthly' ? t('شهري', 'Monthly') : t('ستة أشهر', 'Six months')}</dd></div>}
               <div className="flex justify-between"><dt className="text-muted-foreground">{t('الدفع', 'Checkout')}</dt><dd className="font-semibold" data-testid="text-configured">{t('غير مفعّل (Polar قيد الانتظار)', 'Not enabled (Polar pending)')}</dd></div>
               {b.dailyAiLimit !== undefined && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">{t('طلبات المعلّم / 24 ساعة', 'AI requests / 24 hours')}</dt><dd>{b.dailyAiLimit}</dd></div>}
               {comp && b.accessExpiresAt && <div className="flex flex-wrap justify-between gap-3"><dt className="text-muted-foreground">{t('انتهاء المنحة المجانية', 'Complimentary expiry')}</dt><dd data-testid="text-access-expiry">{fmt(b.accessExpiresAt)}</dd></div>}
@@ -41,6 +42,7 @@ export default function Premium() {
                   {b.isGuest && <Link href="/sign-up" className="press inline-block rounded-xl bg-primary px-4 py-2 font-semibold text-primary-foreground" data-testid="link-premium-signup">{t('إنشاء حساب', 'Create account')}</Link>}
                 </div>
               )}
+              <Link href="/choose-plan?plan=trial" className="press mt-3 inline-block rounded-xl border border-primary px-4 py-2 font-semibold text-primary">{t('اختر التجربة وتابع التعلّم', 'Choose trial and continue learning')}</Link>
             </Card>
           )}
 
@@ -57,7 +59,8 @@ export default function Premium() {
                 </p>
                 {o.id === 'monthly' && <p className="mt-2 text-sm">{t('كل دفعة تغطي شهرًا واحدًا؛ يلزم تجديد الاشتراك للمتابعة في الشهر التالي.', 'Each payment covers one month; renew to continue the following month.')}</p>}
                 {o.savingsUsd > 0 && <p className="mt-3 flex items-center gap-2 text-sm font-semibold" data-testid="text-savings"><Check className="size-4 text-primary" />{t(`توفير $${o.savingsUsd} (${o.savingsPercent}%)`, `Save $${o.savingsUsd} (${o.savingsPercent}%)`)}</p>}
-                <Btn className="mt-4 w-full" disabled data-testid={`button-subscribe-${o.id}`}><Lock className="size-4" />{t('الدفع غير متاح بعد', 'Checkout not available yet')}</Btn>
+                <Link href={`/choose-plan?plan=${o.id}`} className="press mt-4 block rounded-2xl bg-primary px-4 py-3 text-center font-semibold text-primary-foreground" data-testid={`link-select-${o.id}`}>{t('اختر الخطة وتابع التعلّم', 'Choose plan and continue learning')}</Link>
+                <Btn className="mt-3 w-full" disabled data-testid={`button-subscribe-${o.id}`}><Lock className="size-4" />{t('الدفع غير متاح بعد', 'Checkout not available yet')}</Btn>
               </Card>
             ))}
           </div>

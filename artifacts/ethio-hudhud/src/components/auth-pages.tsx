@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, Redirect } from 'wouter';
 import { SignIn, SignUp, useAuth } from '@clerk/react';
+import { parsePlanChoice, planChoicePath } from '@/lib/plan-choice';
 import { AlertTriangle, Info, RotateCw } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { Toggles } from '@/components/shell';
@@ -63,9 +64,11 @@ function AuthFrame({ children, mode }: { children: ReactNode; mode: 'in' | 'up' 
   const { t } = useApp();
   const { isLoaded, isSignedIn } = useAuth();
   const initial = useRef<boolean | null>(null);
+  const plan = parsePlanChoice(new URLSearchParams(window.location.search).get('plan'));
+  const planSearch = plan ? `?plan=${plan}` : '';
   if (isLoaded && initial.current === null) initial.current = !!isSignedIn;
   // Only bounce users who arrived already signed in; fresh sign-ups follow Clerk's own redirect.
-  if (initial.current === true && isSignedIn) return <Redirect to={safeReturn() ?? '/dashboard'} replace />;
+  if (initial.current === true && isSignedIn) return <Redirect to={mode === 'up' || plan ? planChoicePath(window.location.search) : safeReturn() ?? '/dashboard'} replace />;
 
   const tab = (active: boolean) => cn('flex-1 rounded-xl px-4 py-2.5 text-center text-sm font-bold transition-colors', active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground');
   return (
@@ -85,8 +88,8 @@ function AuthFrame({ children, mode }: { children: ReactNode; mode: 'in' | 'up' 
           <Toggles />
         </div>
         <nav className="flex w-[440px] max-w-full gap-1 rounded-2xl border border-border bg-card p-1" aria-label={t('نوع الحساب', 'Account')}>
-          <Link href="/sign-in" aria-current={mode === 'in' ? 'page' : undefined} className={tab(mode === 'in')} data-testid="tab-signin">{t('تسجيل الدخول', 'Sign in')}</Link>
-          <Link href="/sign-up" aria-current={mode === 'up' ? 'page' : undefined} className={tab(mode === 'up')} data-testid="tab-signup">{t('إنشاء حساب', 'Create account')}</Link>
+          <Link href={`/sign-in${planSearch}`} aria-current={mode === 'in' ? 'page' : undefined} className={tab(mode === 'in')} data-testid="tab-signin">{t('تسجيل الدخول', 'Sign in')}</Link>
+          <Link href={`/sign-up${planSearch}`} aria-current={mode === 'up' ? 'page' : undefined} className={tab(mode === 'up')} data-testid="tab-signup">{t('إنشاء حساب', 'Create account')}</Link>
         </nav>
         <ClerkSlot>{children}</ClerkSlot>
         <div className="flex w-[440px] max-w-full items-start gap-2.5 rounded-2xl border border-gold/50 bg-gold/10 px-4 py-3 text-sm leading-relaxed" data-testid="note-guest-transfer">
@@ -106,17 +109,20 @@ function AuthFrame({ children, mode }: { children: ReactNode; mode: 'in' | 'up' 
 }
 
 export function SignInPage() {
+  const plan = useRef(parsePlanChoice(new URLSearchParams(window.location.search).get('plan')));
+  const suffix = plan.current ? `?plan=${plan.current}` : '';
   return (
     <AuthFrame mode="in">
-      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} fallbackRedirectUrl={`${basePath}/dashboard`} />
+      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up${suffix}`} fallbackRedirectUrl={`${basePath}/dashboard`} forceRedirectUrl={plan.current ? `${basePath}/choose-plan${suffix}` : undefined} />
     </AuthFrame>
   );
 }
 
 export function SignUpPage() {
+  const destination = useRef(planChoicePath(window.location.search));
   return (
     <AuthFrame mode="up">
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} fallbackRedirectUrl={`${basePath}/onboarding`} />
+      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in${destination.current.includes('?') ? destination.current.slice(destination.current.indexOf('?')) : ''}`} forceRedirectUrl={`${basePath}${destination.current}`} />
     </AuthFrame>
   );
 }

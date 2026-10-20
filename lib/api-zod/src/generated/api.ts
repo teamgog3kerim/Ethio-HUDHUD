@@ -426,6 +426,56 @@ export const ClearChatResponse = zod.object({
 })
 
 
+/**
+ * @summary Save a signed-in learner's plan preference without activating payment or restarting trial
+ */
+export const SelectCoursePlanBody = zod.object({
+  "plan": zod.enum(['trial', 'monthly', 'six_month'])
+})
+
+export const selectCoursePlanResponseTrialDaysRemainingMin = 0;
+export const selectCoursePlanResponseTrialDaysRemainingMax = 2;
+
+export const selectCoursePlanResponseReminderOneDaysRemainingMin = 0;
+export const selectCoursePlanResponseReminderOneDaysRemainingMax = 4;
+
+
+
+export const SelectCoursePlanResponse = zod.object({
+  "plan": zod.string(),
+  "selectedPlan": zod.union([zod.literal('trial'),zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish().describe('Learner preference only, never proof of a paid subscription'),
+  "configured": zod.boolean(),
+  "message": zod.string(),
+  "dailyAiLimit": zod.number().int().optional(),
+  "accessExpiresAt": zod.string().nullish(),
+  "source": zod.enum(['none', 'admin_grant']).optional(),
+  "isGuest": zod.boolean(),
+  "enforcementEnabled": zod.boolean(),
+  "fullCourseAccess": zod.boolean(),
+  "trial": zod.object({
+  "state": zod.enum(['active', 'expired']),
+  "startedAt": zod.coerce.date(),
+  "endsAt": zod.coerce.date(),
+  "daysRemaining": zod.number().int().min(selectCoursePlanResponseTrialDaysRemainingMin).max(selectCoursePlanResponseTrialDaysRemainingMax)
+}),
+  "offers": zod.array(zod.object({
+  "id": zod.enum(['monthly', 'six_month']),
+  "priceUsd": zod.number().int(),
+  "durationMonths": zod.number().int(),
+  "billing": zod.enum(['monthly', 'one_time']),
+  "sixMonthTotalUsd": zod.number().int(),
+  "savingsUsd": zod.number().int(),
+  "savingsPercent": zod.number()
+})),
+  "reminder": zod.union([zod.object({
+  "kind": zod.enum(['complimentary_expiring', 'renewal_due', 'course_expiring']),
+  "expiresAt": zod.coerce.date(),
+  "daysRemaining": zod.number().int().min(selectCoursePlanResponseReminderOneDaysRemainingMin).max(selectCoursePlanResponseReminderOneDaysRemainingMax),
+  "delivery": zod.enum(['in_app'])
+}),zod.null()])
+})
+
+
 export const getBillingStatusResponseTrialDaysRemainingMin = 0;
 export const getBillingStatusResponseTrialDaysRemainingMax = 2;
 
@@ -436,6 +486,7 @@ export const getBillingStatusResponseReminderOneDaysRemainingMax = 4;
 
 export const GetBillingStatusResponse = zod.object({
   "plan": zod.string(),
+  "selectedPlan": zod.union([zod.literal('trial'),zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish().describe('Learner preference only, never proof of a paid subscription'),
   "configured": zod.boolean(),
   "message": zod.string(),
   "dailyAiLimit": zod.number().int().optional(),

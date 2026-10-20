@@ -10,6 +10,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { InstallPrompt } from '@/components/install-prompt';
+import ChoosePlan from '@/pages/choose-plan';
 import { SignInPage, SignUpPage } from '@/components/auth-pages';
 import { AppProvider, useApp } from '@/lib/app';
 import NotFound from '@/pages/not-found';
@@ -150,6 +151,7 @@ function ClerkProviderWithRoutes() {
           <Route path="/onboarding" component={Onboarding} />
           <Route path="/account" component={Account} />
           <Route path="/premium" component={Premium} />
+          <Route path="/choose-plan" component={ChoosePlan} />
           <Route path="/admin" component={AdminOverview} />
           <Route path="/admin/users" component={AdminUsers} />
           <Route path="/admin/settings" component={AdminSettings} />

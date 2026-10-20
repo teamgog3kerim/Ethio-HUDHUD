@@ -190,6 +190,26 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/HealthStatus" }
+  /billing/selection:
+    post:
+      operationId: selectCoursePlan
+      tags: [learning]
+      summary: Save a signed-in learner's plan preference without activating payment or restarting trial
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PlanSelectionInput" }
+      responses:
+        "200":
+          description: Saved preference and current access status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BillingStatus" }
+        "400":
+          description: Invalid plan
+        "401":
+          description: Sign in required
   /billing/status:
     get:
       operationId: getBillingStatus
@@ -688,11 +708,20 @@ components:
         role: { type: string, enum: [user, assistant] }
         content: { type: string }
         createdAt: { type: string }
+    PlanSelectionInput:
+      type: object
+      required: [plan]
+      properties:
+        plan: { type: string, enum: [trial, monthly, six_month] }
     BillingStatus:
       type: object
       required: [plan, configured, message, trial, offers, enforcementEnabled, fullCourseAccess, reminder, isGuest]
       properties:
         plan: { type: string }
+        selectedPlan:
+          type: [string, "null"]
+          enum: [trial, monthly, six_month, null]
+          description: Learner preference only, never proof of a paid subscription
         configured: { type: boolean }
         message: { type: string }
         dailyAiLimit: { type: integer }

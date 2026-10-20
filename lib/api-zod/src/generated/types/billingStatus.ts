@@ -5,12 +5,18 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AccessReminder } from './accessReminder';
+import type { BillingStatusSelectedPlan } from './billingStatusSelectedPlan';
 import type { BillingStatusSource } from './billingStatusSource';
 import type { CourseOffer } from './courseOffer';
 import type { CourseTrial } from './courseTrial';
 
 export interface BillingStatus {
   plan: string;
+  /**
+     * Learner preference only, never proof of a paid subscription
+     * @nullable
+     */
+  selectedPlan?: BillingStatusSelectedPlan;
   configured: boolean;
   message: string;
   dailyAiLimit?: number;

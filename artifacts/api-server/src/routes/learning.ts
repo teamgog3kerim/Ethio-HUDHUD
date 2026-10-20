@@ -26,7 +26,7 @@ import
   CompleteLessonBody, CompleteLessonParams, CompleteLessonResponse, GetProgressResponse,
   GetStudyPlanResponse, GetVocabularyResponse, ReviewVocabularyBody, ReviewVocabularyParams,
   ReviewVocabularyResponse, GetBillingStatusResponse, GetFavouritesResponse, SaveFavouriteParams, RemoveFavouriteParams,
-  SaveStudyScheduleBody,
+  SaveStudyScheduleBody, SelectCoursePlanBody,
 }
  from "@workspace/api-zod"
 ;
@@ -756,6 +756,26 @@ router.post("/vocabulary/:id/review", async (req, res) =>
 }
 )
 ;
+
+router.post("/billing/selection", async (req, res) => {
+  res.setHeader("Cache-Control", "private, no-store");
+  const userId = getAuth(req).userId;
+  if (!userId) {
+    res.status(401).json({ error: "سجّل الدخول لحفظ اختيار خطتك." });
+    return;
+  }
+  const parsed = SelectCoursePlanBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "اختر التجربة المجانية أو الخطة الشهرية أو خطة الستة أشهر." });
+    return;
+  }
+  const learner = await getLearner(req, res);
+  // Preference only: never write payment grants, expiry dates, or trial clocks.
+  await db.update(learners).set({
+    preferences: sql`${learners.preferences} || ${JSON.stringify({ selectedPlan: parsed.data.plan })}::jsonb`,
+  }).where(eq(learners.id, learner.id));
+  res.json(GetBillingStatusResponse.parse(await billingStatus(learner.id, userId, req.signedCookies?.hudhud_guest)));
+});
 
 router.get("/billing/status", async (req, res) => 
 {
