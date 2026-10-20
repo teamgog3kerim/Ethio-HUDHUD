@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:billing": "tsc -p tests/learning-path/tsconfig.json --noEmit && playwright test --config tests/learning-path/playwright.config.ts billing.spec.ts",
     "test:favourites": "tsc -p tests/learning-path/tsconfig.json --noEmit && playwright test --config tests/learning-path/playwright.config.ts favourites.spec.ts",
     "test:learning-path": "tsc -p tests/learning-path/tsconfig.json --noEmit && playwright test --config tests/learning-path/playwright.config.ts",
     "dev": "vite --config vite.config.ts --host 0.0.0.0",

@@ -25,3 +25,15 @@ was unavailable; the Nix Chromium package includes its runtime dependencies.
 
 **How to apply:** Keep browser executable selection portable and document the
 override instead of checking a machine-specific Nix store path into test code.
+
+Browser harnesses rooted outside the production source tree must explicitly
+include that source tree in Tailwind scanning.
+
+**Why:** Otherwise imported components can render without their utility classes;
+loading skeletons collapse and responsive/RTL assertions can pass on unstyled
+markup instead of the real layout.
+
+**How to apply:** When adding a test-only Vite root, scan production components
+from its CSS entry and retain the application's real CSS. Check visible loading
+states and responsive visibility rather than treating a successful import as
+proof that utilities were generated.

@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "test:billing": "pnpm --filter @workspace/ethio-hudhud run test:billing",
     "test:favourites": "pnpm --filter @workspace/ethio-hudhud run test:favourites",
     "test:learning-path": "pnpm --filter @workspace/api-server test && pnpm --filter @workspace/api-server exec tsx --test ../../lib/api-client-react/tests/learning-path.test.ts && pnpm --filter @workspace/ethio-hudhud run test:learning-path && pnpm run test:learning-path:api",
     "test:learning-path:api": "RUN_LEARNING_INTEGRATION=1 pnpm --filter @workspace/api-server exec tsx --test src/lib/learning-completion.integration.test.ts",

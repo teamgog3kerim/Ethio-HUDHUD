@@ -1,0 +1,5 @@
+@import "../../src/index.css";
+
+/* The test Vite root is outside src; explicitly scan the production UI so
+   visibility, skeleton height and responsive/RTL checks use real utilities. */
+@source "../../src";

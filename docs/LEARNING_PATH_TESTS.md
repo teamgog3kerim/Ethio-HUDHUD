@@ -10,7 +10,7 @@ This command fails on any failing layer. It runs:
 
 1. Existing API unit tests, including curriculum validation and the 75% quiz threshold for every seeded lesson.
 2. Shared learning-path tests (six months / 24 weeks, all month boundaries, empty/uneven months, immutable cache inputs, resume and completion totals).
-3. Playwright cases: six learning-path, three progress-identity and four favourites scenarios on desktop and again at 390 × 844 with Arabic RTL and reduced motion.
+3. Playwright cases: six learning-path, three progress-identity, four favourites and nine billing scenarios on desktop and again at 390 × 844 with reduced motion. Billing runs in both Arabic RTL and English LTR.
 4. The real Express completion-route integration test. This is explicitly enabled by the command, not silently skipped.
 
 ## Prerequisites
@@ -47,7 +47,7 @@ This command fails on any failing layer. It runs:
 
 ## Isolation and scope
 
-The browser suite uses the **real Dashboard, Learn and Lesson pages, Shell, React Query
+The browser suite uses the **real Dashboard, Learn, Lesson, Account and Premium pages, Shell, React Query
 hooks, Wouter links, language provider, timer, and production CSS**. Only Clerk
 hooks are replaced by a test-only identity adapter. Each browser test gets a new
 browser context and its own in-memory API records, based on the real curriculum
@@ -145,6 +145,61 @@ records are created, modified or archived. Backend identity/archive enforcement
 remains covered by the existing favourites integration tests; these browser
 checks are evidence of client/UI behavior, not real Clerk login or database
 persistence. Completion and lesson-navigation behavior are outside their scope.
+
+## Trial and pricing browser regressions
+
+```sh
+# Browser-only: no database, real accounts, API server or billing credentials
+pnpm run test:billing
+```
+
+Nine scenarios run in Arabic RTL and English LTR on both desktop and
+390 × 844 mobile (36 checks), also included in the learning-path browser command:
+
+- Expired/day-three guest notices link to signup and plans and explicitly say
+  guest progress does not transfer automatically. Switching the mounted client
+  to a synthetic account removes signup/guest copy, including after reload.
+- Proposed prices display $29 monthly / $174 over six months and $149 once,
+  six-month duration and $25 / 14.4% savings from typed contract fixtures.
+  Both checkout buttons stay disabled; no provider requests or writes are allowed.
+- Expired trials still permit reading a lesson and opening both lesson and
+  practical-conversation exercises. No enforcement is enabled.
+- Advancing the browser clock through the production 60-second poll replaces
+  the countdown with the expired prompt on the same mounted page.
+- Returning to the window refreshes the status before the next poll, using the
+  browser visibility event consumed by React Query (not a direct query refetch).
+- Held responses show the pricing skeleton without false offers/notices.
+  A failed response shows Retry; successful retry restores the cards.
+  Pending/failed billing does not block conversation exercises.
+- Complimentary expiry, monthly renewal and course expiry have distinct
+  translated labels, localized dates, four-day examples and “in-app only”
+  delivery copy. A complimentary grant is not presented as a trial.
+- Pricing, prompts, loading/error states and expiry notices fit both viewports;
+  every language case asserts the HTML language and direction.
+
+The fixture is typed against the generated OpenAPI `BillingStatus` model from
+`lib/api-spec/openapi.yaml`. Fixed server responses exercise rendering, not
+server billing calculations. Existing `billing-policy.test.ts` and
+`billing-status.db.test.ts` remain responsible for the 48-hour boundary,
+timestamp persistence, clock carryover, concurrency, pricing calculations and
+four-day reminder eligibility.
+
+Each test owns fresh browser storage and two in-memory status records. A
+context-wide interceptor rejects unexpected endpoints, all API writes, unknown
+identities and external requests (including payment popups). Google Fonts CSS
+is replaced by an empty local response to avoid external availability affecting
+the test. Held responses and route handlers are released in teardown, including
+when assertions fail; browser contexts and the test server are also disposed.
+No real learner, owner, progress record or grant is created or modified.
+
+The harness explicitly scans production `src` for Tailwind utilities because its
+Vite root is in the test directory. This keeps responsive visibility and skeleton
+height representative of the app instead of testing unstyled markup.
+With responsive utilities applied, the existing mobile favourites sign-out check
+uses the real Account page instead of the desktop-only sidebar button.
+These checks do not test Clerk's signup UI, a real paid subscription, a payment
+provider, or browser-to-database billing persistence. Polar stays deferred and
+checkout/enforcement remain disabled.
 
 ## Focused commands and failure output
 

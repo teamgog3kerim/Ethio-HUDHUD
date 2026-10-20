@@ -33,3 +33,8 @@ export const useAuth = () => {
   return { isSignedIn: !!userId, userId };
 };
 export const useClerk = () => clerk;
+// Account renders optional email details; this adapter never loads real users.
+export const useUser = () => {
+  const { isSignedIn } = useAuth();
+  return { isSignedIn, user: null };
+};
