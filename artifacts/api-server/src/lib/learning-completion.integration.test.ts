@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import test from "node:test";
+import test, { after } from "node:test";
 import express from "express";
 import { and, eq } from "drizzle-orm";
 import { db, pool, learners, lessons, lessonStarts, completions, attempts, reviews } from "@workspace/db";
@@ -8,6 +8,9 @@ import type { LessonContent } from "@workspace/db";
 import learningRouter from "../routes/learning";
 import { defaultPreferences } from "./learner";
 import { GetCoursesResponse, GetLessonResponse, GetProgressResponse, CompleteLessonResponse, GetProfileResponse, GetStudyPlanResponse } from "@workspace/api-zod";
+
+// All cases share this pool; close it only after every isolated learner is cleaned up.
+after(() => pool.end());
 
 // Opt-in because it needs a migrated development/test database. The canonical
 // test:learning-path command enables it, so the release check cannot silently
@@ -20,12 +23,8 @@ test("real completion routes: browsing, failure, retry, reload and one-time cred
   const [learner] = await db.insert(learners).values({ identity, preferences: defaultPreferences }).returning();
   assert.ok(learner);
   t.after(async () => {
-    try {
-      // Cascades only this UUID learner's attempts, starts, reviews and progress.
-      await db.delete(learners).where(and(eq(learners.id, learner.id), eq(learners.identity, identity)));
-    } finally {
-      await pool.end();
-    }
+    // Cascades only this UUID learner's attempts, starts, reviews and progress.
+    await db.delete(learners).where(and(eq(learners.id, learner.id), eq(learners.identity, identity)));
   });
   const app = express();
   app.use(express.json());
@@ -196,4 +195,114 @@ test("real completion routes: browsing, failure, retry, reload and one-time cred
   const [afterSchedule] = await db.select().from(completions).where(eq(completions.learnerId, learner.id));
   assert.equal(afterSchedule!.id, original.id);
   assert.equal(afterSchedule!.completedAt.getTime(), original.completedAt.getTime());
+});
+
+test("real completion routes: concurrent different lessons both retain credit and study time", {
+  skip: process.env.RUN_LEARNING_INTEGRATION !== "1",
+}, async t => {
+  const guest = randomUUID();
+  const identity = `guest:${guest}`;
+  const [learner] = await db.insert(learners).values({ identity, preferences: defaultPreferences }).returning();
+  assert.ok(learner);
+  t.after(async () => {
+    // Never delete curriculum or records belonging to any other learner.
+    await db.delete(learners).where(and(eq(learners.id, learner.id), eq(learners.identity, identity)));
+  });
+
+  const app = express();
+  app.use(express.json());
+  app.use((req, _res, next) => {
+    Object.assign(req, {
+      auth: Object.assign(() => ({ userId: null, tokenType: "session_token" }), { [Symbol.for("@clerk/express.auth")]: true }),
+      signedCookies: { hudhud_guest: guest },
+    });
+    next();
+  });
+  app.use(learningRouter);
+  const server = app.listen(0, "127.0.0.1");
+  t.after(() => new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())));
+  await new Promise<void>(resolve => server.once("listening", resolve));
+  const address = server.address();
+  assert.ok(address && typeof address !== "string");
+  const base = `http://127.0.0.1:${address.port}`;
+  const get = async (path: string) => {
+    const response = await fetch(`${base}${path}`);
+    assert.equal(response.status, 200, path);
+    return response.json();
+  };
+
+  // Read the existing active curriculum, requiring an actual shared word so the
+  // review uniqueness assertion cannot pass vacuously. No seed or lesson edits.
+  const catalog = GetCoursesResponse.parse(await get("/courses"));
+  const visibleIds = new Set(catalog.flatMap(course => course.lessons.map(lesson => lesson.id)));
+  const sources = (await db.select().from(lessons).where(eq(lessons.active, true)))
+    .filter(lesson => visibleIds.has(lesson.id));
+  const pair = sources.flatMap((first, index) =>
+    sources.slice(index + 1).filter(second =>
+      (first.content as LessonContent).words.some(word =>
+        (second.content as LessonContent).words.some(other => other.id === word.id)))
+      .map(second => [first, second] as const))[0];
+  assert.ok(pair, "Existing active curriculum must contain two different lessons with shared vocabulary");
+  assert.notEqual(pair[0].id, pair[1].id);
+  const intervals = [45, 75] as const;
+  const submissions = pair.map((lesson, index) => ({
+    lesson,
+    answers: (lesson.answerKey as { correctIndex: number }[]).map(key => key.correctIndex),
+    activeSeconds: intervals[index]!,
+  }));
+  const expectedWords = new Set(pair.flatMap(lesson => (lesson.content as LessonContent).words.map(word => word.id)));
+  const expectedStudySeconds = intervals[0] + intervals[1];
+
+  for (const { lesson } of submissions) {
+    assert.equal(GetLessonResponse.parse(await get(`/lessons/${lesson.id}`)).completed, false);
+    // Represent actual elapsed study without sleeping; scope timer changes to
+    // the UUID learner and give each lesson enough time for its own interval.
+    const starts = await db.update(lessonStarts).set({ startedAt: new Date(Date.now() - 120_000) })
+      .where(and(eq(lessonStarts.learnerId, learner.id), eq(lessonStarts.lessonId, lesson.id)))
+      .returning();
+    assert.equal(starts.length, 1);
+  }
+  const responses = await Promise.all(submissions.map(({ lesson, answers, activeSeconds }) =>
+    fetch(`${base}/lessons/${lesson.id}/complete`, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ answers, activeSeconds }),
+    })));
+  const results = await Promise.all(responses.map(async response => {
+    assert.equal(response.status, 200);
+    return CompleteLessonResponse.parse(await response.json());
+  }));
+  for (const result of results) {
+    assert.equal(result.passed, true);
+    assert.equal(result.score, 100);
+    assert.equal(result.xpEarned, 30, "a different lesson is legitimate work, not a duplicate");
+  }
+  assert.equal(results.reduce((xp, result) => xp + result.xpEarned, 0), 60);
+
+  const savedCompletions = await db.select().from(completions).where(eq(completions.learnerId, learner.id));
+  assert.equal(savedCompletions.length, 2);
+  assert.deepEqual(new Set(savedCompletions.map(row => row.lessonId)), new Set(pair.map(lesson => lesson.id)));
+  const savedAttempts = await db.select().from(attempts).where(eq(attempts.learnerId, learner.id));
+  assert.equal(savedAttempts.length, 2);
+  for (const { lesson, answers, activeSeconds } of submissions) {
+    const lessonAttempts = savedAttempts.filter(attempt => attempt.lessonId === lesson.id);
+    assert.equal(lessonAttempts.length, 1, "each lesson keeps its own attempt");
+    assert.deepEqual(lessonAttempts[0]!.answers, answers);
+    assert.equal(lessonAttempts[0]!.score, 100);
+    assert.equal(lessonAttempts[0]!.activeSeconds, activeSeconds, "each lesson retains its actual interval");
+    assert.equal(GetLessonResponse.parse(await get(`/lessons/${lesson.id}`)).completed, true);
+  }
+  assert.equal(savedAttempts.reduce((seconds, attempt) => seconds + attempt.activeSeconds, 0), expectedStudySeconds);
+  const savedReviews = await db.select().from(reviews).where(eq(reviews.learnerId, learner.id));
+  assert.equal(savedReviews.length, expectedWords.size, "shared words get only one review");
+  assert.deepEqual(new Set(savedReviews.map(review => review.wordId)), expectedWords);
+
+  // Fresh reads must reflect both committed transactions, not just response XP.
+  const progress = GetProgressResponse.parse(await get("/progress/summary"));
+  assert.equal(progress.lessonsCompleted, 2);
+  assert.equal(progress.xp, 60);
+  assert.equal(progress.totalMinutes, Math.round(expectedStudySeconds / 6) / 10);
+  const refreshed = GetCoursesResponse.parse(await get("/courses"));
+  for (const lesson of pair) {
+    assert.equal(refreshed.flatMap(course => course.lessons).find(row => row.id === lesson.id)!.completed, true);
+  }
 });
