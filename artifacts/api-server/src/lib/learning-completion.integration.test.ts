@@ -12,6 +12,108 @@ import { GetCoursesResponse, GetLessonResponse, GetProgressResponse, CompleteLes
 // All cases share this pool; close it only after every isolated learner is cleaned up.
 after(() => pool.end());
 
+test("real completion credit stays with the submitting account while its response is delayed", {
+  skip: process.env.RUN_LEARNING_INTEGRATION !== "1",
+  timeout: 30_000,
+}, async t => {
+  const accountA = `regression-${randomUUID()}`;
+  const accountB = `regression-${randomUUID()}`;
+  const guest = randomUUID();
+  const owners = [accountA, accountB, null] as const;
+  const isolated = new Map<string | null, typeof learners.$inferSelect>();
+  for (const owner of owners) {
+    const identity = owner ? `clerk:${owner}` : `guest:${guest}`;
+    const [learner] = await db.insert(learners).values({ identity, preferences: defaultPreferences }).returning();
+    assert.ok(learner);
+    isolated.set(owner, learner);
+    t.after(() => db.delete(learners).where(and(eq(learners.id, learner.id), eq(learners.identity, identity))));
+  }
+
+  let activeOwner: string | null = accountA;
+  let release: (() => void) | undefined;
+  let captured: (() => void) | undefined;
+  let heldResult: unknown;
+  const app = express();
+  app.use(express.json());
+  app.use((req, res, next) => {
+    // Capture transport identity per request, never read the later session in
+    // the completion handler. No credentials, auth bypass or test route ship.
+    const requestOwner = activeOwner;
+    Object.assign(req, {
+      auth: Object.assign(() => ({ userId: requestOwner, tokenType: "session_token" }), { [Symbol.for("@clerk/express.auth")]: true }),
+      signedCookies: { hudhud_guest: guest },
+    });
+    if (req.method === "POST" && req.path.endsWith("/complete")) {
+      const send = res.json.bind(res);
+      const gate = new Promise<void>(resolve => { release = resolve; });
+      res.json = body => {
+        heldResult = body;
+        captured?.();
+        void gate.then(() => send(body));
+        return res;
+      };
+    }
+    next();
+  });
+  app.use(learningRouter);
+  const server = app.listen(0, "127.0.0.1");
+  t.after(() => {
+    release?.();
+    server.closeAllConnections();
+    return new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+  });
+  await new Promise<void>(resolve => server.once("listening", resolve));
+  const address = server.address();
+  assert.ok(address && typeof address !== "string");
+  const base = `http://127.0.0.1:${address.port}`;
+  const get = async (path: string) => {
+    const response = await fetch(`${base}${path}`, { signal: AbortSignal.timeout(15_000) });
+    assert.equal(response.status, 200, path);
+    return response.json();
+  };
+  const catalog = GetCoursesResponse.parse(await get("/courses"));
+  const selected = catalog.flatMap(c => c.lessons).slice(0, 2);
+  assert.equal(selected.length, 2, "Existing seeded active curriculum is required");
+  for (const [index, incoming] of [accountB, null].entries()) {
+    activeOwner = accountA;
+    const lessonId = selected[index]!.id;
+    const [source] = await db.select().from(lessons).where(eq(lessons.id, lessonId));
+    assert.ok(source);
+    const committed = new Promise<void>(resolve => { captured = resolve; });
+    const pending = fetch(`${base}/lessons/${lessonId}/complete`, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ answers: (source.answerKey as { correctIndex: number }[]).map(k => k.correctIndex), activeSeconds: 0 }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    // res.json is called only after the production transaction commits.
+    await Promise.race([committed, pending.then(() => { throw new Error("Completion response was not delayed"); })]);
+    assert.equal(CompleteLessonResponse.parse(heldResult).xpEarned, 30);
+    activeOwner = incoming;
+    const incomingSummary = GetProgressResponse.parse(await get("/progress/summary"));
+    assert.equal(incomingSummary.xp, 0);
+    assert.equal(incomingSummary.lessonsCompleted, 0);
+    assert.equal(GetLessonResponse.parse(await get(`/lessons/${lessonId}`)).completed, false);
+    const ownerRow = isolated.get(accountA)!;
+    const saved = await db.select().from(completions)
+      .where(and(eq(completions.learnerId, ownerRow.id), eq(completions.lessonId, lessonId)));
+    assert.equal(saved.length, 1, "Original account already owns persisted credit before delivery");
+    release!();
+    const response = await pending;
+    assert.equal(response.status, 200);
+    assert.equal(CompleteLessonResponse.parse(await response.json()).score, 100);
+    assert.equal(GetProgressResponse.parse(await get("/progress/summary")).xp, 0);
+    activeOwner = accountA;
+    const original = GetProgressResponse.parse(await get("/progress/summary"));
+    assert.equal(original.xp, (index + 1) * 30);
+    assert.equal(original.lessonsCompleted, index + 1);
+    assert.equal(GetLessonResponse.parse(await get(`/lessons/${lessonId}`)).completed, true);
+    const [retained] = await db.select().from(completions)
+      .where(and(eq(completions.learnerId, ownerRow.id), eq(completions.lessonId, lessonId)));
+    assert.equal(retained!.id, saved[0]!.id);
+    assert.equal(retained!.completedAt.getTime(), saved[0]!.completedAt.getTime());
+  }
+});
+
 // Opt-in because it needs a migrated development/test database. The canonical
 // test:learning-path command enables it, so the release check cannot silently
 // skip persistence coverage. No seed, schema push, truncation or lesson edits.

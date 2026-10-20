@@ -10,7 +10,7 @@ This command fails on any failing layer. It runs:
 
 1. Existing API unit tests, including curriculum validation and the 75% quiz threshold for every seeded lesson.
 2. Shared learning-path tests (six months / 24 weeks, all month boundaries, empty/uneven months, immutable cache inputs, resume and completion totals).
-3. Playwright cases: six learning-path, three progress-identity, four favourites and nine billing scenarios on desktop and again at 390 × 844 with reduced motion. Billing runs in both Arabic RTL and English LTR.
+3. Playwright cases: six learning-path, three progress-identity, five completion-identity, four favourites and nine billing scenarios on desktop and again at 390 × 844 with reduced motion. Billing runs in both Arabic RTL and English LTR.
 4. The real Express completion-route integration test. This is explicitly enabled by the command, not silently skipped.
 
 ## Prerequisites
@@ -41,6 +41,12 @@ This command fails on any failing layer. It runs:
   and verify the first/last lesson edges; browsing never sends a completion.
 - Navigate away with a partial answer/delayed callback, return to question one,
   finish, navigate to the next lesson, and return without stale results or answers.
+- Hold passing and failing completion POST responses after a synthetic write,
+  switch A to B or sign out without remounting the app/query client, then release.
+  No old score, result, XP notification, invalidation call (including inactive
+  keys), or completion-triggered refetch may enter the incoming session. Returning
+  to A and reloading preserves only A's saved credit. A → B → A also rejects
+  results from A's first session.
 - Use all six month selectors and stage controls in Arabic; assert no horizontal
   page overflow on Learn, lesson reading, quiz and result views; inspect computed
   animation and transition durations with reduced motion enabled.
@@ -54,6 +60,13 @@ browser context and its own in-memory API records, based on the real curriculum
 seed. The records survive that test's reloads but cannot reach any database or
 account. Every `/api/` request is intercepted; unexpected endpoints and browser
 runtime exceptions fail the test.
+
+The delayed-write real-router case creates three random isolated learners (two
+synthetic account identities and one guest), holds responses after the database
+transaction, then reads as the incoming account or signed-out guest. It verifies
+zero incoming credit and stable original completion IDs, timestamps and XP before
+and after delivery. Only those learners and their cascading records are deleted.
+These tests simulate trusted identity boundaries, not Clerk login itself.
 
 Browser grading responses are a contract double, not evidence of backend grading.
 The separate integration test mounts the **real learning router** with a trusted

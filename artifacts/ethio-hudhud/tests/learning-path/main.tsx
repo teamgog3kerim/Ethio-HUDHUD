@@ -11,6 +11,13 @@ import { ClerkQueryClientCacheInvalidator } from '@/components/clerk-query-cache
 import './styles.css';
 
 const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+// Observe invalidation calls, including inactive keys with no network observer.
+// This instrumentation exists only in the isolated regression entry.
+const invalidateQueries = client.invalidateQueries.bind(client);
+client.invalidateQueries = (...args) => {
+  window.dispatchEvent(new CustomEvent('test-query-invalidation', { detail: args[0]?.queryKey }));
+  return invalidateQueries(...args);
+};
 createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={client}>
     <AppProvider>

@@ -37,3 +37,16 @@ markup instead of the real layout.
 from its CSS entry and retain the application's real CSS. Check visible loading
 states and responsive visibility rather than treating a successful import as
 proof that utilities were generated.
+
+Separate obsolete response effects from already committed learner credit.
+Account changes retire the submitting session, even if the same account returns;
+ordinary navigation within that session should still refresh saved progress.
+
+**Why:** Dropping a late result prevents cross-account disclosure, but must not
+undo a successful write or prevent the original learner from seeing it later.
+Matching account IDs alone cannot distinguish an earlier A → B → A session.
+
+**How to apply:** For delayed-write regressions, hold delivery after commit,
+inspect both UI results and inactive-query invalidation calls, and separately
+verify ownership against isolated real records. Keep ordinary same-session
+navigation distinct from authentication changes when suppressing callbacks.

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '@clerk/react';
 import { Link, useParams } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
 import { Check, Eye, EyeOff, ChevronLeft, ChevronRight, RotateCw, Timer, X } from 'lucide-react';
@@ -15,17 +16,20 @@ import { cn } from '@/lib/utils';
 import { PronunciationNote } from '@/components/pronunciation-note';
 import { ConversationCard } from '@/components/conversation-card';
 import { FavouriteButton } from '@/components/favourites';
+import { getIdentityGeneration } from '@/lib/identity-generation';
 
 type Phase = 'vocab' | 'quiz' | 'result';
 
 export default function LessonPage() {
   const { id = '' } = useParams<{ id: string }>();
-  return <LessonView key={id} id={id} />;
+  const { userId } = useAuth();
+  return <LessonView key={`${userId ?? 'guest'}:${id}`} id={id} />;
 }
 
 function LessonView({ id }: { id: string }) {
   const { t, lang } = useApp();
   const qc = useQueryClient();
+  const [identityGeneration] = useState(() => getIdentityGeneration(qc));
   const q = useGetLesson(id);
   const courses = useGetCourses();
   const pos = courses.data ? getLessonPosition(courses.data, id) : null;
@@ -43,8 +47,14 @@ function LessonView({ id }: { id: string }) {
   const complete = useCompleteLesson({
     mutation: {
       onSuccess: (r) => {
-        setResult(r);
-        setPhase('result');
+        // The server may have saved this learner's credit already. Ignore only
+        // the obsolete UI/cache effects, never undo or reassign the write.
+        if (getIdentityGeneration(qc) !== identityGeneration) return;
+        if (alive.current) {
+          setResult(r);
+          setPhase('result');
+        }
+        // Navigation within the same session still needs fresh saved progress.
         qc.invalidateQueries({ queryKey: getGetProgressQueryKey() });
         qc.invalidateQueries({ queryKey: getGetCoursesQueryKey() });
         qc.invalidateQueries({ queryKey: getGetLessonQueryKey(id) });
@@ -64,7 +74,7 @@ function LessonView({ id }: { id: string }) {
     const next = [...answers.slice(0, qi), opt];
     setAnswers(next);
     window.setTimeout(() => {
-      if (!alive.current) return;
+      if (!alive.current || getIdentityGeneration(qc) !== identityGeneration) return;
       if (qi + 1 < lesson.exercises.length) setQi(qi + 1);
       else submit(next);
     }, 320);

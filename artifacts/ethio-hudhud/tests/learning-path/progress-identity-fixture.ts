@@ -29,6 +29,7 @@ function createState() {
     hold: undefined as { identity: Identity; paths: string[] } | undefined,
     pending: [] as { identity: Identity; path: string; release: () => void }[],
     reads: [] as { identity: Identity; path: string }[],
+    submissions: [] as { identity: Identity; id: string; score: number; xpEarned: number }[],
     release() {
       this.hold = undefined;
       for (const pending of this.pending.splice(0)) pending.release();
@@ -47,6 +48,29 @@ export const test = base.extend<{ progress: ReturnType<typeof createState> }>({
       const path = new URL(request.url()).pathname;
       const identity = (request.headers().cookie?.match(/(?:^|; )test-identity=([^;]+)/)?.[1] ?? null) as Identity;
       const record = state.records.get(identity);
+      const completion = path.match(/^\/api\/lessons\/([^/]+)\/complete$/);
+      if (request.method() === 'POST' && completion && record) {
+        const lesson = lessons.find(l => l.id === completion[1]);
+        expect(lesson, 'Completion must reference isolated curriculum').toBeDefined();
+        const body = request.postDataJSON();
+        expect(Object.keys(body).sort()).toEqual(['activeSeconds', 'answers']);
+        expect(body.answers).toHaveLength(lesson!.answerKey.length);
+        expect(body.activeSeconds).toBeGreaterThanOrEqual(0);
+        expect(body.activeSeconds).toBeLessThanOrEqual(3600);
+        const feedback = lesson!.answerKey.map((key, i) => ({ ...key, correct: body.answers[i] === key.correctIndex }));
+        const score = Math.round(100 * feedback.filter(f => f.correct).length / feedback.length);
+        const passed = score >= 75;
+        const xpEarned = passed && !record.completed.has(lesson!.id) ? 30 : 0;
+        // Model a committed write with only its HTTP response still in flight.
+        // Real database persistence is covered by the API integration suite.
+        if (passed) record.completed.add(lesson!.id);
+        record.xp += xpEarned;
+        state.submissions.push({ identity, id: lesson!.id, score, xpEarned });
+        if (state.hold?.identity === identity && state.hold.paths.includes(path)) {
+          await new Promise<void>(release => state.pending.push({ identity, path, release }));
+        }
+        return route.fulfill({ json: { score, passed, xpEarned, feedback } });
+      }
       if (request.method() !== 'GET' || !record) {
         unexpected.push(`${request.method()} ${path} (${identity})`);
         return route.fulfill({ status: 500, json: { error: 'Unexpected test request' } });
@@ -62,6 +86,10 @@ export const test = base.extend<{ progress: ReturnType<typeof createState> }>({
       }));
       let body: unknown;
       if (path === '/api/courses') body = catalog();
+      else if (/^\/api\/lessons\/[^/]+$/.test(path)) {
+        body = catalog().flatMap(c => c.lessons).find(l => l.id === path.split('/').at(-1));
+        expect(body, 'Lesson must exist in isolated curriculum').toBeDefined();
+      }
       else if (path === '/api/progress/summary') body = {
         lessonsCompleted: record.completed.size, totalLessons: lessons.length,
         xp: record.xp, vocabularyLearned: 0, totalMinutes: 0, todayMinutes: 0,
@@ -90,7 +118,7 @@ export const test = base.extend<{ progress: ReturnType<typeof createState> }>({
       await use(state);
     } finally {
       state.release();
-      expect(unexpected, 'Every API call must stay inside the isolated read-only fixture').toEqual([]);
+      expect(unexpected, 'Every API call must stay inside the isolated identity fixture').toEqual([]);
       expect(errors, 'No browser runtime errors').toEqual([]);
     }
   },

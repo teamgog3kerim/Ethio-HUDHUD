@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useClerk } from '@clerk/react';
 import { useQueryClient } from '@tanstack/react-query';
+import { advanceIdentityGeneration } from '@/lib/identity-generation';
 
 // Shared by the application and browser regression entry so tests exercise the
 // real cache boundary, not a test-only imitation of account switching.
@@ -12,6 +13,9 @@ export function ClerkQueryClientCacheInvalidator() {
     const unsub = addListener(({ user }) => {
       const id = user?.id ?? null;
       if (prev.current !== undefined && prev.current !== id) {
+        // Clearing a mutation cache does not cancel an in-flight write or its
+        // callbacks. Retire that session synchronously, before any refetch.
+        advanceIdentityGeneration(qc);
         // clear() removes cache entries but leaves mounted observers holding
         // their old result until something else rerenders them. Reset removes
         // that data immediately, cancels old requests and refetches active views.
