@@ -10,7 +10,7 @@ This command fails on any failing layer. It runs:
 
 1. Existing API unit tests, including curriculum validation and the 75% quiz threshold for every seeded lesson.
 2. Shared learning-path tests (six months / 24 weeks, all month boundaries, empty/uneven months, immutable cache inputs, resume and completion totals).
-3. Twenty Playwright cases: six learning-path and four favourites scenarios on desktop and again at 390 × 844 with Arabic RTL and reduced motion.
+3. Playwright cases: six learning-path, three progress-identity and four favourites scenarios on desktop and again at 390 × 844 with Arabic RTL and reduced motion.
 4. The real Express completion-route integration test. This is explicitly enabled by the command, not silently skipped.
 
 ## Prerequisites
@@ -47,7 +47,7 @@ This command fails on any failing layer. It runs:
 
 ## Isolation and scope
 
-The browser suite uses the **real Learn and Lesson pages, Shell, React Query
+The browser suite uses the **real Dashboard, Learn and Lesson pages, Shell, React Query
 hooks, Wouter links, language provider, timer, and production CSS**. Only Clerk
 hooks are replaced by a test-only identity adapter. Each browser test gets a new
 browser context and its own in-memory API records, based on the real curriculum
@@ -73,6 +73,40 @@ weekday distribution, paused-week freezing and overdue-versus-progress separatio
 The test server and guest adapters are not imported by the normal app entry.
 These checks do not cover Clerk sign-in, published deployment routing, or a
 single browser-to-database end-to-end session.
+
+## Learning progress across identities
+
+The three progress-identity scenarios exercise the same
+`ClerkQueryClientCacheInvalidator` mounted in `src/App.tsx`, not a test-only cache
+reset. The test-only entry adds Dashboard so XP comes from the real progress hook
+and resume links come from the real Dashboard and Learn pages.
+
+- Keep one page and query client alive across guest → account A → account B →
+  guest → B → A → guest. Each owner has different completed lessons, XP and next
+  lesson. Assert the dashboard XP and resume link, Learn totals, every individual
+  completion marker in the first month, and Learn's resume link. Reload both
+  pages under each identity and verify the same owner-specific data returns.
+- Switch identities while Learn stays mounted and the new courses response is
+  held. The old completion list, total and resume link must disappear before
+  the new response arrives, then show only the new owner's records.
+- Hold outgoing accounts' progress and courses responses, switch to another
+  account or guest, then release the old snapshots. Verify both pending views
+  clear the old data and late responses cannot overwrite the current XP, resume
+  link or completed lessons.
+
+Run only these browser checks (no database, live API or credentials):
+
+```sh
+pnpm --filter @workspace/ethio-hudhud exec tsc -p tests/learning-path/tsconfig.json --noEmit
+pnpm --filter @workspace/ethio-hudhud exec playwright test --config tests/learning-path/playwright.config.ts progress-identity.spec.ts
+```
+
+These are isolated provider/cache tests, not evidence of Clerk's sign-in UI or
+server token/ownership enforcement. Each test has three separate in-memory
+records; all API calls fail closed outside the configured GET endpoints. The
+synthetic identity persists in session storage across reloads and travels in a
+test-only cookie before SDK listeners refetch. No real accounts, progress writes,
+guest-to-account transfer or saved-item behavior are exercised.
 
 ## Favourites browser regressions
 

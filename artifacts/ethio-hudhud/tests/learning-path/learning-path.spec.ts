@@ -162,7 +162,9 @@ test('Arabic month controls, mobile fit and reduced-motion CSS remain usable', a
     await expect(page.getByTestId(`stage-${stage}`)).toBeVisible();
   }
   const fit = async () => {
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    // Result/marker entrance animations can briefly enlarge the document.
+    // Assert the settled layout with a bounded wait, not a single frame.
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   };
   await fit();
   if (testInfo.project.name.includes('reduced-motion')) {

@@ -4,6 +4,7 @@ import { Route, Switch } from 'wouter';
 import { AppProvider } from '@/lib/app';
 import Learn from '@/pages/learn';
 import Lesson from '@/pages/lesson';
+import Dashboard from '@/pages/dashboard';
 import { ClerkQueryClientCacheInvalidator } from '@/components/clerk-query-cache-invalidator';
 import '@/index.css';
 
@@ -13,6 +14,7 @@ createRoot(document.getElementById('root')!).render(
     <AppProvider>
       <ClerkQueryClientCacheInvalidator />
       <Switch>
+        <Route path="/dashboard" component={Dashboard} />
         <Route path="/lesson/:id" component={Lesson} />
         <Route component={Learn} />
       </Switch>
