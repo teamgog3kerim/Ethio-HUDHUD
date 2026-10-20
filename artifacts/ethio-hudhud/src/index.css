@@ -5,6 +5,12 @@
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
+/* Wide touch-only screens (including landscape phones) keep app navigation. */
+@custom-variant shell-desktop {
+  @media (min-width: 64rem) and (hover: hover) and (pointer: fine) {
+    @slot;
+  }
+}
 
 @theme inline {
   --color-background: hsl(var(--background));
@@ -92,14 +98,37 @@
 
 @layer base {
   * { @apply border-border; }
-  html { scroll-behavior: smooth; }
-  body { @apply font-sans antialiased bg-background text-foreground; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body { @apply font-sans antialiased bg-background text-foreground; margin: 0; min-width: 0; }
   button, a { -webkit-tap-highlight-color: transparent; }
   :focus-visible { outline: 2px solid hsl(var(--gold)); outline-offset: 2px; }
 }
 
 .font-display { font-family: var(--app-font-display); }
 .am { font-family: 'Noto Sans Ethiopic', sans-serif; direction: ltr; unicode-bidi: isolate; }
+
+.app-mobile-header {
+  padding-top: max(.625rem, env(safe-area-inset-top));
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+@layer components {
+  .app-content {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+  }
+  @media (min-width: 40rem) {
+    .app-content {
+      padding-left: max(2rem, env(safe-area-inset-left));
+      padding-right: max(2rem, env(safe-area-inset-right));
+    }
+  }
+}
+.app-mobile-tabs {
+  padding-left: max(.25rem, env(safe-area-inset-left));
+  padding-right: max(.25rem, env(safe-area-inset-right));
+}
 
 .grain::before {
   content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 60; opacity: .05;

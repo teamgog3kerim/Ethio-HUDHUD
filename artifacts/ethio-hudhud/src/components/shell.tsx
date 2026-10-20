@@ -89,7 +89,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const active = (h: string) => loc === h || loc.startsWith(h + '/');
   return (
     <div className="grain min-h-[100dvh] bg-background">
-      <aside className="fixed inset-y-0 start-0 z-30 hidden w-64 flex-col border-e border-border bg-card/70 p-4 backdrop-blur lg:flex">
+      <aside data-testid="desktop-sidebar" className="fixed inset-y-0 start-0 z-30 hidden w-64 flex-col border-e border-border bg-card/70 p-4 backdrop-blur shell-desktop:flex">
         <Brand />
         <nav className="mt-8 flex flex-1 flex-col gap-1">
           {items.map((i) => (
@@ -129,9 +129,9 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/85 px-4 py-2.5 backdrop-blur lg:hidden">
+      <header data-testid="mobile-header" className="app-mobile-header sticky top-0 z-30 flex flex-wrap items-center justify-between gap-2 border-b border-border bg-background/85 px-4 py-2.5 backdrop-blur shell-desktop:hidden">
         <Brand size={34} />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Toggles />
           {isAdmin && (
             <Link href="/admin" data-testid="nav-admin-mobile" className="press grid size-10 place-items-center rounded-xl border border-border bg-card" aria-label={t('الإدارة', 'Administration')}>
@@ -149,11 +149,11 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl px-4 pb-28 pt-6 sm:px-8 lg:ms-64 lg:w-[calc(100%_-_16rem)] lg:max-w-none lg:px-12 lg:pb-12 lg:pt-10">
-        <div className="mx-auto max-w-5xl"><PlatformNotices /><BillingNotice />{children}</div>
+      <main className="app-content mx-auto min-w-0 w-full max-w-5xl pt-6 shell-desktop:ms-64 shell-desktop:w-[calc(100%_-_16rem)] shell-desktop:max-w-none shell-desktop:px-12 shell-desktop:pb-12 shell-desktop:pt-10">
+        <div className="mx-auto min-w-0 max-w-5xl"><PlatformNotices /><BillingNotice />{children}</div>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-7 border-t border-border bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+      <nav data-testid="mobile-tabs" className="app-mobile-tabs fixed inset-x-0 bottom-0 z-30 grid grid-cols-7 border-t border-border bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur shell-desktop:hidden">
         {items.map((i) => (
           <Link key={i.href} href={i.href} data-testid={`tab-${i.href.slice(1)}`} className={cn('flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium', active(i.href) ? 'text-primary' : 'text-muted-foreground')}>
             <span className={cn('grid h-7 w-11 place-items-center rounded-full transition-colors', active(i.href) && 'bg-primary/15')}>

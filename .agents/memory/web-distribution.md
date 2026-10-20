@@ -13,3 +13,9 @@ as the intended distribution, including for administrators.
 **How to apply:** Keep the administration interface usable on mobile browsers and
 home-screen installations. Do not make app-store distribution or the separate Expo
 companion a prerequisite for learning or administering the published website.
+
+Installed mobile apps must use the mobile view, not the desktop-site layout.
+
+**Why:** The user explicitly requested mobile presentation when using the installed app on phones.
+
+**How to apply:** Keep mobile navigation available in phone landscape orientation and preserve safe-area spacing for both learners and administrators.
