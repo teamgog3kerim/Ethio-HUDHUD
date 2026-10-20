@@ -15,6 +15,7 @@ import { toInput } from '@/lib/options';
 import { cn } from '@/lib/utils';
 import { SignOutAction } from '@/components/sign-out';
 import { AnalyticsPreference } from '@/components/analytics-preference';
+import { InviteFriend } from '@/components/invite-friend';
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
@@ -67,7 +68,7 @@ export default function Account() {
 
   return (
     <Shell>
-      <PageHead eyebrow={q.data?.isGuest ? t('جلسة ضيف', 'Guest session') : t('حسابي', 'My account')} title={t('الإعدادات', 'Settings')} />
+      <PageHead eyebrow={q.data?.isGuest ? t('جلسة ضيف', 'Guest session') : t('حسابي', 'My account')} title={t('الإعدادات', 'Settings')} right={<InviteFriend />} />
       {isSignedIn && (
         <Card className="mb-5 flex flex-wrap items-center justify-between gap-4" data-testid="card-identity">
           <div className="flex min-w-0 items-center gap-3">

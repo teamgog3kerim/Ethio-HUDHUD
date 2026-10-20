@@ -5,11 +5,13 @@ import { Action, Card, Failure, Loading, Screen, Txt, styles } from "@/component
 import { useColors } from "@/hooks/useColors";
 import { AnimatedHudhud } from "@/components/AnimatedHudhud";
 import { CourseAccess } from "@/components/CourseAccess";
+import { InviteFriend } from "@/components/InviteFriend";
 export default function Home() {
   const profile = useGetProfile(); const progress = useGetProgress(); const courses = useGetCourses(); const c = useColors();
   const next = courses.data?.flatMap(course => course.lessons).find(l => !l.completed);
   return <Screen title={`أهلاً، ${profile.data?.displayName ?? "صديق هدهد"}`} subtitle="لنقترب اليوم خطوة من الأمهرية.">
     <CourseAccess compact />
+    <InviteFriend />
     <Card style={{ backgroundColor: c.primary, borderWidth: 0 }}>
       <View style={{ flexDirection: "row-reverse", alignItems: "center", justifyContent: "space-between" }}><View style={{ flex: 1 }}><Txt style={{ color: c.primaryForeground }}>كلمة تبدأ بها رحلتك</Txt><Txt style={[styles.fidel, { color: c.primaryForeground, textAlign: "right", marginVertical: 8 }]}>ሰላም</Txt><Txt style={{ color: c.primaryForeground }}>مرحباً · sälam</Txt></View><AnimatedHudhud size={100} radius={28} /></View>
     </Card>

@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "tsx --test src/lib/*.test.ts ../../lib/api-client-react/tests/renewal-consent.test.ts",
+    "test": "tsx --test src/lib/*.test.ts ../../lib/api-client-react/tests/*.test.ts",
     "bootstrap-owner": "tsx src/scripts/bootstrap-owner.ts",
     "reminders:send": "tsx src/scripts/send-renewal-reminders.ts",
     "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",

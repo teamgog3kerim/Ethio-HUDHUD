@@ -6,6 +6,7 @@ import {
 import { Card, ErrorState, LinkBtn, PilotNote, ProgressBar, Skeleton, Am } from '@/components/bits';
 import { AiAllowance } from '@/components/admin/notices';
 import { CoursePlans } from '@/components/course-plans';
+import { InviteFriend } from '@/components/invite-friend';
 import { Shell } from '@/components/shell';
 import { useApp } from '@/lib/app';
 
@@ -43,9 +44,12 @@ export default function Dashboard() {
 
   return (
     <Shell>
-      <div className="rise mb-6">
+      <div className="rise mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
         <p className="text-sm text-muted-foreground">{t('مرحبًا بعودتك', 'Welcome back')}</p>
         <h1 className="font-display text-3xl font-extrabold" data-testid="text-greeting">{profile.data?.displayName || t('ضيفنا العزيز', 'Dear guest')}</h1>
+        </div>
+        <InviteFriend />
       </div>
 
       {profile.data && !profile.data.onboardingComplete && (

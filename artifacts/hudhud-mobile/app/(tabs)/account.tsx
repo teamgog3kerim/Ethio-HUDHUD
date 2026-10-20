@@ -11,6 +11,7 @@ import { useColors } from "@/hooks/useColors";
 import { router } from "expo-router";
 import { SessionActions } from "@/components/SessionActions";
 import { CourseAccess } from "@/components/CourseAccess";
+import { InviteFriend } from "@/components/InviteFriend";
 import { cancelStudyNotifications } from "@/utils/renewal-push";
 export default function Account() {
   const query = useGetProfile();
@@ -47,6 +48,7 @@ function Preferences({ profile }: { profile: Profile }) {
     <Txt style={styles.heading}>رحلتك، على طريقتك</Txt>
     <SessionActions />
     <CourseAccess />
+    <InviteFriend />
     <Card><Txt>الاسم</Txt><TextInput accessibilityLabel="الاسم" value={form.displayName} onChangeText={displayName => setForm(p => ({ ...p, displayName }))} style={{ padding: 14, borderRadius: c.radius, backgroundColor: c.background, color: c.foreground, textAlign: "right" }} />
       <Txt>المستوى</Txt>{(["beginner", "intermediate", "advanced"] as const).map((level, i) => <Action key={level} secondary={form.level !== level} title={["مبتدئ", "متوسط", "متقدم"][i]!} onPress={() => setForm(p => ({ ...p, level }))} />)}
       <Txt>هدفك اليومي</Txt><View style={{ flexDirection: "row", gap: 10 }}>{[15, 30, 60].map(dailyGoal => <Action key={dailyGoal} title={`${dailyGoal} دقيقة`} secondary={form.dailyGoal !== dailyGoal} onPress={() => setForm(p => ({ ...p, dailyGoal }))} />)}</View>

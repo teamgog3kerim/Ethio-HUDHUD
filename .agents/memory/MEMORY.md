@@ -10,3 +10,4 @@
 - [Favourite identity boundaries](favourite-identity-boundaries.md) — guest saves stay separate from account saves; any future transfer needs explicit learner consent.
 - [Learning regression isolation](learning-regression-isolation.md) — separate browser doubles from real grading/persistence; keep test identities isolated and use Nix-wrapped Chromium on Replit.
 - [Study scheduling](study-scheduling.md) — fewer study weekdays group activities within 180 calendar days; dates remain suggestions, not progress or notification consent.
+- [Friend invitations](friend-invitations.md) — learner-confirmed Arabic invitations include the verified public domain, never preview or identity links.
