@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useApp } from '@/lib/app';
 import { cn } from '@/lib/utils';
+import { disableRenewalPush } from '@/lib/renewal-push';
 
 export function SignOutAction({ className, children, testId = 'button-signout' }: { className?: string; children?: ReactNode; testId?: string }) {
   const { t } = useApp();
@@ -27,6 +28,7 @@ export function SignOutAction({ className, children, testId = 'button-signout' }
     setFailed(false);
     try {
       await qc.cancelQueries();
+      await disableRenewalPush(false, true);
       await signOut();
       qc.clear();
       setOpen(false);

@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import healthRouter from "./health";
 import learningRouter from "./learning";
 import tutorRouter from "./tutor";
+import renewalRouter from "./renewal";
 import adminRouter from "./admin";
 import { enforceAccountStatus } from "../lib/admin-auth";
 import { getAppSettings } from "../lib/app-settings";
@@ -27,6 +28,7 @@ router.use(async (req, _res, next) => {
   next();
 });
 router.use(learningRouter);
+router.use(renewalRouter);
 router.use(tutorRouter);
 
 export default router;

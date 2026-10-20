@@ -446,6 +446,83 @@ export interface PlanSelectionInput {
   plan: PlanSelectionInputPlan;
 }
 
+export interface ReminderRevocationInput {
+  revocationToken: string;
+  /** @pattern ^[0-9a-f]{64}$ */
+  bindingKey: string;
+}
+
+export type ReminderDeviceInputChannel = typeof ReminderDeviceInputChannel[keyof typeof ReminderDeviceInputChannel];
+
+
+export const ReminderDeviceInputChannel = {
+  web: 'web',
+  expo: 'expo',
+} as const;
+
+export interface ReminderDeviceInput {
+  revocationToken: string;
+  /**
+     * Reject enrollment if the signed-in identity changed while permission was being requested.
+     * @minLength 1
+     * @maxLength 200
+     */
+  expectedUserId: string;
+  channel: ReminderDeviceInputChannel;
+  /**
+     * @minLength 1
+     * @maxLength 2048
+     */
+  address: string;
+  /** @maxLength 200 */
+  p256dh?: string;
+  /** @maxLength 100 */
+  auth?: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  timezone: string;
+}
+
+export type ReminderDeviceStatusState = typeof ReminderDeviceStatusState[keyof typeof ReminderDeviceStatusState];
+
+
+export const ReminderDeviceStatusState = {
+  disabled: 'disabled',
+  enabled: 'enabled',
+  expired: 'expired',
+} as const;
+
+/**
+ * @nullable
+ */
+export type ReminderDeviceStatusLastResult = typeof ReminderDeviceStatusLastResult[keyof typeof ReminderDeviceStatusLastResult] | null;
+
+
+export const ReminderDeviceStatusLastResult = {
+  sending: 'sending',
+  accepted: 'accepted',
+  confirmed: 'confirmed',
+  failed: 'failed',
+  unknown: 'unknown',
+} as const;
+
+export interface ReminderDeviceStatus {
+  /** @nullable */
+  bindingKey: string | null;
+  webConfigured: boolean;
+  nativeConfigured: boolean;
+  /** @nullable */
+  publicKey?: string | null;
+  enabled: boolean;
+  state: ReminderDeviceStatusState;
+  /** @nullable */
+  nextAt: string | null;
+  /** @nullable */
+  lastResult: ReminderDeviceStatusLastResult;
+}
+
 /**
  * Learner preference only, never proof of a paid subscription
  * @nullable
@@ -572,3 +649,4 @@ search?: string;
  */
 page?: number;
 };
+

@@ -1,6 +1,67 @@
 /* Network-only PWA worker. Never cache API replies, Clerk sessions or learner data. */
 self.addEventListener('install', () => { self.skipWaiting(); });
 self.addEventListener('activate', event => { event.waitUntil(self.clients.claim()); });
+// Only an opaque installation binding and period hashes are persisted here.
+// No credentials, billing dates, API responses, or learner content are cached.
+function renewalStore(action) {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('hudhud-renewal', 1);
+    request.onupgradeneeded = () => request.result.createObjectStore('state');
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const db = request.result;
+      const tx = db.transaction('state', 'readwrite');
+      let result;
+      action(tx.objectStore('state'), value => { result = value; });
+      tx.oncomplete = () => { db.close(); resolve(result); };
+      tx.onerror = () => { db.close(); reject(tx.error); };
+    };
+  });
+}
+self.addEventListener('message', event => {
+  if (event.data?.type !== 'RENEWAL_BINDING') return;
+  event.waitUntil((async () => {
+    try {
+      await renewalStore((store, done) => {
+        store.put(event.data.id || null, 'binding');
+        done(null);
+      });
+      if (!event.data.id) {
+        for (const notice of await self.registration.getNotifications()) notice.close();
+      }
+      event.ports[0]?.postMessage({ ok: true });
+    } catch { event.ports[0]?.postMessage({ ok: false }); }
+  })());
+});
+self.addEventListener('push', event => {
+  event.waitUntil((async () => {
+    let payload;
+    try { payload = event.data?.json(); } catch { return; }
+    if (!payload || Date.parse(payload.expiresAt) <= Date.now() || !Number.isFinite(Date.parse(payload.expiresAt))) return;
+    const allowed = await renewalStore((store, done) => {
+      const binding = store.get('binding');
+      binding.onsuccess = () => {
+        if (binding.result !== payload.binding) { done(false); return; }
+        const seen = store.get(payload.period);
+        seen.onsuccess = () => {
+          if (seen.result) { done(false); return; }
+          // Claim before display, so duplicate push events cannot race.
+          store.put(true, payload.period);
+          done(true);
+        };
+      };
+    });
+    if (!allowed) return;
+    await self.registration.showNotification(payload.title, {
+      body: payload.body, icon: new URL('icons/icon-192.png', self.registration.scope).href,
+      tag: `renewal-${payload.period}`, data: { renewal: true },
+    });
+  })());
+});
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(self.clients.openWindow(new URL('premium', self.registration.scope).href));
+});
 self.addEventListener('fetch', event => {
   if (event.request.mode !== 'navigate' || event.request.method !== 'GET') return;
   event.respondWith(fetch(event.request).catch(() => new Response(

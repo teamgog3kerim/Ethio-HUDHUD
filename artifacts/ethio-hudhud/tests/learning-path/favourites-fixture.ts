@@ -1,6 +1,7 @@
 import { test as base, expect, type Page } from '@playwright/test';
 import { courseSeed, lessonSeed } from '@workspace/db/seed-data';
 import { arabicLessonContent } from '@workspace/db/pronunciation';
+import { status, reminderDevice } from './billing-data';
 
 export const lesson = lessonSeed.find(l => !l.content.dialogue?.length)!;
 export const conversation = lessonSeed.find(l => l.content.dialogue?.length)!;
@@ -53,7 +54,8 @@ export const test = base.extend<{ favourites: ReturnType<typeof createState> }>(
         if (path === '/api/profile') return json({ id: identity ?? 'guest', displayName: 'متعلّم', isGuest: !identity, language: 'ar' });
         if (path === '/api/admin/me') return json({ signedIn: !!identity, role: null });
         if (path === '/api/app-settings') return json({ announcementAr: '', announcementEn: '', learningEnabled: true, aiEnabled: true });
-        if (path === '/api/billing/status') return json({ plan: 'complimentary', accessExpiresAt: null, reminder: null });
+        if (path === '/api/billing/status') return json({ ...status(!identity), plan: 'complimentary' });
+        if (/^\/api\/billing\/reminder-device\/[0-9a-f-]{36}$/.test(path)) return json(reminderDevice);
         if (path === '/api/courses') return json(courseSeed.map(c => ({
           ...c, completedCount: 0,
           lessons: lessonSeed.filter(l => l.courseId === c.id && !state.archived.has(l.id)).map(l => record(l.id)),

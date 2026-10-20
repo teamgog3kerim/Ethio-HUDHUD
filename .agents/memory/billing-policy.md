@@ -24,3 +24,21 @@ Offer all three choices on the public home page and learner home, and let learne
 **Why:** The user requested home-page plan visibility and a sign-up → plan choice → learning journey.
 
 **How to apply:** Preserve this journey when enabling Polar later. Until verified payment exists, save monthly and six-month choices only as account preferences; never treat a choice as payment or restart the server-owned trial clock.
+
+Use server-driven background renewal delivery, separate from device-local study alarms.
+
+**Why:** Access can be revoked or extended while the learner is away. A native expiry alarm based only on the last app visit cannot observe that cancellation and may show an obsolete renewal notice.
+
+**How to apply:** Keep renewal consent separate from study preferences and re-check the verified access source at dispatch. Do not replace remote delivery with local expiry scheduling merely to avoid native push setup. Report unavailable provider/build setup honestly and retain in-app notices.
+
+Native renewal pushes must check current device/account consent before presentation, not rely on unregistering a push token alone.
+
+**Why:** A queued push can outlive sign-out or reach a token reused by another account. Automatic OS alert payloads bypass the app's account check.
+
+**How to apply:** Preserve data-only delivery with account-bound background presentation when connecting real native push credentials. Opt-out must remain retryable after local account flags have been cleared or the network request fails.
+
+Notification-provider availability must never become a prerequisite for signing out.
+
+**Why:** Requiring an authenticated withdrawal request made ordinary sign-out fail during API outages, even for learners who had never enabled renewal notifications.
+
+**How to apply:** Persist local withdrawal and retryable revocation first; sign-out does remote cleanup best-effort and sends nothing for never-enrolled devices. Explicit reminder-settings opt-out must still be able to disable a server registration when local ownership flags are already cleared.

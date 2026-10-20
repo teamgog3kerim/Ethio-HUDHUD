@@ -476,6 +476,82 @@ export const SelectCoursePlanResponse = zod.object({
 })
 
 
+export const RevokeReminderDeviceParams = zod.object({
+  "deviceId": zod.coerce.string().uuid()
+})
+
+export const revokeReminderDeviceBodyBindingKeyRegExp = new RegExp('^[0-9a-f]{64}$');
+
+
+export const RevokeReminderDeviceBody = zod.object({
+  "revocationToken": zod.string().uuid(),
+  "bindingKey": zod.string().regex(revokeReminderDeviceBodyBindingKeyRegExp)
+})
+
+export const RevokeReminderDeviceResponse = zod.void()
+
+
+export const GetReminderDeviceParams = zod.object({
+  "deviceId": zod.coerce.string().uuid()
+})
+
+export const GetReminderDeviceResponse = zod.object({
+  "bindingKey": zod.string().nullable(),
+  "webConfigured": zod.boolean(),
+  "nativeConfigured": zod.boolean(),
+  "publicKey": zod.string().nullish(),
+  "enabled": zod.boolean(),
+  "state": zod.enum(['disabled', 'enabled', 'expired']),
+  "nextAt": zod.coerce.date().nullable(),
+  "lastResult": zod.union([zod.literal('sending'),zod.literal('accepted'),zod.literal('confirmed'),zod.literal('failed'),zod.literal('unknown'),zod.literal(null)]).nullable()
+})
+
+
+export const SaveReminderDeviceParams = zod.object({
+  "deviceId": zod.coerce.string().uuid()
+})
+
+export const saveReminderDeviceBodyExpectedUserIdMax = 200;
+
+export const saveReminderDeviceBodyAddressMax = 2048;
+
+export const saveReminderDeviceBodyP256dhMax = 200;
+
+export const saveReminderDeviceBodyAuthMax = 100;
+
+export const saveReminderDeviceBodyTimezoneMax = 100;
+
+
+
+export const SaveReminderDeviceBody = zod.object({
+  "revocationToken": zod.string().uuid(),
+  "expectedUserId": zod.string().min(1).max(saveReminderDeviceBodyExpectedUserIdMax).describe('Reject enrollment if the signed-in identity changed while permission was being requested.'),
+  "channel": zod.enum(['web', 'expo']),
+  "address": zod.string().min(1).max(saveReminderDeviceBodyAddressMax),
+  "p256dh": zod.string().max(saveReminderDeviceBodyP256dhMax).optional(),
+  "auth": zod.string().max(saveReminderDeviceBodyAuthMax).optional(),
+  "timezone": zod.string().min(1).max(saveReminderDeviceBodyTimezoneMax)
+})
+
+export const SaveReminderDeviceResponse = zod.object({
+  "bindingKey": zod.string().nullable(),
+  "webConfigured": zod.boolean(),
+  "nativeConfigured": zod.boolean(),
+  "publicKey": zod.string().nullish(),
+  "enabled": zod.boolean(),
+  "state": zod.enum(['disabled', 'enabled', 'expired']),
+  "nextAt": zod.coerce.date().nullable(),
+  "lastResult": zod.union([zod.literal('sending'),zod.literal('accepted'),zod.literal('confirmed'),zod.literal('failed'),zod.literal('unknown'),zod.literal(null)]).nullable()
+})
+
+
+export const RemoveReminderDeviceParams = zod.object({
+  "deviceId": zod.coerce.string().uuid()
+})
+
+export const RemoveReminderDeviceResponse = zod.void()
+
+
 export const getBillingStatusResponseTrialDaysRemainingMin = 0;
 export const getBillingStatusResponseTrialDaysRemainingMax = 2;
 
@@ -808,3 +884,5 @@ export const GetAdminAuditResponseItem = zod.object({
   "createdAt": zod.string()
 })
 export const GetAdminAuditResponse = zod.array(GetAdminAuditResponseItem)
+
+

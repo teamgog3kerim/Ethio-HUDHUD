@@ -64,7 +64,7 @@ export default function Premium() {
               </Card>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground" data-testid="text-pricing-note">{t('التنبيه قبل التجديد الشهري أو انتهاء الدورة بأربعة أيام، عند وجود وصول ساري. التنبيهات داخل التطبيق عند فتحه فقط، وليست بريدًا إلكترونيًا أو إشعارات في الخلفية. الدفع عبر Polar مؤجّل، ولا يتم تحصيل رسوم أو منح اشتراك مدفوع الآن.', 'When access is active, an in-app reminder appears four days before monthly renewal or course expiry. Alerts are shown when you open the app, not by email or background push. Polar payments are deferred; no charges or paid subscriptions are activated now.')}</p>
+          <p className="text-sm text-muted-foreground" data-testid="text-pricing-note">{t('تظهر تنبيهات التطبيق قبل الموعد الموثّق بأربعة أيام. إشعارات الخلفية اختيارية وتعتمد على إعداد الإرسال ودعم الجهاز وإذنك؛ راجع حالة التسليم في إعدادات التذكير. لا يتم إرسال بريد إلكتروني. الدفع عبر Polar مؤجّل، ولا يتم تحصيل رسوم أو منح اشتراك مدفوع الآن.', 'In-app alerts appear four days before a verified date. Optional background notifications depend on delivery setup, device support and permission; check the reminder settings for delivery status. No email is sent. Polar payments are deferred; no charges or paid subscriptions are activated now.')}</p>
         </div>
       )}
     </Shell>

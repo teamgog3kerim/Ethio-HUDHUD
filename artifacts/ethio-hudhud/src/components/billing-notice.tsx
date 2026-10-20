@@ -2,6 +2,7 @@ import { Link } from 'wouter';
 import { BellRing, Clock, UserPlus } from 'lucide-react';
 import { getGetBillingStatusQueryKey, useGetBillingStatus } from '@workspace/api-client-react';
 import { useApp } from '@/lib/app';
+import { RenewalPushSettings } from './renewal-push';
 
 export function useBilling() {
   return useGetBillingStatus({ query: { queryKey: getGetBillingStatusQueryKey(), refetchInterval: 60_000, refetchOnWindowFocus: true } });
@@ -43,6 +44,7 @@ export function BillingNotice() {
           <span className="text-xs text-muted-foreground">{t('تنبيه داخل التطبيق فقط', 'In-app alert only')}</span>
         </p>
       )}
+      <RenewalPushSettings />
     </div>
   );
 }

@@ -32,6 +32,7 @@ import AdminSettings from '@/pages/admin/settings';
 import AdminContent from '@/pages/admin/content';
 import AdminAudit from '@/pages/admin/audit';
 import { Privacy, Terms } from '@/pages/legal';
+import { RenewalIdentityBoundary } from '@/components/renewal-push';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
 
@@ -135,6 +136,7 @@ function ClerkProviderWithRoutes() {
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
     >
       <ClerkQueryClientCacheInvalidator />
+      <RenewalIdentityBoundary />
       <RoutedErrorBoundary>
         <Switch>
           <Route path="/" component={HomeRedirect} />

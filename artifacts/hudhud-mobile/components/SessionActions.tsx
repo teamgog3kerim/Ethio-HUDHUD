@@ -3,9 +3,9 @@ import { Modal, Platform, View } from "react-native";
 import { useAuth, useClerk, useUser } from "@clerk/expo";
 import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import * as Notifications from "expo-notifications";
 import { Action, Card, Txt, styles } from "./LearningUI";
 import { useColors } from "@/hooks/useColors";
+import { disableNativeRenewalPush, cancelStudyNotifications } from "@/utils/renewal-push";
 
 export function SessionActions() {
   const { isSignedIn } = useAuth();
@@ -22,9 +22,10 @@ export function SessionActions() {
     lock.current = true; setBusy(true); setError("");
     try {
       await qc.cancelQueries();
+      await disableNativeRenewalPush(true, true);
+      await cancelStudyNotifications();
       await signOut();
       qc.clear();
-      if (Platform.OS !== "web") void Notifications.cancelAllScheduledNotificationsAsync().catch(() => {});
       router.replace("/welcome");
     } catch { setError("تعذر تسجيل الخروج. تحقق من اتصالك وحاول مرة أخرى."); }
     finally { lock.current = false; setBusy(false); }

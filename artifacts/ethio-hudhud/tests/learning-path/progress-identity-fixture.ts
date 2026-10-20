@@ -1,6 +1,7 @@
 import { test as base, expect, type Page } from '@playwright/test';
 import { courseSeed, lessonSeed } from '@workspace/db/seed-data';
 import { arabicLessonContent } from '@workspace/db/pronunciation';
+import { status, reminderDevice } from './billing-data';
 
 export type Identity = 'progress-a' | 'progress-b' | null;
 export const lessons = [...courseSeed].sort((a, b) => a.month - b.month)
@@ -72,7 +73,8 @@ export const test = base.extend<{ progress: ReturnType<typeof createState> }>({
       };
       else if (path === '/api/admin/me') body = { signedIn: !!identity, role: null };
       else if (path === '/api/app-settings') body = { announcementAr: '', announcementEn: '', learningEnabled: true, aiEnabled: true };
-      else if (path === '/api/billing/status') body = { plan: 'complimentary', accessExpiresAt: null, reminder: null };
+      else if (path === '/api/billing/status') body = { ...status(!identity), plan: 'complimentary' };
+      else if (/^\/api\/billing\/reminder-device\/[0-9a-f-]{36}$/.test(path)) body = reminderDevice;
       else if (['/api/vocabulary', '/api/study-plan', '/api/favourites'].includes(path)) body = [];
       else {
         unexpected.push(`${request.method()} ${path}`);

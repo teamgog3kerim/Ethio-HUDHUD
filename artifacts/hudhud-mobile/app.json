@@ -22,7 +22,8 @@
     "plugins": [
       "expo-router",
       "@clerk/expo",
-      "expo-secure-store"
+      "expo-secure-store",
+      ["expo-notifications", { "enableBackgroundRemoteNotifications": true }]
     ],
     "experiments": {
       "typedRoutes": true,

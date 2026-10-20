@@ -1,6 +1,7 @@
 import { getGetBillingStatusQueryKey, useGetBillingStatus } from "@workspace/api-client-react";
 import { router } from "expo-router";
 import { Action, Card, Failure, Loading, Txt, styles } from "@/components/LearningUI";
+import { NativeRenewalSettings } from "./RenewalPush";
 
 export function CourseAccess({ compact = false }: { compact?: boolean }) {
   const q = useGetBillingStatus({ query: { queryKey: getGetBillingStatusQueryKey(), refetchInterval: 60_000, refetchOnWindowFocus: true } });
@@ -29,7 +30,8 @@ export function CourseAccess({ compact = false }: { compact?: boolean }) {
         <Action title="الدفع غير متاح بعد" disabled onPress={() => {}} />
       </Card>)}
       <Txt>{b.message}</Txt>
-      <Txt>تظهر التذكيرات داخل التطبيق قبل التجديد أو انتهاء الوصول بأربعة أيام. لا يتم إرسال بريد إلكتروني أو إشعارات في الخلفية. لا تحصيل أو اشتراك مدفوع قبل تفعيل Polar.</Txt>
+      <Txt>تظهر التذكيرات داخل التطبيق قبل التجديد أو انتهاء الوصول بأربعة أيام. لا يتم إرسال بريد إلكتروني. لا تحصيل أو اشتراك مدفوع قبل تفعيل Polar.</Txt>
+      <NativeRenewalSettings />
     </>}
   </Card>;
 }

@@ -2,6 +2,7 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { seedCurriculum } from "@workspace/db/seed";
 import { bootstrapConfiguredOwner } from "./lib/admin-auth";
+import { startRenewalDelivery } from "./lib/renewal-delivery";
 
 const rawPort = process.env["PORT"];
 
@@ -27,6 +28,7 @@ seedCurriculum().then(async () => {
   }
 
   logger.info({ port }, "Server listening");
+  startRenewalDelivery();
 })).catch(err => {
   logger.fatal({ err }, "Unable to initialize curriculum. Apply development database schema first.");
   process.exit(1);

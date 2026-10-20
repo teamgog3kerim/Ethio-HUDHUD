@@ -210,6 +210,52 @@ paths:
           description: Invalid plan
         "401":
           description: Sign in required
+  /billing/reminder-device/{deviceId}/revoke:
+    post:
+      operationId: revokeReminderDevice
+      parameters:
+        - name: deviceId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReminderRevocationInput" }
+      responses:
+        "204": { description: "Matching account-device consent revoked, including after account switches" }
+  /billing/reminder-device/{deviceId}:
+    parameters:
+      - name: deviceId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      operationId: getReminderDevice
+      responses:
+        "200":
+          description: Delivery configuration and this account's device status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReminderDeviceStatus" }
+    put:
+      operationId: saveReminderDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReminderDeviceInput" }
+      responses:
+        "200":
+          description: Consent saved for this installation and signed-in account
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReminderDeviceStatus" }
+    delete:
+      operationId: removeReminderDevice
+      responses:
+        "204": { description: Background reminders disabled for this device }
   /billing/status:
     get:
       operationId: getBillingStatus
@@ -713,6 +759,35 @@ components:
       required: [plan]
       properties:
         plan: { type: string, enum: [trial, monthly, six_month] }
+    ReminderRevocationInput:
+      type: object
+      required: [revocationToken, bindingKey]
+      properties:
+        revocationToken: { type: string, format: uuid }
+        bindingKey: { type: string, pattern: "^[0-9a-f]{64}$" }
+    ReminderDeviceInput:
+      type: object
+      required: [channel, address, timezone, expectedUserId, revocationToken]
+      properties:
+        revocationToken: { type: string, format: uuid }
+        expectedUserId: { type: string, minLength: 1, maxLength: 200, description: Reject enrollment if the signed-in identity changed while permission was being requested. }
+        channel: { type: string, enum: [web, expo] }
+        address: { type: string, minLength: 1, maxLength: 2048 }
+        p256dh: { type: string, maxLength: 200 }
+        auth: { type: string, maxLength: 100 }
+        timezone: { type: string, minLength: 1, maxLength: 100 }
+    ReminderDeviceStatus:
+      type: object
+      required: [webConfigured, nativeConfigured, enabled, state, nextAt, lastResult, bindingKey]
+      properties:
+        bindingKey: { type: [string, "null"] }
+        webConfigured: { type: boolean }
+        nativeConfigured: { type: boolean }
+        publicKey: { type: [string, "null"] }
+        enabled: { type: boolean }
+        state: { type: string, enum: [disabled, enabled, expired] }
+        nextAt: { type: [string, "null"], format: date-time }
+        lastResult: { type: [string, "null"], enum: [sending, accepted, confirmed, failed, unknown, null] }
     BillingStatus:
       type: object
       required: [plan, configured, message, trial, offers, enforcementEnabled, fullCourseAccess, reminder, isGuest]

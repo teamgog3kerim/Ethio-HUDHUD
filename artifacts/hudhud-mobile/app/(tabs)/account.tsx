@@ -11,6 +11,7 @@ import { useColors } from "@/hooks/useColors";
 import { router } from "expo-router";
 import { SessionActions } from "@/components/SessionActions";
 import { CourseAccess } from "@/components/CourseAccess";
+import { cancelStudyNotifications } from "@/utils/renewal-push";
 export default function Account() {
   const query = useGetProfile();
   if (query.isLoading) return <Loading />;
@@ -26,14 +27,14 @@ function Preferences({ profile }: { profile: Profile }) {
   const updateReminder = async (enabled: boolean) => {
     try {
       if (Platform.OS === "web") { setNotice("التذكيرات المحلية متاحة على الجهاز الأصلي فقط."); return; }
-      if (!enabled) { await Notifications.cancelAllScheduledNotificationsAsync(); setForm(p => ({ ...p, reminderEnabled: false })); return; }
+      if (!enabled) { await cancelStudyNotifications(); setForm(p => ({ ...p, reminderEnabled: false })); return; }
       if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(form.reminderTime)) { setNotice("اكتب الوقت مثل 19:00."); return; }
       const permission = await Notifications.requestPermissionsAsync();
       if (permission.status !== "granted") { setNotice("لم تمنح إذن الإشعارات. يمكنك تفعيله من إعدادات الجهاز."); return; }
       if (Platform.OS === "android") await Notifications.setNotificationChannelAsync("daily-study", { name: "تذكير التعلّم", importance: Notifications.AndroidImportance.DEFAULT });
-      await Notifications.cancelAllScheduledNotificationsAsync();
+      await cancelStudyNotifications();
       const [hour, minute] = form.reminderTime.split(":").map(Number);
-      await Notifications.scheduleNotificationAsync({ content: { title: "حان وقت الأمهرية", body: "درسك اليومي ينتظرك. واصل رحلتك مع هدهد." }, trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: hour!, minute: minute!, channelId: "daily-study" } });
+      await Notifications.scheduleNotificationAsync({ identifier: `study:${profile.id}`, content: { title: "حان وقت الأمهرية", body: "درسك اليومي ينتظرك. واصل رحلتك مع هدهد.", data: { type: "study" } }, trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: hour!, minute: minute!, channelId: "daily-study" } });
       setForm(p => ({ ...p, reminderEnabled: true, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }));
       setNotice("تم ضبط التذكير حسب الوقت المحلي لجهازك. احفظ التفضيلات.");
     } catch { setNotice("تعذر جدولة التذكير على هذا الجهاز."); }
@@ -56,7 +57,7 @@ function Preferences({ profile }: { profile: Profile }) {
     {!!notice && <Txt style={{ color: c.primary }}>{notice}</Txt>}
     {save.isError && <Txt style={{ color: c.destructive }}>تعذر حفظ التفضيلات.</Txt>}
     <Action title={save.isPending ? "جارٍ الحفظ…" : "احفظ وابدأ التعلّم"} disabled={save.isPending || !form.displayName.trim()} icon="check" onPress={() => {
-      if (!form.reminderEnabled && Platform.OS !== "web") void Notifications.cancelAllScheduledNotificationsAsync();
+      if (!form.reminderEnabled && Platform.OS !== "web") void cancelStudyNotifications().catch(() => setNotice("تعذر إيقاف تذكير الدراسة."));
       save.mutate({ data: { ...form, onboardingComplete: true } }, { onSuccess: () => { void qc.invalidateQueries(); setNotice("تم حفظ تفضيلاتك."); } });
     }} />
     <Action title="تصدير بياناتي" secondary onPress={() => { void exportAccount().then(data => Share.share({ message: JSON.stringify(data, null, 2) })).catch(() => setNotice("تعذر تصدير البيانات.")); }} />

@@ -1,24 +1,9 @@
 import { test as base, expect, type Page } from '@playwright/test';
-import type { BillingStatus } from '@workspace/api-client-react';
+import { status, reminderDevice } from './billing-data';
 import { courseSeed, lessonSeed } from '@workspace/db/seed-data';
 import { arabicLessonContent } from '@workspace/db/pronunciation';
 
-// Contract-shaped response, not a second implementation of billing policy.
-// Dates/prices are fixed examples; the existing API tests own their calculation.
-export function status(isGuest = true): BillingStatus {
-  return {
-    plan: 'free', configured: false, isGuest,
-    message: 'الدفع عبر Polar مؤجّل. التعلم مفتوح ولا يتم تحصيل رسوم.',
-    source: 'none', accessExpiresAt: null, dailyAiLimit: 10,
-    enforcementEnabled: false, fullCourseAccess: true,
-    trial: { state: 'expired', startedAt: '2026-10-01T12:00:00Z', endsAt: '2026-10-03T12:00:00Z', daysRemaining: 0 },
-    offers: [
-      { id: 'monthly', priceUsd: 29, durationMonths: 1, billing: 'monthly', sixMonthTotalUsd: 174, savingsUsd: 0, savingsPercent: 0 },
-      { id: 'six_month', priceUsd: 149, durationMonths: 6, billing: 'one_time', sixMonthTotalUsd: 149, savingsUsd: 25, savingsPercent: 14.4 },
-    ],
-    reminder: null,
-  };
-}
+export { status } from './billing-data';
 
 export const lesson = lessonSeed.find(l => l.content.words.length > 0)!;
 export const conversation = lessonSeed.find(l => l.content.dialogue?.length)!;
@@ -71,6 +56,7 @@ export const test = base.extend<{ billing: ReturnType<typeof createState> }>({
         return route.fulfill({ status: 500, json: { error: 'Unexpected test request' } });
       }
       const json = (body: unknown) => route.fulfill({ json: body });
+      if (/^\/api\/billing\/reminder-device\/[0-9a-f-]{36}$/.test(url.pathname)) return json(reminderDevice);
       if (url.pathname === '/api/billing/status') {
         billing.reads.push(id);
         const snapshot = structuredClone(record);

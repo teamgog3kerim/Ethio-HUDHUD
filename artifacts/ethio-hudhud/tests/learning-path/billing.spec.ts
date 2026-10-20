@@ -57,7 +57,8 @@ for (const lang of ['ar', 'en'] as const) {
         await button.evaluate(el => (el as HTMLButtonElement).click());
       }
       await expect(page.getByTestId('text-billing-message')).toContainText(text('لا يتم تحصيل رسوم', 'No payment is collected'));
-      await expect(page.getByTestId('text-pricing-note')).toContainText(text('ليست بريدًا إلكترونيًا أو إشعارات في الخلفية', 'not by email or background push'));
+      await expect(page.getByTestId('text-pricing-note')).toContainText(text('إشعارات الخلفية اختيارية', 'Optional background notifications'));
+      await expect(page.getByTestId('text-pricing-note')).toContainText(text('لا يتم إرسال بريد إلكتروني', 'No email is sent'));
       await layout(page, lang);
     });
 

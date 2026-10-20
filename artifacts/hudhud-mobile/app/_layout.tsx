@@ -13,6 +13,8 @@ import { setBaseUrl, setAuthTokenGetter } from '@workspace/api-client-react';
 import { useColors } from '@/hooks/useColors';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { NativeRenewalBoundary } from '@/components/RenewalPush';
+import { setNativeRenewalIdentity } from '@/utils/renewal-push';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -27,9 +29,10 @@ function Startup() {
 
 function AuthBridge() {
   const { getToken, userId } = useAuth();
+  setNativeRenewalIdentity(userId);
   const queryClient = useMemo(() => new QueryClient(), [userId]);
   setAuthTokenGetter(() => getToken());
-  return <QueryClientProvider client={queryClient}><RootLayoutNav /></QueryClientProvider>;
+  return <QueryClientProvider client={queryClient}><NativeRenewalBoundary /><RootLayoutNav /></QueryClientProvider>;
 }
 
 function RootLayoutNav() {
