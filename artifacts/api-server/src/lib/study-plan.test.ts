@@ -10,8 +10,8 @@ test("calendar follows all six months and schedules every lesson once with four 
   const plan = buildStudyPlan([...courses].reverse());
   assert.equal(plan.length, 180);
   const scheduled = plan.filter(p => p.type === "lesson");
-  assert.equal(scheduled.length, 60);
-  assert.equal(new Set(scheduled.map(p => p.lessonId)).size, 60);
+  assert.equal(scheduled.length, lessonSeed.length);
+  assert.equal(new Set(scheduled.map(p => p.lessonId)).size, lessonSeed.length);
   for (const course of courses) {
     const days = plan.filter(p => p.month === course.month);
     assert.equal(days.length, 30);

@@ -37,21 +37,21 @@ test('pass, reload and repeat retain exactly one completion and update resume/pr
   await answerQuiz(page, boundary, true);
   await expect(page.getByTestId('text-score')).toHaveText('100%');
   await expect(page.getByTestId('panel-result')).toContainText('+30 XP');
-  await expect(page.getByTestId('text-path-progress')).toContainText('1 / 60');
+  await expect(page.getByTestId('text-path-progress')).toContainText(`1 / ${orderedLessons.length}`);
   await expect(page.getByTestId('link-next-lesson')).toHaveAttribute('href', `/lesson/${afterBoundary.id}`);
 
   await page.reload();
   await expectReading(page, boundary);
-  await expect(page.getByTestId('text-path-progress')).toContainText('1 / 60');
+  await expect(page.getByTestId('text-path-progress')).toContainText(`1 / ${orderedLessons.length}`);
   expect(learner.submissions).toHaveLength(1);
   await startQuiz(page);
   await answerQuiz(page, boundary, true);
   await expect(page.getByTestId('panel-result')).toContainText('+0 XP');
   await page.getByTestId('link-back-learn').click();
-  await expect(page.getByTestId('text-overall')).toContainText('1 / 60');
+  await expect(page.getByTestId('text-overall')).toContainText(`1 / ${orderedLessons.length}`);
   await expect(page.getByTestId('link-continue-learning')).toHaveAttribute('href', `/lesson/${orderedLessons[0]!.id}`);
   await page.reload();
-  await expect(page.getByTestId('text-overall')).toContainText('1 / 60');
+  await expect(page.getByTestId('text-overall')).toContainText(`1 / ${orderedLessons.length}`);
   expect([...learner.completed]).toEqual([boundary.id]);
   expect(learner.submissions).toHaveLength(2);
 });
@@ -74,9 +74,9 @@ test('a failed quiz and retry reset answers without awarding completion', async 
   await answerQuiz(page, boundary, false);
   await expect(page.getByTestId('text-score')).toHaveText('0%');
   await page.getByTestId('link-back-learn').click();
-  await expect(page.getByTestId('text-overall')).toContainText('0 / 60');
+  await expect(page.getByTestId('text-overall')).toContainText(`0 / ${orderedLessons.length}`);
   await page.reload();
-  await expect(page.getByTestId('text-overall')).toContainText('0 / 60');
+  await expect(page.getByTestId('text-overall')).toContainText(`0 / ${orderedLessons.length}`);
   expect(learner.completed.size).toBe(0);
 });
 

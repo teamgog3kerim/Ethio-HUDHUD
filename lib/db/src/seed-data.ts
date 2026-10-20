@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { arabicLessonContent, arabicLearningText, arabicPronunciation } from "./pronunciation";
 import { extraLessonInputs, conversationLessonInputs } from "./extra-curriculum";
 import { extendedLessonInputs, extendedConversationInputs } from "./extended-curriculum";
+import { numberLessonInputs } from "./numbers-curriculum";
 export type SeedWord = { id: string; amharic: string; arabic: string; english: string; transliteration: string; due: boolean; interval: number };
 export type SeedExercise = { id: string; prompt: string; options: string[]; type: string };
 export type LessonContent = {
@@ -73,13 +74,17 @@ const allInputs: LessonInput[] = [
   ...extendedConversationInputs.map(c => [
     c.id, c.courseId, c.titleAr, c.titleEn, c.explanation, c.turns.map(t => t[2]),
   ] satisfies LessonInput),
+  ...numberLessonInputs,
 ];
 export const lessonSeed = allInputs.map(([id, courseId, titleAr, titleEn, explanation, rawWords], n) => {
   const words = rawWords.map(makeWord);
   const conversation = allConversations.find(c => c.id === id);
-  const exerciseWords = words.slice(0, n >= 42 ? 8 : 4);
+  const numbersLesson = id.startsWith("numbers-course-");
+  const exerciseWords = numbersLesson ? words : words.slice(0, n >= 42 ? 8 : 4);
   const answers = exerciseWords.map((w, i) => {
-    const options = exerciseWords.map(v => v.arabic);
+    const options = numbersLesson
+      ? Array.from({ length: 4 }, (_, j) => exerciseWords[(i + j) % exerciseWords.length]!.arabic)
+      : exerciseWords.map(v => v.arabic);
     // Rotate options so the answer is not always in the same position.
     const rotated = [...options.slice(i % 3), ...options.slice(0, i % 3)];
     return { exercise: { id: `${id}-${i}`, prompt: `ما معنى ${w.amharic}؟`, options: rotated, type: courseId === "fidel" ? "fidel" : "vocabulary" }, correctIndex: rotated.indexOf(w.arabic), explanation: `${w.amharic} تعني ${w.arabic}. النقل التقريبي: ${w.transliteration}.` };

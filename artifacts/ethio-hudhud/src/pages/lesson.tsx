@@ -36,7 +36,7 @@ function LessonView({ id }: { id: string }) {
   const [qi, setQi] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [result, setResult] = useState<LessonResult | null>(null);
-  const [showTr, setShowTr] = useState(() => { try { return localStorage.getItem('hh-tr') === '1'; } catch { return false; } });
+  const [showTr, setShowTr] = useState(() => { try { return id.startsWith('numbers-course-') || localStorage.getItem('hh-tr') === '1'; } catch { return id.startsWith('numbers-course-'); } });
   const toggleTr = () => setShowTr((v) => { try { localStorage.setItem('hh-tr', v ? '0' : '1'); } catch { /* ignore */ } return !v; });
   const { seconds, reset } = useActiveTimer(phase !== 'result');
 

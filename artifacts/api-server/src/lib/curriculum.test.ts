@@ -6,9 +6,9 @@ import { lessonContentSchema } from "./lesson-validation";
 import { gradeAnswers } from "./scoring";
 
 test("adds practical conversations without replacing existing lesson identifiers or sequence", () => {
-  assert.equal(lessonSeed.length, 60);
-  assert.equal(new Set(lessonSeed.map(l => l.id)).size, 60);
-  assert.equal(new Set(lessonSeed.map(l => l.sequence)).size, 60);
+  assert.equal(lessonSeed.length, 70);
+  assert.equal(new Set(lessonSeed.map(l => l.id)).size, 70);
+  assert.equal(new Set(lessonSeed.map(l => l.sequence)).size, 70);
   assert.deepEqual(lessonSeed.slice(0, 12).map(l => l.id), [
     "fidel-ha", "fidel-la", "greetings", "introductions", "numbers", "family",
     "questions", "daily-time", "coffee-food", "transport", "work", "days",
@@ -20,7 +20,7 @@ test("adds practical conversations without replacing existing lesson identifiers
   const additions: Record<string, number> = { everyday: 3, speaking: 2, travel: 4, professional: 3 };
   for (const course of courseSeed) {
     const lessons = lessonSeed.filter(l => l.courseId === course.id);
-    assert.equal(lessons.length, 8 + (additions[course.id] ?? 0), course.id);
+    assert.equal(lessons.length, 8 + (additions[course.id] ?? 0) + (course.month <= 2 ? 1 : 2), course.id);
     assert.equal(lessons.filter(l => l.content.dialogue?.length).length, 2 + (additions[course.id] ?? 0));
   }
 });
@@ -86,7 +86,7 @@ test("practical scenarios include all turns in review and four distinct quiz que
 });
 
 test("six-month extensions include two longer lessons and an eight-turn application per month", () => {
-  const extensions = lessonSeed.slice(42);
+  const extensions = lessonSeed.slice(42, 60);
   assert.equal(extensions.length, 18);
   for (const course of courseSeed) {
     assert.equal(course.level, course.month <= 2 ? "beginner" : course.month <= 4 ? "intermediate" : "advanced");

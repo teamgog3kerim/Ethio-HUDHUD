@@ -21,6 +21,15 @@ navigation and tracked lesson completion.
 path rather than turning the catalogue into an unstructured list. Treat the
 duration as a suggested study schedule, not a guarantee of fluency.
 
+Include number lessons from 0 to 100 throughout the six course months, showing
+the numeric value, Amharic word and Arabic-script pronunciation (for example,
+0 · ዜሮ · زيرو).
+
+**Why:** The user explicitly requested number lessons across all course months.
+
+**How to apply:** Keep numerical learning progressive across the six-month path,
+with practical contexts and the same quizzes and completion tracking as other lessons.
+
 Pronunciation guides for Amharic words and letters must use Arabic script
 throughout the app, not Latin transliteration.
 
