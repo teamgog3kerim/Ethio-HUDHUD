@@ -46,8 +46,12 @@ fabricate pronunciation assessment, or claim a paid entitlement from a button.
 **Why:** The brief explicitly requires reviewer-approved content, real providers
 and verified payment webhooks rather than placeholder production features.
 
-**How to apply:** Clearly mark pilot material; require genuine linguistic review
-and actual provider support before presenting those capabilities as available.
+**How to apply:** Preserve internal review status and require genuine linguistic
+review and actual provider support before claiming approval or availability.
+Do not show the recurring learner-facing “This is pilot material awaiting
+qualified review. Lessons may contain mistakes.” notification or its Arabic
+equivalent; the user explicitly requested its removal throughout the app.
+Keep factual audio limitations and approximate-pronunciation guidance.
 
 The requested billing provider is Polar.sh. Do not silently substitute another
 provider or activate Premium without verified payment.

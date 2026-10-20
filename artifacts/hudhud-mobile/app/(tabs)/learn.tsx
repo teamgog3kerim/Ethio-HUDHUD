@@ -43,7 +43,7 @@ export default function Learn() {
           </Card>;
         })}
       </Card>}
-      <Txt style={{ color: c.mutedForeground, fontSize: 12 }}>راجع المفردات وتبادل أدوار المحادثة بين الجلسات. المحتوى تجريبي وينتظر مراجعة لغوية قبل الاعتماد.</Txt>
+      <Txt style={{ color: c.mutedForeground, fontSize: 12 }}>راجع المفردات وتبادل أدوار المحادثة بين الجلسات.</Txt>
     </>}
   </Screen>;
 }

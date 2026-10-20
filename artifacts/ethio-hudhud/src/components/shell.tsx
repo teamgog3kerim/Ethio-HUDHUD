@@ -195,7 +195,7 @@ export function Footer() {
         <Link href="/premium" className="hover:text-foreground" data-testid="link-premium">Premium</Link>
         {settings.data?.supportEmail && <a href={`mailto:${settings.data.supportEmail}`} className="hover:text-foreground" data-testid="link-support">{t('الدعم', 'Support')}</a>}
       </div>
-      <p>{t('مشروع تعلّم شخصي — محتوى تجريبي بانتظار المراجعة.', 'A personal learning project — pilot content awaiting review.')}</p>
+      <p>{t('تعلّم الأمهرية بالعربية مع هدهد.', 'Learn Amharic with HUDHUD.')}</p>
     </footer>
   );
 }

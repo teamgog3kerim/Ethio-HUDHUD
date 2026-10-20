@@ -23,6 +23,6 @@ export default function Home() {
     {courses.isError && <Failure retry={courses.refetch} />}
     <Action title="استكشف المسارات" secondary icon="book-open" onPress={() => router.push("/learn")} />
     <Action title="راجع كلماتك" secondary icon="layers" onPress={() => router.push("/review")} />
-    <Txt style={{ color: c.mutedForeground, fontSize: 12 }}>الدروس تجريبية وتنتظر مراجعة مختص. تعلّم الأمهرية فقط، بشرح عربي.</Txt>
+    <Txt style={{ color: c.mutedForeground, fontSize: 12 }}>تعلّم الأمهرية بشرح عربي.</Txt>
   </Screen>;
 }

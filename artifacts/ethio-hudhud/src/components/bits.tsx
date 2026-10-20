@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Link } from 'wouter';
-import { AlertTriangle, FlaskConical, Headphones, RotateCw } from 'lucide-react';
+import { AlertTriangle, Headphones, RotateCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/lib/app';
 
@@ -87,17 +87,16 @@ export function Empty({ icon, title, body, action }: { icon: ReactNode; title: s
 
 export function PilotNote({ kind = 'content', className }: { kind?: 'content' | 'audio'; className?: string }) {
   const { t } = useApp();
-  const Icon = kind === 'audio' ? Headphones : FlaskConical;
+  // Content-review notices are not part of the learner-facing interface.
+  if (kind === 'content') return null;
   return (
     <div
       className={cn('flex items-start gap-3 rounded-2xl border border-gold/50 bg-gold/10 px-4 py-3 text-sm', className)}
       data-testid={`note-${kind}`}
     >
-      <Icon className="mt-0.5 size-4 shrink-0 text-[hsl(39_70%_38%)] dark:text-gold" />
+      <Headphones className="mt-0.5 size-4 shrink-0 text-[hsl(39_70%_38%)] dark:text-gold" />
       <p className="leading-relaxed">
-        {kind === 'audio'
-          ? t('الصوت بانتظار تسجيلات مراجَعة من متحدثين مؤهلين. التدريب النصي يعمل بالكامل الآن.', 'Audio is waiting for reviewed recordings from qualified speakers. Text practice works fully today.')
-          : t('هذا المحتوى تجريبي (pilot) وينتظر مراجعة مؤهلة قبل اعتماده. قد تحتوي الدروس على أخطاء.', 'This is pilot material awaiting qualified review. Lessons may contain mistakes.')}
+        {t('الصوت بانتظار تسجيلات مراجَعة من متحدثين مؤهلين. التدريب النصي يعمل بالكامل الآن.', 'Audio is waiting for reviewed recordings from qualified speakers. Text practice works fully today.')}
       </p>
     </div>
   );
