@@ -14,7 +14,7 @@ subdirectory. Select **Web Service** with Node.js/Nixpacks.
 | --- | --- |
 | Node | 22 |
 | Package manager | pnpm 10.26.1 (pinned in package.json) |
-| Install, if the UI asks | `corepack enable && pnpm install --frozen-lockfile --prod=false` |
+| Install | Use `nixpacks.toml`: installs pinned pnpm without Corepack, then frozen-lockfile dependencies |
 | Build | `pnpm run deploy:build` |
 | Start | `pnpm run deploy:start` |
 | Bind | `0.0.0.0` |
@@ -23,6 +23,9 @@ subdirectory. Select **Web Service** with Node.js/Nixpacks.
 | Static publish directory | None: this is a Node web service, not static-only hosting |
 
 `nixpacks.toml` supplies install/build/start configuration automatically.
+Keep the Root Directory set to the repository root so this file is discovered.
+Clear stale custom install/build commands in EthioDeploy if they override this
+file. The install phase prints Node/pnpm versions to help diagnose host issues.
 Do not use the generic root `build` command for this host: it includes unrelated
 artifacts. Keep build dependencies installed; Vite and TypeScript are required.
 
@@ -157,3 +160,24 @@ HTTPS site. Keep the old site available until cutover and data validation are do
 
 This guide prepares the repository. It does not publish to EthioDeploy, push a
 GitHub branch, transfer secrets, configure DNS/auth, or migrate production data.
+
+## If the dashboard says “nixpacks build failed (exit 1)”
+
+That line is a summary, not the root error. Open the deployment's full build log
+and find the first failed command and its preceding error lines.
+
+- A Corepack signature/key-ID error or missing `corepack` is avoided by this
+  configuration's explicit pnpm installation. Do not disable signature checks.
+- `VITE_PUBLIC_APP_URL is required` or `VITE_CLERK_PUBLISHABLE_KEY is required`
+  means those public build-time settings are missing in EthioDeploy. Add the
+  real HTTPS origin and production publishable key. Do not use CI fixture keys.
+- A production-key or origin-mismatch message means the configured values must
+  be corrected; weakening validation would only ship broken sign-in or links.
+- `Use pnpm instead`, npm workspace/catalog errors, or an unexpected Expo build
+  means the wrong install/build command is running. Use the repository root and
+  the commands above, not `npm install` in the repository or a recursive build.
+- A failed dependency download, Nix download, disk/memory error or image-build
+  error needs its specific log; a passing local compile cannot verify it.
+
+If requesting help, include the failed step and about 30 lines before the summary.
+Redact credentials, connection strings and tokens first.
