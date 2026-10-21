@@ -30,6 +30,9 @@ async function expectReading(page: Page, lesson: typeof boundary) {
 }
 
 test('pass, reload and repeat retain exactly one completion and update resume/progress', async ({ page, learner }) => {
+  // Two full quizzes plus reading, reloads and navigation can exceed the
+  // default 45s on a loaded runner. Keep per-action assertions unchanged.
+  test.setTimeout(90_000);
   await page.goto(`/lesson/${boundary.id}`);
   await expectReading(page, boundary);
   expect(learner.submissions).toHaveLength(0);

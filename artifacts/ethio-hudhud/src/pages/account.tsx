@@ -68,7 +68,7 @@ export default function Account() {
 
   return (
     <Shell>
-      <PageHead eyebrow={q.data?.isGuest ? t('جلسة ضيف', 'Guest session') : t('حسابي', 'My account')} title={t('الإعدادات', 'Settings')} right={<InviteFriend />} />
+      <PageHead eyebrow={q.data?.isGuest ? t('جلسة ضيف', 'Guest session') : t('حسابي', 'My account')} title={t('الإعدادات', 'Settings')} right={<InviteFriend source="account" />} />
       {isSignedIn && (
         <Card className="mb-5 flex flex-wrap items-center justify-between gap-4" data-testid="card-identity">
           <div className="flex min-w-0 items-center gap-3">

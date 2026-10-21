@@ -49,7 +49,7 @@ export default function Dashboard() {
         <p className="text-sm text-muted-foreground">{t('مرحبًا بعودتك', 'Welcome back')}</p>
         <h1 className="font-display text-3xl font-extrabold" data-testid="text-greeting">{profile.data?.displayName || t('ضيفنا العزيز', 'Dear guest')}</h1>
         </div>
-        <InviteFriend />
+        <InviteFriend source="dashboard" />
       </div>
 
       {profile.data && !profile.data.onboardingComplete && (

@@ -16,8 +16,10 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/lib/app';
+import { trackInviteEvent, type InviteSource } from '@/lib/analytics';
 
 type Status = { kind: 'ok' | 'error' | 'info'; text: string } | null;
+const templateCategories = ['template_1', 'template_2', 'template_3', 'template_4'] as const;
 
 function finalText(draft: string) {
   const d = draft.trim();
@@ -25,7 +27,7 @@ function finalText(draft: string) {
   return d ? `${d}\n${INVITE_APP_URL}` : INVITE_APP_URL;
 }
 
-export function InviteFriend({ className, compact }: { className?: string; compact?: boolean }) {
+export function InviteFriend({ source, className, compact }: { source: InviteSource; className?: string; compact?: boolean }) {
   const { t, lang } = useApp();
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
@@ -49,6 +51,7 @@ export function InviteFriend({ className, compact }: { className?: string; compa
   }, [open, lang]);
 
   const pick = (i: number) => {
+    trackInviteEvent(source, { action: 'template_selected', template: templateCategories[i] });
     setIndex(i);
     setDraft(getInviteText(i, lang));
     setStatus(null);
@@ -69,6 +72,8 @@ export function InviteFriend({ className, compact }: { className?: string; compa
     setStatus(null);
     try {
       await navigator.share({ title: 'Ethio HUDHUD', text });
+      // A resolved system share is only a handoff, never proof of delivery.
+      trackInviteEvent(source, { action: 'share_handoff', method: 'system_share' });
       setStatus({ kind: 'ok', text: t('تم فتح قائمة المشاركة.', 'The share menu was opened.') });
     } catch (e) {
       if (!(e instanceof DOMException && e.name === 'AbortError') && !(e as { name?: string })?.name?.includes('AbortError')) {
@@ -87,6 +92,7 @@ export function InviteFriend({ className, compact }: { className?: string; compa
     setStatus(null);
     try {
       await navigator.clipboard.writeText(text);
+      trackInviteEvent(source, { action: 'copy_succeeded' });
       setManual(false);
       setStatus({ kind: 'ok', text: t('تم نسخ الرسالة. الصقها في أي محادثة.', 'Message copied. Paste it into any chat.') });
     } catch {
@@ -109,7 +115,10 @@ export function InviteFriend({ className, compact }: { className?: string; compa
         type="button"
         ref={triggerRef}
         className={btnClass(compact ? 'outline' : 'gold', compact ? 'sm' : 'md', className)}
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          if (!open) trackInviteEvent(source, { action: 'opened' });
+          setOpen(true);
+        }}
         aria-haspopup="dialog"
         data-testid="button-invite-friend"
       >
@@ -205,10 +214,12 @@ export function InviteFriend({ className, compact }: { className?: string; compa
             </Btn>
           </div>
           <div className="flex flex-wrap gap-2">
-            <a href={links.whatsapp} target="_blank" rel="noopener noreferrer" className={linkCls} data-testid="link-invite-whatsapp">
+            <a href={links.whatsapp} target="_blank" rel="noopener noreferrer" className={linkCls} data-testid="link-invite-whatsapp"
+              onClick={() => trackInviteEvent(source, { action: 'share_handoff', method: 'whatsapp' })}>
               <Send className="size-4" /> WhatsApp
             </a>
-            <a href={links.telegram} target="_blank" rel="noopener noreferrer" className={linkCls} data-testid="link-invite-telegram">
+            <a href={links.telegram} target="_blank" rel="noopener noreferrer" className={linkCls} data-testid="link-invite-telegram"
+              onClick={() => trackInviteEvent(source, { action: 'share_handoff', method: 'telegram' })}>
               <Send className="size-4" /> Telegram
             </a>
           </div>
