@@ -15,7 +15,7 @@ subdirectory. Select **Web Service** with Node.js/Nixpacks.
 | Node | 22 |
 | Package manager | pnpm 10.26.1 (pinned in package.json) |
 | Install | Use `nixpacks.toml`: installs pinned pnpm without Corepack, then frozen-lockfile dependencies |
-| Build | `pnpm run deploy:build` |
+| Build | `pnpm run build` (equivalent to `pnpm run deploy:build`) |
 | Start | `pnpm run deploy:start` |
 | Bind | `0.0.0.0` |
 | Port | EthioDeploy's `PORT`; fallback 3000 |
@@ -24,10 +24,14 @@ subdirectory. Select **Web Service** with Node.js/Nixpacks.
 
 `nixpacks.toml` supplies install/build/start configuration automatically.
 Keep the Root Directory set to the repository root so this file is discovered.
-Clear stale custom install/build commands in EthioDeploy if they override this
-file. The install phase prints Node/pnpm versions to help diagnose host issues.
-Do not use the generic root `build` command for this host: it includes unrelated
-artifacts. Keep build dependencies installed; Vite and TypeScript are required.
+The pnpm bootstrap runs in **setup**, before dependency installation, because
+EthioDeploy may override the install phase with `pnpm install` and the build
+phase with `pnpm run build`. Both defaults are supported. Keep dependency
+installation at `pnpm install --frozen-lockfile --prod=false` when configurable.
+Setup prints Node/pnpm versions to help diagnose host issues.
+The root `build` command builds only the web app and API; use `build:workspace`
+explicitly for the full workspace. Keep build dependencies installed; Vite and
+TypeScript are required.
 
 ## Required variables
 
@@ -168,6 +172,10 @@ and find the first failed command and its preceding error lines.
 
 - A Corepack signature/key-ID error or missing `corepack` is avoided by this
   configuration's explicit pnpm installation. Do not disable signature checks.
+- `pnpm: command not found` during the install phase means the setup bootstrap
+  did not run. Use the latest repository revision: the bootstrap must be in
+  `[phases.setup]`, not `[phases.install]`, because the host overrides install
+  commands. The plan should show pnpm installation as part of setup.
 - `VITE_PUBLIC_APP_URL is required` or `VITE_CLERK_PUBLISHABLE_KEY is required`
   means those public build-time settings are missing in EthioDeploy. Add the
   real HTTPS origin and production publishable key. Do not use CI fixture keys.

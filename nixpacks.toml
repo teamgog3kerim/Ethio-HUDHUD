@@ -2,19 +2,21 @@ providers = ["node"]
 
 [variables]
 NIXPACKS_NODE_VERSION = "22"
+NIXPACKS_PATH = "/opt/hudhud-tools/node_modules/.bin:/app/node_modules/.bin"
 
 [phases.setup]
-# Install pnpm explicitly below rather than relying on a host's Corepack
-# signing keys or its Nix pnpm overlay version.
+# EthioDeploy can override the install phase with "pnpm install". Bootstrap
+# the package manager in setup so that override cannot skip its installation.
 nixPkgs = ["nodejs_22"]
+paths = ["/opt/hudhud-tools/node_modules/.bin"]
+cmds = [
+  "npm install --prefix /opt/hudhud-tools --no-package-lock --no-audit --no-fund pnpm@10.26.1",
+  "node --version && /opt/hudhud-tools/node_modules/.bin/pnpm --version"
+]
 
 [phases.install]
 paths = ["/opt/hudhud-tools/node_modules/.bin", "/app/node_modules/.bin"]
-cmds = [
-  "npm install --prefix /opt/hudhud-tools --no-package-lock --no-audit --no-fund pnpm@10.26.1",
-  "node --version && pnpm --version",
-  "pnpm install --frozen-lockfile --prod=false"
-]
+cmds = ["pnpm install --frozen-lockfile --prod=false"]
 
 [phases.build]
 cmds = ["pnpm run deploy:build"]

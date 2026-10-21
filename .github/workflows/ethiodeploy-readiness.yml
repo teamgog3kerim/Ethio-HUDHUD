@@ -23,4 +23,5 @@ jobs:
       - run: pnpm install --frozen-lockfile --prod=false
       - run: pnpm run test:deployment
       - run: pnpm --filter @workspace/api-server test
-      - run: pnpm run deploy:build
+      # Match EthioDeploy's default build-command override.
+      - run: pnpm run build

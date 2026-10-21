@@ -28,3 +28,13 @@ GitHub repository.
 **How to apply:** Keep external-host deployment preparation separate from Replit
 publishing. Do not assume that hosting changes authorize moving existing data,
 changing identity tenants, or activating the deferred payment gateway.
+
+EthioDeploy may override Nixpacks install/build phase commands with its own
+`pnpm install` and `pnpm run build` defaults.
+
+**Why:** Actual host logs showed those overrides skipping the configured pnpm
+bootstrap entirely, despite reading the other Nixpacks settings.
+
+**How to apply:** Keep package-manager bootstrapping in the setup phase and make
+the root build command safe for the web/API deployment. Verify the effective
+commands in the host log instead of assuming the TOML commands will run.
