@@ -19,24 +19,3 @@ Installed mobile apps must use the mobile view, not the desktop-site layout.
 **Why:** The user explicitly requested mobile presentation when using the installed app on phones.
 
 **How to apply:** Keep mobile navigation available in phone landscape orientation and preserve safe-area spacing for both learners and administrators.
-
-The current hosting direction is to keep the app on Replit and connect the user's
-`ethiohudhud.com` domain, whose DNS is managed through EthioDeploy.
-
-**Why:** After preparing external hosting, the user explicitly requested
-step-by-step publication on this domain while remaining hosted in Replit.
-
-**How to apply:** Treat EthioDeploy as the domain/DNS provider for this direction,
-not the application host. Use Replit's domain-linking flow and its exact DNS
-records. Do not migrate identities, databases, or activate deferred payments.
-Retain external-deployment tooling unless removal is explicitly requested.
-
-EthioDeploy may override Nixpacks install/build phase commands with its own
-`pnpm install` and `pnpm run build` defaults.
-
-**Why:** Actual host logs showed those overrides skipping the configured pnpm
-bootstrap entirely, despite reading the other Nixpacks settings.
-
-**How to apply:** Keep package-manager bootstrapping in the setup phase and make
-the root build command safe for the web/API deployment. Verify the effective
-commands in the host log instead of assuming the TOML commands will run.

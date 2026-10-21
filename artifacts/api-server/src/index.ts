@@ -21,12 +21,14 @@ if (Number.isNaN(port) || port <= 0) {
 seedCurriculum().then(async () => {
   try { logger.info({ status: await bootstrapConfiguredOwner() }, "Owner bootstrap checked"); }
   catch (err) { logger.error({ err }, "Owner bootstrap unavailable; verified owner can retry on admin sign-in"); }
-}).then(() => app.listen(port, "0.0.0.0", () => {
+}).then(() => app.listen(port, (err) => {
+  if (err) {
+    logger.error({ err }, "Error listening on port");
+    process.exit(1);
+  }
+
   logger.info({ port }, "Server listening");
   startRenewalDelivery();
-}).on("error", (err) => {
-  logger.fatal({ err }, "Error listening on port");
-  process.exit(1);
 })).catch(err => {
   logger.fatal({ err }, "Unable to initialize curriculum. Apply development database schema first.");
   process.exit(1);

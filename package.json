@@ -3,27 +3,16 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "deploy:build": "node scripts/deployment/build.mjs",
-    "deploy:start": "node scripts/deployment/start.mjs",
-    "start": "pnpm run deploy:start",
-    "deploy:check": "node scripts/deployment/check.mjs",
-    "deploy:migrate": "pnpm --filter @workspace/db run migrate",
-    "test:deployment": "node --test scripts/deployment/*.test.mjs",
     "test:billing": "pnpm --filter @workspace/ethio-hudhud run test:billing",
     "test:favourites": "pnpm --filter @workspace/ethio-hudhud run test:favourites",
     "test:learning-path": "pnpm --filter @workspace/api-server test && pnpm --filter @workspace/api-server exec tsx --test ../../lib/api-client-react/tests/learning-path.test.ts && pnpm --filter @workspace/ethio-hudhud run test:learning-path && pnpm run test:learning-path:api",
     "test:learning-path:api": "RUN_LEARNING_INTEGRATION=1 pnpm --filter @workspace/api-server exec tsx --test src/lib/learning-completion.integration.test.ts",
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
-    "build": "node scripts/deployment/build.mjs",
-    "build:workspace": "pnpm run typecheck && pnpm -r --if-present run build",
+    "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },
   "private": true,
-  "packageManager": "pnpm@10.26.1",
-  "engines": {
-    "node": "22.x"
-  },
   "dependencies": {
     "@replit/connectors-sdk": "^0.4.3"
   },
