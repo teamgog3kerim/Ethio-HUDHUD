@@ -18,6 +18,7 @@ export function InstallPrompt() {
   const [deferred, setDeferred] = useState<InstallEvent | null>(null);
   const [busy, setBusy] = useState(false);
   const [manual, setManual] = useState(false);
+  const [scrolling, setScrolling] = useState(false);
   const installed = useRef(false);
   const installationTracked = useRef(false);
   const promptTracked = useRef(false);
@@ -97,6 +98,25 @@ export function InstallPrompt() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!platform || open) {
+      setScrolling(false);
+      return;
+    }
+    let idleTimer: number | undefined;
+    const onScroll = () => {
+      setScrolling(true);
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(() => setScrolling(false), 1100);
+    };
+    // Capture also catches scrolling within nested page containers.
+    window.addEventListener('scroll', onScroll, { passive: true, capture: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll, true);
+      window.clearTimeout(idleTimer);
+    };
+  }, [platform, open]);
+
   const closePrompt = () => {
     setOpen(false);
     try { localStorage.setItem(DISMISSED_KEY, String(Date.now())); } catch { /* Storage is optional. */ }
@@ -132,10 +152,13 @@ export function InstallPrompt() {
     {!installed.current && <button
       type="button"
       onClick={() => { setManual(false); setOpen(true); }}
+      onFocus={() => setScrolling(false)}
+      aria-label={t('تثبيت التطبيق', 'Install app')}
       aria-haspopup="dialog"
-      className="fixed end-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 inline-flex min-h-11 items-center gap-2 rounded-full border border-primary/20 bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-lg"
+      className={`fixed end-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-primary/20 bg-primary py-2 text-sm font-bold text-primary-foreground shadow-lg transition-[padding,gap] duration-200 motion-reduce:transition-none ${scrolling ? 'gap-0 px-3' : 'gap-2 px-4'}`}
+      data-compact={scrolling}
       data-testid="button-open-install"
-    ><Download className="size-4" />{t('تثبيت التطبيق', 'Install app')}</button>}
+    ><Download aria-hidden="true" className="size-4 shrink-0" /><span aria-hidden="true" className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200 motion-reduce:transition-none ${scrolling ? 'max-w-0 opacity-0' : 'max-w-48 opacity-100'}`}>{t('تثبيت التطبيق', 'Install app')}</span></button>}
     <Dialog open={open} onOpenChange={next => { if (!next) dismiss(); }}>
     <DialogContent dir={lang === 'ar' ? 'rtl' : 'ltr'} className="w-[calc(100%-2rem)] max-h-[85dvh] max-w-sm overflow-y-auto rounded-3xl border-border bg-card p-6 text-start" data-testid="install-prompt">
       <div className="flex items-center gap-3 pt-2">
