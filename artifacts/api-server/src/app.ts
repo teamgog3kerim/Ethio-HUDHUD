@@ -9,6 +9,7 @@ import { CLERK_PROXY_PATH, clerkProxyMiddleware, getClerkProxyHost } from "./mid
 import cookieParser from "cookie-parser";
 import { rateLimit } from "express-rate-limit";
 import { HttpError } from "./lib/http-error";
+import { mountProductionWeb } from "./lib/production-web";
 
 const app: Express = express();
 
@@ -38,6 +39,8 @@ const allowedOrigins = new Set([
   process.env.REPLIT_EXPO_DEV_DOMAIN,
   ...(process.env.REPLIT_DOMAINS ?? "").split(","),
 ].filter(Boolean).map(host => `https://${host}`));
+if (process.env.PUBLIC_APP_URL) allowedOrigins.add(new URL(process.env.PUBLIC_APP_URL).origin);
+if (process.env.VITE_PUBLIC_APP_URL) allowedOrigins.add(new URL(process.env.VITE_PUBLIC_APP_URL).origin);
 app.use(cors({ credentials: true, origin: (origin, callback) => callback(null, !!origin && allowedOrigins.has(origin)) }));
 app.use(express.json({ limit: "128kb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -60,6 +63,7 @@ app.use("/api", (req, res, next) => {
 });
 
 app.use("/api", router);
+if (process.env.SERVE_WEB_APP === "true") mountProductionWeb(app);
 app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (err instanceof HttpError) { res.status(err.status).json({ error: err.message }); return; }
   req.log.error({ err }, "Request failed");

@@ -1,0 +1,26 @@
+name: EthioDeploy readiness
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      # Synthetic compile-only fixtures, never used to deploy or authenticate.
+      VITE_PUBLIC_APP_URL: https://example.invalid
+      VITE_CLERK_PUBLISHABLE_KEY: pk_live_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk
+      DATABASE_URL: postgresql://localhost/compile_only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --prod=false
+      - run: pnpm run test:deployment
+      - run: pnpm --filter @workspace/api-server test
+      - run: pnpm run deploy:build

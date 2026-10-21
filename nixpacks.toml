@@ -1,0 +1,13 @@
+providers = ["node"]
+
+[variables]
+NIXPACKS_NODE_VERSION = "22"
+
+[phases.install]
+cmds = ["corepack enable", "pnpm install --frozen-lockfile --prod=false"]
+
+[phases.build]
+cmds = ["pnpm run deploy:build"]
+
+[start]
+cmd = "pnpm run deploy:start"

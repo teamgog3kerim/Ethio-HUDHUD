@@ -46,5 +46,9 @@ Thumbs.db
 
 # Replit
 .cache/
+.env
+.env.*
+!.env.example
+!.env.ethiodeploy.example
 .local/
 /generated-artifacts/

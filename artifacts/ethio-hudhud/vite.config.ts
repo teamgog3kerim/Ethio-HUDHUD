@@ -29,6 +29,9 @@ if (!basePath) {
 
 export default defineConfig({
   base: basePath,
+  define: {
+    __HUDHUD_PUBLIC_APP_URL__: JSON.stringify(process.env.VITE_PUBLIC_APP_URL || 'https://ethio-hudhud.replit.app'),
+  },
   plugins: [
     react(),
     tailwindcss({ optimize: false }),
