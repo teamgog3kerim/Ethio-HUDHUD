@@ -1,0 +1,9 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "PkjXH4jg0UndCTfw-9Tkl"
+uri = "file://artifacts/hudhud-social-promo/public/audio/bg_music.mp3"
+type = "audio"
+title = "bg"
+description = "Generated music: Upbeat modern Ethiopian-inspired pop instrumental for a language learning app social promo. Pentatonic kirar-like plucked lyre, warm marimba, soft claps, punchy kick, 112 BPM, joyful…"

@@ -1,0 +1,29 @@
+kind = "video"
+videoAspectRatio = "9:16"
+previewPath = "/hudhud-social-promo/"
+title = "Ethio HUDHUD · Social Promo"
+description = "Vertical promotional animation for Ethio HUDHUD, the Arabic-first Amharic-learning app, for TikTok and similar social media."
+version = "1.0.0"
+id = "artifacts/hudhud-social-promo"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/hudhud-social-promo/" ]
+localPort = 20312
+
+[services.development]
+run = "pnpm --filter @workspace/hudhud-social-promo run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/hudhud-social-promo", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/hudhud-social-promo/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20312"
+BASE_PATH = "/hudhud-social-promo/"
