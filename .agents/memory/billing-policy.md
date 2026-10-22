@@ -1,6 +1,6 @@
 ---
 name: Course pricing and trial
-description: User-requested free trial, six-month course pricing, and subscription reminder timing.
+description: Course trial, pricing, approved live-access rules, and renewal notification requirements.
 ---
 
 Let users try lessons or practical conversations free for two days. On the third day, prompt them to sign up and subscribe for full lessons and conversation courses.
@@ -28,6 +28,20 @@ payment appear to be money collected.
 **How to apply:** Keep sandbox payment records separate from the live access
 source. Treat enabling real billing and migrating existing pilot learners as an
 explicitly approved rollout, not as an automatic consequence of saving a token.
+
+Approved live-access rules: cancelling monthly renewal preserves access through
+the paid period; failed renewals get three days' grace before paid lessons lock;
+refunds are approved manually in Polar, with full refunds removing the associated
+paid access and partial refunds leaving access unchanged. Preserve learning
+progress and original trial dates.
+
+**Why:** The user explicitly approved these proposed rules.
+
+**How to apply:** Implement these rules for live billing without treating their
+approval as permission to activate live payments. The user deferred Polar
+approval/payout completion and has not decided the customer refund window or
+eligibility terms. Obtain those terms and confirm merchant readiness before
+live activation; do not invent a public refund policy.
 
 Offer all three choices on the public home page and learner home, and let learners choose a free trial, monthly, or six-month plan after sign-up before continuing to lessons.
 

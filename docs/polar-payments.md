@@ -8,6 +8,24 @@ grants, or change learning progress. Live billing and paywalls remain disabled.
 The sandbox adapter is hard-coded to Polar's sandbox environment and refuses to
 operate when `NODE_ENV=production`.
 
+## Approved live-access rules — implementation still pending
+
+- Monthly cancellation stops renewal; access lasts through the paid period.
+- Failed monthly renewals receive three days' grace before paid lessons lock.
+- Refund approval is manual in Polar. A full refund removes its associated paid
+  access; a partial refund leaves access unchanged.
+- Learning progress and original trial dates are preserved.
+
+These access rules are approved, but are not a published customer refund policy.
+The refund window and eligibility conditions remain undecided. The merchant has
+deferred completing Polar approval/payout setup. Live activation stays blocked
+until those items are resolved and the implementation and rollout are approved.
+The sandbox currently fails closed on partial refunds; that is test behavior,
+not the approved live partial-refund rule.
+
+Both live products were verified using read-only requests: USD 29 recurring
+monthly, and USD 149 one-time. No live checkout or charge was created.
+
 ## Development configuration
 
 Server-only secrets, entered with secure secret tooling:
@@ -80,9 +98,10 @@ learning resets; they're not learner progress.
 
 ## Before a real launch
 
-- Independently verify live products and merchant payout readiness.
-- Obtain approved cancellation, refund, failed-payment grace-period and
-  existing-pilot-user transition policies.
+- Confirm merchant approval and payout readiness; live product prices and billing
+  types have already been verified with read-only requests.
+- Obtain the customer refund window and eligibility terms, and approve the
+  existing-pilot-user transition. Implement the approved access rules above.
 - Implement and test live payment records and API-side access enforcement.
 - Guarantee monthly billing ends after six paid periods, including retries,
   webhook outages, refunds, and portal changes. Sandbox currently schedules
