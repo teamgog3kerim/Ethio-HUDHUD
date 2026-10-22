@@ -12,19 +12,17 @@ const T = (n: number) => `${n}vmin`;
 function Hook() {
   return (
     <motion.div style={{ ...fill, background: '#104C3C' }} exit={{ opacity: 0, scale: 1.3 }} transition={{ duration: 0.4 }}>
-      <motion.div className="eth" style={{ ...fill, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: T(150), fontWeight: 900, color: '#E6B55C', lineHeight: 1 }}
+      <motion.div className="eth" style={{ ...fill, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: T(75), fontSize: T(95), fontWeight: 900, color: '#E6B55C', lineHeight: 1 }}
         initial={{ scale: 0.2, rotate: -15, opacity: 0 }} animate={{ scale: [0.2, 1.1, 1], rotate: 0, opacity: 1 }} transition={{ duration: 0.7 }}>ሀ</motion.div>
       {['ሰ', 'ላ', 'ም'].map((c, i) => (
         <motion.div key={c} className="eth" style={{ position: 'absolute', top: T(14), left: `${14 + i * 12}vmin`, fontSize: T(11), color: '#F6F7F3', fontWeight: 900 }}
           initial={{ y: -40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ ...sp, delay: 0.5 + i * 0.2 }}>{c}</motion.div>
       ))}
-      <div dir="rtl" className="kufi" style={{ position: 'absolute', bottom: T(40), width: '100%', textAlign: 'center', color: '#F6F7F3', fontSize: T(10), fontWeight: 800, lineHeight: 1.4 }}>
-        {['هل تريد أن', 'تتكلم الأمهرية؟'].map((l, i) => (
-          <motion.div key={l} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ ...sp, delay: 1.2 + i * 0.4 }}>{l}</motion.div>
+      <div dir="rtl" className="kufi" style={{ position: 'absolute', bottom: T(22), width: '100%', textAlign: 'center', color: '#F6F7F3', fontSize: T(8), fontWeight: 800, lineHeight: 1.4 }}>
+        {['تعلّم اللغة الأمهرية', 'بسهولة،', 'واستمتع بزيارتك', 'للحبشة'].map((l, i) => (
+          <motion.div key={l} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ ...sp, delay: 1.0 + i * 0.5 }}>{l}</motion.div>
         ))}
       </div>
-      <motion.div className="kufi" dir="rtl" style={{ position: 'absolute', bottom: T(26), width: '100%', textAlign: 'center', color: '#E6B55C', fontSize: T(6), fontWeight: 800 }}
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.4 }}>ابدأ من الحروف</motion.div>
     </motion.div>
   );
 }
