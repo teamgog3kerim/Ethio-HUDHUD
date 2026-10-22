@@ -14,6 +14,15 @@ as the intended distribution, including for administrators.
 home-screen installations. Do not make app-store distribution or the separate Expo
 companion a prerequisite for learning or administering the published website.
 
+The user chose `ethiohudhud.com` as the intended custom domain for this app.
+
+**Why:** The user requested step-by-step DNS setup for that domain using their
+attached domain-management page.
+
+**How to apply:** Treat this as the target, not proof that it is already linked.
+Confirm verified deployment metadata and HTTPS before changing public invitations
+or billing callback origins to the custom domain.
+
 Installed mobile apps must use the mobile view, not the desktop-site layout.
 
 **Why:** The user explicitly requested mobile presentation when using the installed app on phones.
