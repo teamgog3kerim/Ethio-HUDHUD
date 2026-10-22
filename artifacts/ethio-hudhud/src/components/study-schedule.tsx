@@ -23,6 +23,12 @@ function ScheduleForm({ profile }: { profile: Profile }) {
   const [startDate, setStartDate] = useState(schedule?.startDate ?? '');
   const [studyDays, setStudyDays] = useState(schedule?.studyDays ?? [0, 1, 2, 3, 4, 5, 6]);
   const [timezone, setTimezone] = useState(profile.timezone);
+  const timezones = Array.from(new Set([
+    profile.timezone,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+    'Africa/Addis_Ababa', 'Asia/Riyadh', 'Asia/Dubai', 'Europe/London', 'America/New_York',
+    ...(typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : []),
+  ]));
   const [saved, setSaved] = useState(false);
   const save = useSaveStudySchedule({
     mutation: {
@@ -55,8 +61,9 @@ function ScheduleForm({ profile }: { profile: Profile }) {
               <input type="date" required min="1900-01-01" max="2100-12-31" value={startDate} onChange={e => setStartDate(e.target.value)} className={inputClass} />
             </label>
             <label className="text-sm font-semibold">{t('المنطقة الزمنية', 'Timezone')}
-              <input required list="study-timezones" value={timezone} onChange={e => setTimezone(e.target.value)} placeholder="Africa/Addis_Ababa" dir="ltr" className={inputClass} />
-              <datalist id="study-timezones">{Array.from(new Set([profile.timezone, Intl.DateTimeFormat().resolvedOptions().timeZone, 'Africa/Addis_Ababa', 'Asia/Riyadh', 'Asia/Dubai', 'Europe/London', 'America/New_York'])).map(zone => <option key={zone} value={zone} />)}</datalist>
+              <select required value={timezone} onChange={e => setTimezone(e.target.value)} dir="ltr" className={inputClass} data-testid="select-study-timezone">
+                {timezones.map(zone => <option key={zone} value={zone}>{zone.replaceAll('_', ' ')}</option>)}
+              </select>
             </label>
           </div>
           <fieldset>
