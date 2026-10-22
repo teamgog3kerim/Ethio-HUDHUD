@@ -2,6 +2,7 @@
 - [Generated contract merges](generated-contract-merges.md) — regenerate merged API validators from the shared contract; bundling alone misses startup-breaking declaration order.
 - [Course billing policy](billing-policy.md) — two-day free trial, $29 monthly or $149 for six months, and reminders four days before renewal.
 - [Expo DevTools warning](expo-devtools-environment.md) — missing desktop Linux libraries can disable optional DevTools while Metro continues serving normally.
+- [Expo build resources](expo-build-resources.md) — workspace success can conceal smaller publishing budgets; verify cold-cache native builds with bounded resources.
 - [Web-first distribution](web-distribution.md) — domain-hosted web app with Android/iOS installation; the same mobile-friendly web app serves learners and admins.
 - [Deleted identity tokens](deleted-session-tokens.md) — provider deletion does not instantly invalidate old JWTs; tombstones must block data recreation.
 - [Shared React contexts](shared-react-contexts.md) — pnpm peer splits can duplicate context libraries in production even when preview works; verify bundle deduplication.

@@ -5,6 +5,8 @@ const { Readable } = require('stream');
 const { pipeline } = require('stream/promises');
 
 let metroProcess = null;
+let stoppingMetro = false;
+let metroStopPromise = null;
 
 const projectRoot = path.resolve(__dirname, '..');
 
@@ -29,21 +31,57 @@ if (!Number.isInteger(metroPort) || metroPort < 1 || metroPort > 65535) {
 }
 const metroOrigin = `http://localhost:${metroPort}`;
 
-function exitWithError(message) {
+async function stopMetro() {
+  if (metroStopPromise) return metroStopPromise;
+  if (!metroProcess) return;
+  stoppingMetro = true;
+  const child = metroProcess;
+  metroStopPromise = (async () => {
+    const exited = new Promise((resolve) => {
+      if (child.exitCode !== null || child.signalCode !== null) resolve();
+      else child.once('exit', resolve);
+    });
+    const terminate = (signal) => {
+      try {
+        // pnpm launches Expo as a child. Stop the owned group, not just pnpm,
+        // so a previous platform cannot retain its heap or listening port.
+        if (process.platform === 'win32') child.kill(signal);
+        else if (child.pid) process.kill(-child.pid, signal);
+      } catch (error) {
+        if (error.code !== 'ESRCH') throw error;
+      }
+    };
+    terminate('SIGTERM');
+    let timeout;
+    await Promise.race([
+      exited,
+      new Promise((resolve) => {
+        timeout = setTimeout(() => {
+          terminate('SIGKILL');
+          resolve();
+        }, 5000);
+      }),
+    ]);
+    clearTimeout(timeout);
+    // The launcher may exit before a stubborn descendant does.
+    terminate('SIGKILL');
+    metroProcess = null;
+  })();
+  return metroStopPromise;
+}
+
+async function exitWithError(message) {
   console.error(message);
-  if (metroProcess) {
-    metroProcess.kill();
-  }
+  await stopMetro();
   process.exit(1);
 }
 
 function setupSignalHandlers() {
-  const cleanup = () => {
-    if (metroProcess) {
-      console.log('Cleaning up Metro process...');
-      metroProcess.kill();
-    }
-    process.exit(0);
+  const cleanup = async () => {
+    console.log('Cleaning up Metro process...');
+    await stopMetro();
+    // An interrupted deployment must not be reported as a successful build.
+    process.exit(1);
   };
 
   process.on('SIGINT', cleanup);
@@ -124,7 +162,7 @@ async function checkMetroHealth() {
     const response = await fetch(`${metroOrigin}/status`, {
       signal: AbortSignal.timeout(5000),
     });
-    return response.ok;
+    return response.ok && (await response.text()).trim() === 'packager-status:running';
   } catch {
     return false;
   }
@@ -137,14 +175,19 @@ function getExpoPublicReplId() {
 async function startMetro(expoPublicDomain, expoPublicReplId) {
   const isRunning = await checkMetroHealth();
   if (isRunning) {
-    console.log('Metro already running');
-    return;
+    throw new Error(`Metro port ${metroPort} is already in use; choose a dedicated EXPO_BUILD_METRO_PORT`);
   }
 
+  stoppingMetro = false;
+  metroStopPromise = null;
   console.log('Starting Metro...');
   console.log(`Setting EXPO_PUBLIC_DOMAIN=${expoPublicDomain}`);
   const env = {
     ...process.env,
+    // Production build containers have less memory than the workspace.
+    // A single transformer and bounded heap leave room for the build runner.
+    CI: '1',
+    NODE_OPTIONS: `${process.env.NODE_OPTIONS || ''} --max-old-space-size=1536`.trim(),
     EXPO_PUBLIC_DOMAIN: expoPublicDomain,
     EXPO_PUBLIC_REPL_ID: expoPublicReplId,
     EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.CLERK_PUBLISHABLE_KEY || '',
@@ -159,15 +202,27 @@ async function startMetro(expoPublicDomain, expoPublicReplId) {
 
   metroProcess = spawn(
     'pnpm',
-    ['exec', 'expo', 'start', '--no-dev', '--minify', '--localhost', '--port', String(metroPort)],
+    ['exec', 'expo', 'start', '--no-dev', '--minify', '--localhost', '--port', String(metroPort), '--max-workers', '1'],
     {
       stdio: ['ignore', 'pipe', 'pipe'],
-      detached: false,
+      detached: process.platform !== 'win32',
       cwd: projectRoot,
       env,
     },
   );
 
+  const child = metroProcess;
+  child.once('error', (error) => {
+    void exitWithError(`Metro could not start: ${error.message}`);
+  });
+  child.once('exit', (code, signal) => {
+    if (!stoppingMetro && metroProcess === child) {
+      void exitWithError(
+        `Metro exited unexpectedly (code=${code}, signal=${signal || 'none'}). ` +
+        'Check the build memory limit and the Metro error output above.',
+      );
+    }
+  });
   if (metroProcess.stdout) {
     metroProcess.stdout.on('data', (data) => {
       const output = data.toString().trim();
@@ -192,7 +247,7 @@ async function startMetro(expoPublicDomain, expoPublicReplId) {
   }
 
   console.error('Metro timeout');
-  process.exit(1);
+  await exitWithError('Metro did not become healthy within 60 seconds');
 }
 
 async function downloadFile(url, outputPath) {
@@ -291,25 +346,26 @@ async function downloadManifest(platform) {
   }
 }
 
-async function downloadBundlesAndManifests(timestamp) {
+async function downloadBundlesAndManifests(timestamp, domain, replId) {
   console.log('Downloading bundles and manifests...');
   console.log('This may take several minutes for production builds...');
 
   try {
-    // Bundles are sequential — Metro can't handle both platforms simultaneously
-    // without stalling. Manifests are cheap and run in parallel after.
-    await downloadBundle('ios', timestamp);
-    await downloadBundle('android', timestamp);
-
-    const [iosManifest, androidManifest] = await Promise.all([
-      downloadManifest('ios'),
-      downloadManifest('android'),
-    ]);
+    const manifests = {};
+    for (const platform of ['ios', 'android']) {
+      await startMetro(domain, replId);
+      await downloadBundle(platform, timestamp);
+      manifests[platform] = await downloadManifest(platform);
+      if (platform === 'ios') {
+        console.log('Releasing iOS Metro memory before building Android...');
+        await stopMetro();
+      }
+    }
 
     console.log('All downloads completed successfully');
-    return { ios: iosManifest, android: androidManifest };
+    return manifests;
   } catch (error) {
-    exitWithError(`Download failed: ${error.message}`);
+    await exitWithError(`Download failed: ${error.message}`);
   }
 }
 
@@ -543,10 +599,8 @@ async function main() {
   prepareDirectories(timestamp);
   clearMetroCache();
 
-  await startMetro(domain, expoPublicReplId);
-
   const downloadTimeout = 600000;
-  const downloadPromise = downloadBundlesAndManifests(timestamp);
+  const downloadPromise = downloadBundlesAndManifests(timestamp, domain, expoPublicReplId);
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => {
       reject(
@@ -583,16 +637,10 @@ async function main() {
 
   console.log('Build complete! Deploy to:', baseUrl);
 
-  if (metroProcess) {
-    metroProcess.kill();
-  }
+  await stopMetro();
   process.exit(0);
 }
 
-main().catch((error) => {
-  console.error('Build failed:', error.message);
-  if (metroProcess) {
-    metroProcess.kill();
-  }
-  process.exit(1);
+main().catch(async (error) => {
+  await exitWithError(`Build failed: ${error.message}`);
 });
