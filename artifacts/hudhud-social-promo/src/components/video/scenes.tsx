@@ -33,8 +33,8 @@ export function Hook() {
       <Ring c={GOLD} s={150} /><Ring c={G2} s={105} d={0.15} />
       <Center>
         <motion.img src={logo} style={{ width: '34vw', borderRadius: '8vw' }} initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 16 }} />
-        <Pop d={0.5}><div className="disp" style={{ color: BG, fontSize: '13vw', fontWeight: 800, lineHeight: 1.25 }}>تكلّم الأمهرية</div></Pop>
-        <Pop d={0.9}><div className="disp" style={{ color: GOLD, fontSize: '9vw', fontWeight: 700 }}>بدون ما تتلخبط</div></Pop>
+        <Pop d={0.5}><div className="disp" style={{ color: BG, fontSize: '11vw', fontWeight: 800, lineHeight: 1.25 }}>تعلّم الأمهرية</div></Pop>
+        <Pop d={0.9}><div className="disp" style={{ color: GOLD, fontSize: '11vw', fontWeight: 700 }}>خطوة بخطوة</div></Pop>
         <Pop d={1.8}><div className="am" style={{ color: BG, opacity: 0.85, fontSize: '11vw', fontWeight: 800 }}>ሰላም!</div></Pop>
       </Center>
     </Fade>

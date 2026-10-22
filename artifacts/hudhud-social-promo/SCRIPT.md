@@ -2,7 +2,7 @@
 Direction: Ethiopian-flag-adjacent brand greens + gold, Arabic-first Kufi type, bouncy spring snaps.
 | Shot | Time | Content |
 |---|---|---|
-| Hook | 0-4 | Logo pops in gold rings; "تكلّم الأمهرية / بدون ما تتلخبط", ሰላም! |
+| Hook | 0-4 | Logo pops in gold rings; "تعلّم الأمهرية / خطوة بخطوة", ሰላም! |
 | Alphabet | 4-8.5 | Six fidelä cards with Arabic-script pronunciation, labelled approximate |
 | Path | 8.5-13 | 6 months, 3 stages timeline (suggested schedule) |
 | Convo | 13-17.5 | Chat bubbles Amharic + Arabic |
