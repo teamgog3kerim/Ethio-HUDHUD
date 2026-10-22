@@ -7,3 +7,11 @@ uri = "file://artifacts/hudhud-social-promo/public/audio/bg_music.mp3"
 type = "audio"
 title = "bg"
 description = "Generated music: Upbeat modern Ethiopian-inspired pop instrumental for a language learning app social promo. Pentatonic kirar-like plucked lyre, warm marimba, soft claps, punchy kick, 112 BPM, joyful…"
+logical_id = "dbe25521-6a98-4d1a-b80f-a7d430289960"
+
+[[outputs]]
+id = "F1CpzgSBHDBMPgLdTzJhD"
+uri = "file://artifacts/hudhud-promo-two/public/audio/bg_music.mp3"
+type = "audio"
+title = "bg"
+description = "Generated music: Upbeat Ethiopian-inspired modern pop instrumental for a language-learning social video. Krar lyre plucks, kebero drums, warm bass, claps, 104 BPM, bright and playful, clear drum hits…"

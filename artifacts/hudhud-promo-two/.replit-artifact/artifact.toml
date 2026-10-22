@@ -1,0 +1,29 @@
+kind = "video"
+videoAspectRatio = "9:16"
+previewPath = "/hudhud-promo-two/"
+title = "Ethio HUDHUD · Promo Two"
+description = "A second distinct vertical social-media promotional animation for the Arabic-first Amharic learning app."
+version = "1.0.0"
+id = "artifacts/hudhud-promo-two"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/hudhud-promo-two/" ]
+localPort = 19117
+
+[services.development]
+run = "pnpm --filter @workspace/hudhud-promo-two run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/hudhud-promo-two", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/hudhud-promo-two/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19117"
+BASE_PATH = "/hudhud-promo-two/"
