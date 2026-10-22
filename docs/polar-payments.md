@@ -13,7 +13,7 @@ operate when `NODE_ENV=production`.
 Server-only secrets, entered with secure secret tooling:
 
 - `POLAR_SANDBOX_ACCESS_TOKEN`
-- `POLAR_SANDBOX_WEBHOOK_SECRET` (pending merchant setup)
+- `POLAR_SANDBOX_WEBHOOK_SECRET`
 
 Non-secret development settings:
 
@@ -46,6 +46,13 @@ access protection can prevent external delivery. If so, don't disable account
 security: use an approved reachable test deployment and configure its sandbox
 adapter separately. A 503 before the secret is supplied is expected; no unsigned
 event is accepted.
+
+Development verification completed: a genuine Polar `subscription.updated`
+notification returned HTTP 202 and produced a persisted receipt after
+reconciliation. Unsigned requests returned HTTP 403. The notification was
+triggered by a metadata-only update to an isolated sandbox test subscription;
+its price and cancellation settings were unchanged. Other event types,
+redelivery and refund scenarios still need dedicated coverage.
 
 The official versioned Polar SDK verifies raw request bytes, signed IDs and
 timestamps. It supports both current Standard Webhooks secrets and older Polar
