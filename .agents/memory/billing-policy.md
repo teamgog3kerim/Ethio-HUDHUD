@@ -19,6 +19,19 @@ The user initially deferred Polar setup, then explicitly requested completing th
 
 **How to apply:** Proceed with Polar sandbox checkout and verified entitlements. Keep live charges and paid-only restrictions disabled until implementation is verified and rollout approved. In-app alerts must not be described as email or background push delivery.
 
+After exactly 48 hours, learners without valid access must be directed to a
+$29 monthly or $149 six-month subscription instead of continuing lessons or
+conversations. Prepare this restriction now, but activate it only when live
+payments are ready; preserve progress and the original trial clock.
+
+**Why:** The user explicitly requested the restriction, then chose to prepare
+it without blocking learners while live payments remain unavailable.
+
+**How to apply:** Enforce on the server as well as the learner interface.
+Preserve administrator access and valid complimentary grants. Do not treat a
+saved plan preference or sandbox payment as paid access. Preparing the gate is
+not permission to enable it or to charge customers.
+
 Sandbox purchases must never activate real paid entitlements or replace an
 administrator's complimentary grant.
 

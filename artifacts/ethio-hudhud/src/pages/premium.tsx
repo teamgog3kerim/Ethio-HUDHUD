@@ -15,7 +15,9 @@ export default function Premium() {
   const six = b?.offers.find((o) => o.id === 'six_month');
   return (
     <Shell>
-      <PageHead eyebrow="Premium" title={t('الخطط المقترحة', 'Proposed plans')} sub={t('كل التعلّم مفتوح خلال المرحلة التجريبية. لا رسوم ولا دفع الآن.', 'All learning is open during the pilot. No charges and no payment today.')} />
+      <PageHead eyebrow="Premium" title={t('خطط الاشتراك', 'Subscription plans')} sub={b?.enforcementEnabled
+        ? t('بعد تجربة 48 ساعة، يلزم الاشتراك لمتابعة الدروس والمحادثات.', 'After the 48-hour trial, subscribe to continue lessons and conversations.')
+        : t('كل التعلّم مفتوح خلال المرحلة التجريبية. لا رسوم ولا دفع الآن.', 'All learning is open during the pilot. No charges and no payment today.')} />
       {q.isLoading && <Skeleton className="h-48" />}
       {q.isError && <ErrorState onRetry={() => q.refetch()} />}
       {b && (
@@ -28,7 +30,7 @@ export default function Premium() {
               {b.dailyAiLimit !== undefined && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">{t('طلبات المعلّم / 24 ساعة', 'AI requests / 24 hours')}</dt><dd>{b.dailyAiLimit}</dd></div>}
               {comp && b.accessExpiresAt && <div className="flex flex-wrap justify-between gap-3"><dt className="text-muted-foreground">{t('انتهاء المنحة المجانية', 'Complimentary expiry')}</dt><dd data-testid="text-access-expiry">{fmt(b.accessExpiresAt)}</dd></div>}
             </dl>
-            <p className="mt-4 rounded-2xl bg-secondary p-3 text-sm" dir="auto" data-testid="text-billing-message">{lang === 'ar' ? b.message : comp ? 'You have a temporary administrator grant, not a paid subscription. No payment is collected.' : 'Polar checkout is not enabled. All learning stays open during the pilot, even after the two-day trial. No payment is collected.'}</p>
+            <p className="mt-4 rounded-2xl bg-secondary p-3 text-sm" dir="auto" data-testid="text-billing-message">{lang === 'ar' ? b.message : comp ? 'You have a temporary administrator grant, not a paid subscription. No payment is collected.' : !b.fullCourseAccess ? 'Your 48-hour trial has ended. Subscribe for $29 monthly or $149 for six months to continue. Your progress is saved.' : 'Polar checkout is not enabled. All learning stays open during the pilot, even after the two-day trial. No payment is collected.'}</p>
           </Card>
 
           {!comp && (
@@ -38,11 +40,13 @@ export default function Premium() {
                 <p className="mt-2 text-sm" data-testid="text-trial-countdown">{t(`متبقٍ ${b.trial.daysRemaining} يوم، وتنتهي ${fmt(b.trial.endsAt)}.`, `${b.trial.daysRemaining} day(s) left; ends ${fmt(b.trial.endsAt)}.`)}</p>
               ) : (
                 <div className="mt-2 space-y-3 text-sm" data-testid="text-trial-expired">
-                  <p>{t(`انتهت التجربة في ${fmt(b.trial.endsAt)}. الدروس ما زالت مفتوحة ولا يوجد حجب.`, `Trial ended ${fmt(b.trial.endsAt)}. Lessons remain open; nothing is blocked.`)}</p>
+                  <p>{!b.fullCourseAccess
+                    ? t('انتهت التجربة. اختر اشتراكاً شهرياً أو لستة أشهر للمتابعة. تقدمك محفوظ.', 'Your trial has ended. Choose monthly or six-month access to continue. Your progress is saved.')
+                    : t(`انتهت التجربة في ${fmt(b.trial.endsAt)}. الدروس ما زالت مفتوحة ولا يوجد حجب.`, `Trial ended ${fmt(b.trial.endsAt)}. Lessons remain open; nothing is blocked.`)}</p>
                   {b.isGuest && <Link href="/sign-up" className="press inline-block rounded-xl bg-primary px-4 py-2 font-semibold text-primary-foreground" data-testid="link-premium-signup">{t('إنشاء حساب', 'Create account')}</Link>}
                 </div>
               )}
-              <Link href="/choose-plan?plan=trial" className="press mt-3 inline-block rounded-xl border border-primary px-4 py-2 font-semibold text-primary">{t('اختر التجربة وتابع التعلّم', 'Choose trial and continue learning')}</Link>
+              <Link href={b.enforcementEnabled && b.trial.state === 'expired' ? '/choose-plan' : '/choose-plan?plan=trial'} className="press mt-3 inline-block rounded-xl border border-primary px-4 py-2 font-semibold text-primary">{b.enforcementEnabled && b.trial.state === 'expired' ? t('اختيار اشتراك', 'Choose a subscription') : t('اختر التجربة وتابع التعلّم', 'Choose trial and continue learning')}</Link>
             </Card>
           )}
 

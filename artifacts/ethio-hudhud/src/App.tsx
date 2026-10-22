@@ -34,6 +34,7 @@ import AdminContent from '@/pages/admin/content';
 import AdminAudit from '@/pages/admin/audit';
 import { Privacy, Terms } from '@/pages/legal';
 import { RenewalIdentityBoundary } from '@/components/renewal-push';
+import { CourseAccessGate } from '@/components/course-access-gate';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
 
@@ -139,6 +140,7 @@ function ClerkProviderWithRoutes() {
       <ClerkQueryClientCacheInvalidator />
       <RenewalIdentityBoundary />
       <RoutedErrorBoundary>
+        <CourseAccessGate>
         <Switch>
           <Route path="/" component={HomeRedirect} />
           <Route path="/sign-in/*?" component={SignInPage} />
@@ -166,6 +168,7 @@ function ClerkProviderWithRoutes() {
           <Route path="/terms" component={Terms} />
           <Route component={NotFound} />
         </Switch>
+        </CourseAccessGate>
       </RoutedErrorBoundary>
     </ClerkProvider>
   );

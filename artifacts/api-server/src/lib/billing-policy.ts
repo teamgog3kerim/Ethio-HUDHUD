@@ -5,6 +5,34 @@ export const RENEWAL_NOTICE_DAYS = 4;
 // Deliberately not a configurable activation switch: live access enforcement
 // requires the deferred, verified Polar checkout/webhook implementation.
 export const BILLING_CONFIGURED = false;
+// Staged only. Change this after verified live entitlements, checkout and
+// webhook handling are ready and the owner explicitly approves activation.
+export const TRIAL_ENFORCEMENT_ENABLED = false;
+
+export function courseAccessPolicy(input: {
+  enforcementEnabled: boolean;
+  trialState: "active" | "expired";
+  isAdmin?: boolean;
+  hasComplimentaryAccess?: boolean;
+  hasVerifiedPaidAccess?: boolean;
+}) {
+  return {
+    enforcementEnabled: input.enforcementEnabled,
+    fullCourseAccess: !input.enforcementEnabled || input.trialState === "active"
+      || input.isAdmin === true || input.hasComplimentaryAccess === true
+      || input.hasVerifiedPaidAccess === true,
+  };
+}
+
+// Account settings, progress, plan selection and billing must remain available
+// after expiry. Protect content reads as well as exercise/conversation writes.
+export function isCourseResource(method: string, path: string) {
+  return (
+    (method === "GET" && /^\/(?:courses|study-plan|vocabulary|favourites|lessons\/[^/]+|ai\/chat)\/?$/.test(path))
+    || (method === "POST" && /^\/(?:lessons\/[^/]+\/complete|vocabulary\/[^/]+\/review|ai\/chat)\/?$/.test(path))
+    || (method === "PUT" && /^\/favourites\/[^/]+\/?$/.test(path))
+  );
+}
 export const COURSE_OFFERS = [
   { id: "monthly" as const, priceUsd: 29, durationMonths: 6, billing: "monthly" as const, sixMonthTotalUsd: 174, savingsUsd: 0, savingsPercent: 0 },
   { id: "six_month" as const, priceUsd: 149, durationMonths: 6, billing: "one_time" as const, sixMonthTotalUsd: 149, savingsUsd: 25, savingsPercent: 14.4 },

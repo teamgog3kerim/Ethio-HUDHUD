@@ -14,13 +14,15 @@ export function safePolarUrl(raw: string | null | undefined): string | null {
 
 type PlanId = 'trial' | 'monthly' | 'six_month';
 
-export function CoursePlans({ onChoose, selected, busy }: { onChoose?: (plan: PlanId) => void; selected?: string | null; busy?: boolean }) {
+export function CoursePlans({ onChoose, selected, busy, paidOnly = false }: { onChoose?: (plan: PlanId) => void; selected?: string | null; busy?: boolean; paidOnly?: boolean }) {
   const { t } = useApp();
   const q = useBilling();
   const b = q.data;
   const monthly = b?.offers.find((o) => o.id === 'monthly');
   const six = b?.offers.find((o) => o.id === 'six_month');
   const current = selected ?? b?.selectedPlan;
+  const expired = b?.enforcementEnabled && b.trial.state === 'expired';
+  const hideTrial = paidOnly || expired;
 
   const action = (id: PlanId, label: string) => {
     const isSel = current === id;
@@ -43,13 +45,15 @@ export function CoursePlans({ onChoose, selected, busy }: { onChoose?: (plan: Pl
       <p className="mt-2 rounded-2xl bg-secondary p-3 text-sm" data-testid="text-plans-note">
         {b?.sandboxCheckoutEnabled
           ? t('يمكنك اختبار الدفع عبر Polar التجريبي دون أموال حقيقية. لا يفعّل الاختبار اشتراكًا حقيقيًا ولا يغيّر وصولك للدروس.', 'Polar sandbox checkout is available for testing without real money. A test does not activate a real subscription or change lesson access.')
-          : t('الدفع الحقيقي عبر Polar غير مفعّل: اختيار خطة مدفوعة تفضيل فقط، ولا رسوم ولا استحقاق مدفوع الآن. التعلّم يبقى مفتوحًا.', 'Live Polar payments are not enabled: choosing a paid plan is a preference only, with no charges or paid entitlement. Learning stays open.')}
+          : b?.configured
+            ? t('اختيار الخطة وحده لا يفتح الدروس؛ يلزم تأكيد الدفع لإتمام الاشتراك.', 'Choosing a plan alone does not unlock lessons; payment must be confirmed to activate access.')
+            : t('الدفع الحقيقي عبر Polar غير مفعّل: اختيار خطة مدفوعة تفضيل فقط، ولا رسوم ولا استحقاق مدفوع الآن. التعلّم يبقى مفتوحًا.', 'Live Polar payments are not enabled: choosing a paid plan is a preference only, with no charges or paid entitlement. Learning stays open.')}
       </p>
       {q.isLoading && <div className="mt-4 grid gap-4 md:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-56" />)}</div>}
       {(q.isError || (b && (!monthly || !six))) && <div className="mt-4"><ErrorState what={t('الخطط', 'plans')} onRetry={() => q.refetch()} /></div>}
       {b && monthly && six && (
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <Card data-testid="card-plan-trial" className={cls('trial')}>
+        <div className={`mt-4 grid gap-4 ${hideTrial ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
+          {!hideTrial && <Card data-testid="card-plan-trial" className={cls('trial')}>
             <p className="text-xs font-bold uppercase tracking-widest text-primary">{t('تجربة مجانية', 'Free trial')}</p>
             <p className="font-display mt-2 text-3xl font-extrabold">{t('يومان', '48 hours')}</p>
             <p className="mt-2 text-sm text-muted-foreground">{t('تجربة مجانية لمدة يومين (48 ساعة). اختيارها لا يعيد تشغيل ساعة التجربة.', 'A free two-day (48-hour) trial. Choosing it does not reset the trial clock.')}</p>
@@ -57,7 +61,7 @@ export function CoursePlans({ onChoose, selected, busy }: { onChoose?: (plan: Pl
               ? t('انتهت تجربتك، لكن التعلّم ما زال مفتوحًا خلال المرحلة التجريبية.', 'Your trial has ended, but learning remains open during the pilot.')
               : t(`متبقٍ ${b.trial.daysRemaining} يوم من تجربتك الحالية.`, `${b.trial.daysRemaining} day(s) remain in your current trial.`)}</p>
             {action('trial', t('ابدأ التجربة', 'Choose trial'))}
-          </Card>
+          </Card>}
           <Card data-testid="card-plan-monthly" className={cls('monthly')}>
             <p className="text-xs font-bold uppercase tracking-widest text-primary">{t('شهري', 'Monthly')}</p>
             <p className="font-display mt-2 text-3xl font-extrabold">${monthly.priceUsd}<span className="text-base font-medium text-muted-foreground"> {t('/ شهر', '/ month')}</span></p>

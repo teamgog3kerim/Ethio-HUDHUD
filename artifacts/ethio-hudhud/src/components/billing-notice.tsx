@@ -31,7 +31,9 @@ export function BillingNotice() {
         </p>
       ) : (
         <div className={`${row} border-primary/40 bg-primary/10`} data-testid="banner-trial-expired">
-          <span className="min-w-0 flex-1 font-medium">{b.isGuest
+          <span className="min-w-0 flex-1 font-medium">{b.enforcementEnabled && !b.fullCourseAccess
+            ? t('انتهت تجربة 48 ساعة. اشترك شهرياً أو لستة أشهر لمتابعة الدروس والمحادثات. تقدمك محفوظ.', 'Your 48-hour trial has ended. Subscribe monthly or for six months to continue lessons and conversations. Your progress is saved.')
+            : b.isGuest
             ? t('انتهت التجربة. أنشئ حسابًا لبدء تقدم مستقل واطّلع على الخطط. لا ينتقل تقدم الضيف تلقائيًا. التعلم ما زال مفتوحًا.', 'Your trial has ended. Create an account for separate account progress and see the plans. Guest progress does not transfer automatically. Learning stays open.')
             : t('انتهت التجربة. اطّلع على الخطط. التعلم ما زال مفتوحًا.', 'Your trial has ended. See the plans. Learning stays open.')}</span>
           {b.isGuest && <Link href="/sign-up" className={link} data-testid="link-trial-signup"><UserPlus className="me-1 inline size-4" />{t('إنشاء حساب', 'Create account')}</Link>}

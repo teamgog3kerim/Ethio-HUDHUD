@@ -8,6 +8,7 @@ import polarSandboxRouter from "./polar-sandbox";
 import { enforceAccountStatus } from "../lib/admin-auth";
 import { getAppSettings } from "../lib/app-settings";
 import { HttpError } from "../lib/http-error";
+import { enforceCourseAccess } from "../lib/course-access";
 
 const router: IRouter = Router();
 
@@ -29,6 +30,7 @@ router.use(async (req, _res, next) => {
   }
   next();
 });
+router.use(enforceCourseAccess);
 router.use(learningRouter);
 router.use(renewalRouter);
 router.use(tutorRouter);

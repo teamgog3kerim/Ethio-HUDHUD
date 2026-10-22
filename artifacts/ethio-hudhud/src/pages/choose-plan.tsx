@@ -34,7 +34,8 @@ export default function ChoosePlan() {
     setChoice(parsePlanChoice(new URLSearchParams(window.location.search).get('plan')));
     return () => { version.current++; };
   }, [userId]);
-  const selected = choice ?? parsePlanChoice(billing.data?.selectedPlan);
+  const requested = choice ?? parsePlanChoice(billing.data?.selectedPlan);
+  const selected = billing.data?.enforcementEnabled && billing.data.trial.state === 'expired' && requested === 'trial' ? null : requested;
   const save = async () => {
     if (!selected || !userId || saving) return;
     const owner = userId, request = ++version.current;
@@ -44,7 +45,8 @@ export default function ChoosePlan() {
       const result = await selectCoursePlan({ plan: selected });
       if (identity.current !== owner || version.current !== request) return;
       cache.setQueryData(getGetBillingStatusQueryKey(), result);
-      navigate('/learn');
+      // A stored preference is not payment and must not bypass the access gate.
+      if (result.fullCourseAccess) navigate('/learn');
     } catch {
       if (identity.current === owner && version.current === request) setError(true);
     } finally {
@@ -76,9 +78,11 @@ export default function ChoosePlan() {
   if (!isSignedIn) return <Redirect to={`/sign-up${choice ? `?plan=${choice}` : ''}`} replace />;
   return <Shell>
     <PageHead title={t('اختر خطتك وابدأ التعلّم', 'Choose your plan and start learning')} sub={t('احفظ اختيارك في حسابك، ثم انتقل إلى الدروس والمحادثات.', 'Save your choice to your account, then continue to lessons and conversations.')} />
-    <CoursePlans selected={selected} onChoose={plan => { setChoice(plan); setError(false); setCheckoutError(null); }} busy={saving || checkingOut} />
+    <CoursePlans selected={selected} onChoose={plan => { setChoice(plan); setError(false); setCheckoutError(null); }} busy={saving || checkingOut} paidOnly={billing.data?.enforcementEnabled && billing.data.trial.state === 'expired'} />
     <div className="mt-6 space-y-3 rounded-3xl border border-border bg-card p-5" aria-live="polite">
-      <p className="text-sm text-muted-foreground">{selected === 'monthly' || selected === 'six_month'
+      <p className="text-sm text-muted-foreground">{billing.data?.enforcementEnabled
+        ? t('التجربة مدتها 48 ساعة من أول استخدام. اختيار الخطة أو إنشاء حساب جديد لا يعيد التجربة ولا يفتح الدروس دون استحقاق موثّق.', 'The trial lasts 48 hours from first use. Selecting a plan or signing up does not restart it or unlock lessons without verified access.')
+        : selected === 'monthly' || selected === 'six_month'
         ? t('سيُحفظ هذا الاختيار كتفضيل فقط. لم يتم الدفع أو تفعيل اشتراك مدفوع. يمكنك التعلّم مجانًا خلال المرحلة التجريبية حتى تفعيل Polar.', 'This saves a preference only. No payment or paid subscription is activated. You can learn free during the pilot until Polar is enabled.')
         : t('التجربة مدتها 48 ساعة من أول استخدام، ولا تبدأ مجددًا عند إنشاء الحساب أو تغيير الخطة. يبقى التعلّم مفتوحًا خلال المرحلة التجريبية.', 'Your trial lasts 48 hours from first use; signing up or changing plans does not restart it. Learning stays open during the pilot.')}</p>
       {sandbox && <p className="rounded-2xl bg-secondary p-3 text-sm" data-testid="text-sandbox-note">{t('هذا اختبار في بيئة Polar التجريبية فقط: لا رسوم حقيقية ولا استحقاق مدفوع حقيقي، ولن يتغير وصولك للدروس.', 'This is a Polar sandbox test only: no real charges and no real paid entitlement. Your learning access does not change.')}</p>}
@@ -88,7 +92,9 @@ export default function ChoosePlan() {
       </Btn>}
       {error && <ErrorState what={t('حفظ اختيار الخطة', 'saving your plan choice')} onRetry={() => void save()} />}
       <Btn variant={sandbox ? 'outline' : undefined} disabled={!selected || saving || checkingOut || !billing.data || billing.isError} onClick={() => void save()} data-testid="button-plan-continue">
-        {saving ? t('جارٍ حفظ الاختيار…', 'Saving your choice…') : t('احفظ الاختيار وتابع إلى الدروس', 'Save choice and continue to lessons')}
+        {saving ? t('جارٍ حفظ الاختيار…', 'Saving your choice…') : billing.data?.enforcementEnabled && !billing.data.fullCourseAccess
+          ? t('احفظ اختيار الاشتراك (لا يفتح الدروس)', 'Save subscription choice (does not unlock lessons)')
+          : t('احفظ الاختيار وتابع إلى الدروس', 'Save choice and continue to lessons')}
       </Btn>
     </div>
   </Shell>;
