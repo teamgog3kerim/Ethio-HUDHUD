@@ -10,6 +10,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { InstallPrompt } from '@/components/install-prompt';
+import PaymentReturn from '@/pages/payment-return';
 import ChoosePlan from '@/pages/choose-plan';
 import { SignInPage, SignUpPage } from '@/components/auth-pages';
 import { AppProvider, useApp } from '@/lib/app';
@@ -154,6 +155,8 @@ function ClerkProviderWithRoutes() {
           <Route path="/account" component={Account} />
           <Route path="/premium" component={Premium} />
           <Route path="/choose-plan" component={ChoosePlan} />
+          <Route path="/billing/return" component={PaymentReturn} />
+          <Route path="/billing/cancel" component={PaymentReturn} />
           <Route path="/admin" component={AdminOverview} />
           <Route path="/admin/users" component={AdminUsers} />
           <Route path="/admin/settings" component={AdminSettings} />

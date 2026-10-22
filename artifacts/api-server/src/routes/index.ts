@@ -4,6 +4,7 @@ import learningRouter from "./learning";
 import tutorRouter from "./tutor";
 import renewalRouter from "./renewal";
 import adminRouter from "./admin";
+import polarSandboxRouter from "./polar-sandbox";
 import { enforceAccountStatus } from "../lib/admin-auth";
 import { getAppSettings } from "../lib/app-settings";
 import { HttpError } from "../lib/http-error";
@@ -17,6 +18,7 @@ router.get("/app-settings", async (_req, res) => {
 });
 router.use(enforceAccountStatus);
 router.use("/admin", adminRouter);
+router.use(polarSandboxRouter);
 router.use(async (req, _res, next) => {
   if (req.method === "POST") {
     const settings = await getAppSettings();

@@ -624,6 +624,7 @@ export interface BillingStatus {
      */
   selectedPlan?: BillingStatusSelectedPlan;
   configured: boolean;
+  sandboxCheckoutEnabled?: boolean;
   message: string;
   dailyAiLimit?: number;
   /** @nullable */
@@ -635,6 +636,80 @@ export interface BillingStatus {
   trial: CourseTrial;
   offers: CourseOffer[];
   reminder: AccessReminder | null;
+}
+
+export type PolarWebhookEnvelopeData = { [key: string]: unknown };
+
+export interface PolarWebhookEnvelope {
+  type: string;
+  data: PolarWebhookEnvelopeData;
+  [key: string]: unknown;
+ }
+
+export type PolarCheckoutInputPlan = typeof PolarCheckoutInputPlan[keyof typeof PolarCheckoutInputPlan];
+
+
+export const PolarCheckoutInputPlan = {
+  monthly: 'monthly',
+  six_month: 'six_month',
+} as const;
+
+export interface PolarCheckoutInput {
+  plan: PolarCheckoutInputPlan;
+}
+
+export type PolarCheckoutEnvironment = typeof PolarCheckoutEnvironment[keyof typeof PolarCheckoutEnvironment];
+
+
+export const PolarCheckoutEnvironment = {
+  sandbox: 'sandbox',
+} as const;
+
+export type PolarCheckoutPlan = typeof PolarCheckoutPlan[keyof typeof PolarCheckoutPlan];
+
+
+export const PolarCheckoutPlan = {
+  monthly: 'monthly',
+  six_month: 'six_month',
+} as const;
+
+export type PolarCheckoutStatus = typeof PolarCheckoutStatus[keyof typeof PolarCheckoutStatus];
+
+
+export const PolarCheckoutStatus = {
+  pending: 'pending',
+  paid: 'paid',
+  failed: 'failed',
+  expired: 'expired',
+  refunded: 'refunded',
+} as const;
+
+export interface PolarCheckout {
+  id: string;
+  environment: PolarCheckoutEnvironment;
+  plan: PolarCheckoutPlan;
+  status: PolarCheckoutStatus;
+  /** @nullable */
+  checkoutUrl: string | null;
+  /** @nullable */
+  accessUntil: string | null;
+  /** @nullable */
+  subscriptionStatus: string | null;
+  cancelAtPeriodEnd: boolean;
+  /** @nullable */
+  verifiedAt: string | null;
+}
+
+export type PolarPortalEnvironment = typeof PolarPortalEnvironment[keyof typeof PolarPortalEnvironment];
+
+
+export const PolarPortalEnvironment = {
+  sandbox: 'sandbox',
+} as const;
+
+export interface PolarPortal {
+  url: string;
+  environment: PolarPortalEnvironment;
 }
 
 export type ExportAccount200 = { [key: string]: unknown };

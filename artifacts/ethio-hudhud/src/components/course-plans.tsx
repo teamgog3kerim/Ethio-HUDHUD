@@ -3,6 +3,15 @@ import { Btn, Card, ErrorState, LinkBtn, Skeleton } from '@/components/bits';
 import { useBilling } from '@/components/billing-notice';
 import { useApp } from '@/lib/app';
 
+export function safePolarUrl(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  try {
+    const u = new URL(raw);
+    const ok = u.protocol === 'https:' && !u.username && !u.password && u.hostname === 'sandbox.polar.sh';
+    return ok ? u.toString() : null;
+  } catch { return null; }
+}
+
 type PlanId = 'trial' | 'monthly' | 'six_month';
 
 export function CoursePlans({ onChoose, selected, busy }: { onChoose?: (plan: PlanId) => void; selected?: string | null; busy?: boolean }) {
@@ -32,7 +41,9 @@ export function CoursePlans({ onChoose, selected, busy }: { onChoose?: (plan: Pl
       <h2 className="font-display text-2xl font-extrabold sm:text-3xl">{t('اختر خطتك ثم انتقل إلى الدروس', 'Choose a plan, then proceed to lessons')}</h2>
       <p className="mt-2 text-sm text-muted-foreground">{t('برنامج الأمهرية لستة أشهر لمتحدثي العربية. الاختيار تفضيل فقط.', 'The six-month Amharic programme for Arabic speakers. Your choice is a preference only.')}</p>
       <p className="mt-2 rounded-2xl bg-secondary p-3 text-sm" data-testid="text-plans-note">
-        {t('الدفع عبر Polar مؤجّل: اختيار خطة مدفوعة تفضيل فقط، ولا رسوم ولا استحقاق مدفوع الآن. التعلّم يبقى مفتوحًا خلال المرحلة التجريبية.', 'Polar payments are deferred: choosing a paid plan is a preference only, with no charges and no paid entitlement yet. Pilot learning stays open.')}
+        {b?.sandboxCheckoutEnabled
+          ? t('يمكنك اختبار الدفع عبر Polar التجريبي دون أموال حقيقية. لا يفعّل الاختبار اشتراكًا حقيقيًا ولا يغيّر وصولك للدروس.', 'Polar sandbox checkout is available for testing without real money. A test does not activate a real subscription or change lesson access.')
+          : t('الدفع الحقيقي عبر Polar غير مفعّل: اختيار خطة مدفوعة تفضيل فقط، ولا رسوم ولا استحقاق مدفوع الآن. التعلّم يبقى مفتوحًا.', 'Live Polar payments are not enabled: choosing a paid plan is a preference only, with no charges or paid entitlement. Learning stays open.')}
       </p>
       {q.isLoading && <div className="mt-4 grid gap-4 md:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-56" />)}</div>}
       {(q.isError || (b && (!monthly || !six))) && <div className="mt-4"><ErrorState what={t('الخطط', 'plans')} onRetry={() => q.refetch()} /></div>}

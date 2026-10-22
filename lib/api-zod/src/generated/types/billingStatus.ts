@@ -18,6 +18,7 @@ export interface BillingStatus {
      */
   selectedPlan?: BillingStatusSelectedPlan;
   configured: boolean;
+  sandboxCheckoutEnabled?: boolean;
   message: string;
   dailyAiLimit?: number;
   /** @nullable */

@@ -48,6 +48,12 @@ timeoutMs = 20000
 [userenv.shared]
 ADMIN_BOOTSTRAP_EMAIL = "teamgog3@gmail.com"
 
+[userenv.development]
+POLAR_SANDBOX_APP_URL = "https://3e612faa-2e4d-4ee4-b145-759195952e72-00-2plfn9im0vkeb.reed.replit.dev"
+POLAR_SANDBOX_CHECKOUT_ENABLED = "true"
+POLAR_SANDBOX_MONTHLY_PRODUCT_ID = "f921b6f4-7800-40c4-b091-d5db11360c17"
+POLAR_SANDBOX_SIX_MONTH_PRODUCT_ID = "134ce7d5-dfaf-49ca-91eb-19859e4c6525"
+
 [nix]
 channel = "stable-25_05"
 packages = ["chromium"]

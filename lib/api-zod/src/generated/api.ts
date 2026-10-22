@@ -427,6 +427,72 @@ export const ClearChatResponse = zod.object({
 
 
 /**
+ * @summary Receive a signed Polar sandbox event; raw bytes verified by the Polar SDK
+ */
+export const ReceiveSandboxWebhookHeader = zod.object({
+  "webhook-id": zod.string(),
+  "webhook-timestamp": zod.string(),
+  "webhook-signature": zod.string()
+})
+
+export const ReceiveSandboxWebhookBody = zod.object({
+  "type": zod.string(),
+  "data": zod.record(zod.string(), zod.unknown())
+})
+
+export const ReceiveSandboxWebhookResponse = zod.void()
+
+
+/**
+ * @summary Create a signed-in learner's Polar sandbox checkout; never charges real money
+ */
+export const CreateSandboxCheckoutBody = zod.object({
+  "plan": zod.enum(['monthly', 'six_month'])
+})
+
+export const CreateSandboxCheckoutResponse = zod.object({
+  "id": zod.string().uuid(),
+  "environment": zod.enum(['sandbox']),
+  "plan": zod.enum(['monthly', 'six_month']),
+  "status": zod.enum(['pending', 'paid', 'failed', 'expired', 'refunded']),
+  "checkoutUrl": zod.string().nullable(),
+  "accessUntil": zod.coerce.date().nullable(),
+  "subscriptionStatus": zod.string().nullable(),
+  "cancelAtPeriodEnd": zod.boolean(),
+  "verifiedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Verify this account's sandbox checkout against Polar
+ */
+export const GetSandboxCheckoutParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetSandboxCheckoutResponse = zod.object({
+  "id": zod.string().uuid(),
+  "environment": zod.enum(['sandbox']),
+  "plan": zod.enum(['monthly', 'six_month']),
+  "status": zod.enum(['pending', 'paid', 'failed', 'expired', 'refunded']),
+  "checkoutUrl": zod.string().nullable(),
+  "accessUntil": zod.coerce.date().nullable(),
+  "subscriptionStatus": zod.string().nullable(),
+  "cancelAtPeriodEnd": zod.boolean(),
+  "verifiedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Open this signed-in learner's Polar sandbox billing portal
+ */
+export const CreateSandboxPortalResponse = zod.object({
+  "url": zod.string().url(),
+  "environment": zod.enum(['sandbox'])
+})
+
+
+/**
  * @summary Save a signed-in learner's plan preference without activating payment or restarting trial
  */
 export const SelectCoursePlanBody = zod.object({
@@ -445,6 +511,7 @@ export const SelectCoursePlanResponse = zod.object({
   "plan": zod.string(),
   "selectedPlan": zod.union([zod.literal('trial'),zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish().describe('Learner preference only, never proof of a paid subscription'),
   "configured": zod.boolean(),
+  "sandboxCheckoutEnabled": zod.boolean().optional(),
   "message": zod.string(),
   "dailyAiLimit": zod.number().int().optional(),
   "accessExpiresAt": zod.string().nullish(),
@@ -564,6 +631,7 @@ export const GetBillingStatusResponse = zod.object({
   "plan": zod.string(),
   "selectedPlan": zod.union([zod.literal('trial'),zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish().describe('Learner preference only, never proof of a paid subscription'),
   "configured": zod.boolean(),
+  "sandboxCheckoutEnabled": zod.boolean().optional(),
   "message": zod.string(),
   "dailyAiLimit": zod.number().int().optional(),
   "accessExpiresAt": zod.string().nullish(),

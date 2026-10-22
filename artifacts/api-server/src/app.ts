@@ -9,6 +9,7 @@ import { CLERK_PROXY_PATH, clerkProxyMiddleware, getClerkProxyHost } from "./mid
 import cookieParser from "cookie-parser";
 import { rateLimit } from "express-rate-limit";
 import { HttpError } from "./lib/http-error";
+import { handleSandboxWebhook } from "./lib/polar-sandbox";
 
 const app: Express = express();
 
@@ -39,6 +40,16 @@ const allowedOrigins = new Set([
   ...(process.env.REPLIT_DOMAINS ?? "").split(","),
 ].filter(Boolean).map(host => `https://${host}`));
 app.use(cors({ credentials: true, origin: (origin, callback) => callback(null, !!origin && allowedOrigins.has(origin)) }));
+// Raw signed payload, before JSON parsing, Clerk auth and browser CSRF checks.
+app.post("/api/billing/polar/sandbox/webhook", express.raw({ type: "application/json", limit: "128kb" }), async (req, res) => {
+  if (!Buffer.isBuffer(req.body)) throw new HttpError(400, "Expected JSON webhook");
+  await handleSandboxWebhook(req.body, {
+    "webhook-id": req.get("webhook-id") ?? "",
+    "webhook-timestamp": req.get("webhook-timestamp") ?? "",
+    "webhook-signature": req.get("webhook-signature") ?? "",
+  });
+  res.status(202).end();
+});
 app.use(express.json({ limit: "128kb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(process.env.SESSION_SECRET));

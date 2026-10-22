@@ -19,6 +19,16 @@ The user initially deferred Polar setup, then explicitly requested completing th
 
 **How to apply:** Proceed with Polar sandbox checkout and verified entitlements. Keep live charges and paid-only restrictions disabled until implementation is verified and rollout approved. In-app alerts must not be described as email or background push delivery.
 
+Sandbox purchases must never activate real paid entitlements or replace an
+administrator's complimentary grant.
+
+**Why:** Integration testing must not change real learners' access or make a test
+payment appear to be money collected.
+
+**How to apply:** Keep sandbox payment records separate from the live access
+source. Treat enabling real billing and migrating existing pilot learners as an
+explicitly approved rollout, not as an automatic consequence of saving a token.
+
 Offer all three choices on the public home page and learner home, and let learners choose a free trial, monthly, or six-month plan after sign-up before continuing to lessons.
 
 **Why:** The user requested home-page plan visibility and a sign-up → plan choice → learning journey.

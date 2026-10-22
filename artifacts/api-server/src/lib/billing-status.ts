@@ -3,6 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import { getAppSettings, getAccessState } from "./app-settings";
 import { BILLING_CONFIGURED, COURSE_OFFERS, courseTrial, accessReminder } from "./billing-policy";
 import { selectedCoursePlan } from "./billing-selection";
+import { sandboxEnabled } from "./polar-sandbox";
 
 export async function billingStatus(learnerId: string, userId: string | null, guestId?: unknown) {
   // Carry only the trial clock across guest -> account sign-in. This does not
@@ -25,6 +26,7 @@ export async function billingStatus(learnerId: string, userId: string | null, gu
     ...access,
     selectedPlan: selectedCoursePlan(learner?.preferences),
     configured: BILLING_CONFIGURED,
+    sandboxCheckoutEnabled: sandboxEnabled(),
     enforcementEnabled: false,
     fullCourseAccess: true,
     isGuest: !userId,

@@ -190,6 +190,68 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/HealthStatus" }
+  /billing/polar/sandbox/webhook:
+    post:
+      operationId: receiveSandboxWebhook
+      summary: Receive a signed Polar sandbox event; raw bytes verified by the Polar SDK
+      parameters:
+        - { name: webhook-id, in: header, required: true, schema: { type: string } }
+        - { name: webhook-timestamp, in: header, required: true, schema: { type: string } }
+        - { name: webhook-signature, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PolarWebhookEnvelope" }
+      responses:
+        "202": { description: Event processed or safely ignored }
+        "403": { description: Invalid signature }
+        "503": { description: Sandbox webhook not configured }
+  /billing/polar/sandbox/checkout:
+    post:
+      operationId: createSandboxCheckout
+      summary: Create a signed-in learner's Polar sandbox checkout; never charges real money
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PolarCheckoutInput" }
+      responses:
+        "200":
+          description: Sandbox checkout
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PolarCheckout" }
+        "401": { description: Sign in required }
+        "409": { description: Existing purchase or pending checkout }
+        "503": { description: Sandbox not ready }
+  /billing/polar/sandbox/checkout/{id}:
+    get:
+      operationId: getSandboxCheckout
+      summary: Verify this account's sandbox checkout against Polar
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Server-verified sandbox result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PolarCheckout" }
+        "401": { description: Sign in required }
+        "404": { description: Checkout not owned by this account }
+  /billing/polar/sandbox/portal:
+    post:
+      operationId: createSandboxPortal
+      summary: Open this signed-in learner's Polar sandbox billing portal
+      responses:
+        "200":
+          description: Sandbox customer portal
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PolarPortal" }
   /billing/selection:
     post:
       operationId: selectCoursePlan
@@ -798,6 +860,7 @@ components:
           enum: [trial, monthly, six_month, null]
           description: Learner preference only, never proof of a paid subscription
         configured: { type: boolean }
+        sandboxCheckoutEnabled: { type: boolean }
         message: { type: string }
         dailyAiLimit: { type: integer }
         accessExpiresAt: { type: [string, "null"] }
@@ -813,6 +876,38 @@ components:
           oneOf:
             - { $ref: "#/components/schemas/AccessReminder" }
             - { type: "null" }
+    PolarWebhookEnvelope:
+      type: object
+      required: [type, data]
+      additionalProperties: true
+      properties:
+        type: { type: string }
+        data: { type: object, additionalProperties: true }
+    PolarCheckoutInput:
+      type: object
+      required: [plan]
+      additionalProperties: false
+      properties:
+        plan: { type: string, enum: [monthly, six_month] }
+    PolarCheckout:
+      type: object
+      required: [id, environment, plan, status, checkoutUrl, accessUntil, subscriptionStatus, cancelAtPeriodEnd, verifiedAt]
+      properties:
+        id: { type: string, format: uuid }
+        environment: { type: string, enum: [sandbox] }
+        plan: { type: string, enum: [monthly, six_month] }
+        status: { type: string, enum: [pending, paid, failed, expired, refunded] }
+        checkoutUrl: { type: [string, "null"] }
+        accessUntil: { type: [string, "null"], format: date-time }
+        subscriptionStatus: { type: [string, "null"] }
+        cancelAtPeriodEnd: { type: boolean }
+        verifiedAt: { type: [string, "null"], format: date-time }
+    PolarPortal:
+      type: object
+      required: [url, environment]
+      properties:
+        url: { type: string, format: uri }
+        environment: { type: string, enum: [sandbox] }
     CourseTrial:
       type: object
       required: [state, startedAt, endsAt, daysRemaining]

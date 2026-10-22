@@ -41,6 +41,10 @@ import type {
   LessonSubmission,
   PlanDay,
   PlanSelectionInput,
+  PolarCheckout,
+  PolarCheckoutInput,
+  PolarPortal,
+  PolarWebhookEnvelope,
   Profile,
   ProfileInput,
   Progress,
@@ -1342,6 +1346,333 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getClearChatMutationOptions(options));
+    }
+
+export const getReceiveSandboxWebhookUrl = () => {
+
+
+
+
+  return `/api/billing/polar/sandbox/webhook`
+}
+
+/**
+ * @summary Receive a signed Polar sandbox event; raw bytes verified by the Polar SDK
+ */
+export const receiveSandboxWebhook = async (polarWebhookEnvelope: PolarWebhookEnvelope, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<void>(getReceiveSandboxWebhookUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(polarWebhookEnvelope)
+  }
+);}
+
+
+
+
+
+export const getReceiveSandboxWebhookMutationKey = () => ['receiveSandboxWebhook'] as const;
+
+export const getReceiveSandboxWebhookMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveSandboxWebhook>>, TError,ReceiveSandboxWebhookMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof receiveSandboxWebhook>>, TError,ReceiveSandboxWebhookMutationVariables, TContext> => {
+
+const mutationKey = getReceiveSandboxWebhookMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof receiveSandboxWebhook>>, ReceiveSandboxWebhookMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  receiveSandboxWebhook(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReceiveSandboxWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof receiveSandboxWebhook>>>
+    export type ReceiveSandboxWebhookMutationBody = BodyType<PolarWebhookEnvelope>
+    export type ReceiveSandboxWebhookMutationError = ErrorType<void>
+    export type ReceiveSandboxWebhookMutationVariables = {data: BodyType<PolarWebhookEnvelope>}
+
+    /**
+ * @summary Receive a signed Polar sandbox event; raw bytes verified by the Polar SDK
+ */
+export const useReceiveSandboxWebhook = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveSandboxWebhook>>, TError,ReceiveSandboxWebhookMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof receiveSandboxWebhook>>,
+        TError,
+        ReceiveSandboxWebhookMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReceiveSandboxWebhookMutationOptions(options));
+    }
+
+export const getCreateSandboxCheckoutUrl = () => {
+
+
+
+
+  return `/api/billing/polar/sandbox/checkout`
+}
+
+/**
+ * @summary Create a signed-in learner's Polar sandbox checkout; never charges real money
+ */
+export const createSandboxCheckout = async (polarCheckoutInput: PolarCheckoutInput, options?: Parameters<typeof customFetch>[1]): Promise<PolarCheckout> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<PolarCheckout>(getCreateSandboxCheckoutUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(polarCheckoutInput)
+  }
+);}
+
+
+
+
+
+export const getCreateSandboxCheckoutMutationKey = () => ['createSandboxCheckout'] as const;
+
+export const getCreateSandboxCheckoutMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSandboxCheckout>>, TError,CreateSandboxCheckoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSandboxCheckout>>, TError,CreateSandboxCheckoutMutationVariables, TContext> => {
+
+const mutationKey = getCreateSandboxCheckoutMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSandboxCheckout>>, CreateSandboxCheckoutMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createSandboxCheckout(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSandboxCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof createSandboxCheckout>>>
+    export type CreateSandboxCheckoutMutationBody = BodyType<PolarCheckoutInput>
+    export type CreateSandboxCheckoutMutationError = ErrorType<void>
+    export type CreateSandboxCheckoutMutationVariables = {data: BodyType<PolarCheckoutInput>}
+
+    /**
+ * @summary Create a signed-in learner's Polar sandbox checkout; never charges real money
+ */
+export const useCreateSandboxCheckout = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSandboxCheckout>>, TError,CreateSandboxCheckoutMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createSandboxCheckout>>,
+        TError,
+        CreateSandboxCheckoutMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateSandboxCheckoutMutationOptions(options));
+    }
+
+export const getGetSandboxCheckoutUrl = (id: string,) => {
+
+
+
+
+  return `/api/billing/polar/sandbox/checkout/${id}`
+}
+
+/**
+ * @summary Verify this account's sandbox checkout against Polar
+ */
+export const getSandboxCheckout = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<PolarCheckout> => {
+
+  return customFetch<PolarCheckout>(getGetSandboxCheckoutUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSandboxCheckoutQueryKey = (id: string,) => {
+    return [
+    `/api/billing/polar/sandbox/checkout/${id}`
+    ] as const;
+    }
+
+
+export const getGetSandboxCheckoutQueryOptions = <TData = Awaited<ReturnType<typeof getSandboxCheckout>>, TError = ErrorType<void>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSandboxCheckout>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSandboxCheckoutQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSandboxCheckout>>> = ({ signal }) => getSandboxCheckout(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSandboxCheckout>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSandboxCheckoutQueryResult = NonNullable<Awaited<ReturnType<typeof getSandboxCheckout>>>
+export type GetSandboxCheckoutQueryError = ErrorType<void>
+
+
+/**
+ * @summary Verify this account's sandbox checkout against Polar
+ */
+
+export function useGetSandboxCheckout<TData = Awaited<ReturnType<typeof getSandboxCheckout>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSandboxCheckout>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSandboxCheckoutQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateSandboxPortalUrl = () => {
+
+
+
+
+  return `/api/billing/polar/sandbox/portal`
+}
+
+/**
+ * @summary Open this signed-in learner's Polar sandbox billing portal
+ */
+export const createSandboxPortal = async ( options?: Parameters<typeof customFetch>[1]): Promise<PolarPortal> => {
+
+  return customFetch<PolarPortal>(getCreateSandboxPortalUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCreateSandboxPortalMutationKey = () => ['createSandboxPortal'] as const;
+
+export const getCreateSandboxPortalMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSandboxPortal>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSandboxPortal>>, TError,void, TContext> => {
+
+const mutationKey = getCreateSandboxPortalMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSandboxPortal>>, void> = () => {
+
+
+          return  createSandboxPortal(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSandboxPortalMutationResult = NonNullable<Awaited<ReturnType<typeof createSandboxPortal>>>
+
+    export type CreateSandboxPortalMutationError = ErrorType<unknown>
+
+
+    /**
+ * @summary Open this signed-in learner's Polar sandbox billing portal
+ */
+export const useCreateSandboxPortal = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSandboxPortal>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createSandboxPortal>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getCreateSandboxPortalMutationOptions(options));
     }
 
 export const getSelectCoursePlanUrl = () => {
