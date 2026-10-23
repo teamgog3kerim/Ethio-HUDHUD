@@ -21,20 +21,19 @@ The user initially deferred Polar setup, then explicitly requested completing th
 
 After exactly 48 hours, learners without valid access must be directed to a
 $29 monthly or $149 six-month subscription instead of continuing lessons or
-conversations. Keep this prepared restriction off until the first genuine
-payment and its course access have been verified; preserve progress and the
-original trial clock.
+conversations. Activate the restriction for the next user-published build;
+preserve progress and the original trial clock.
 
-**Why:** The user explicitly requested the restriction, then chose:
-"Wait until the first genuine payment is verified (recommended)." This
-supersedes the earlier readiness-only activation condition.
+**Why:** After choosing to wait for the first genuine payment, the user
+subsequently instructed: "New users gets 48 hour free trials , then must gets
+forced to proceed with paid options." This supersedes the waiting condition.
 
 **How to apply:** Enforce on the server as well as the learner interface.
 Preserve administrator access and valid complimentary grants. Do not treat a
-saved plan preference or sandbox payment as paid access. Preparing the gate is
-not permission to enable it or to charge customers. Checkout availability,
-provider readiness, sandbox tests, and checkout-update receipts do not satisfy
-the genuine-payment verification condition.
+saved plan preference or sandbox payment as paid access. This approval enables
+trial enforcement, not automatic charges, a real test purchase, or publication.
+Provider readiness and checkout-update receipts still are not proof of a paid
+order.
 
 Sandbox purchases must never activate real paid entitlements or replace an
 administrator's complimentary grant.
@@ -116,8 +115,8 @@ real purchase.
 
 Implement and enable manual $29 monthly renewals after testing. Learners choose
 to pay again each month; no automatic charges. Limit the course to six monthly
-payments ($174 total), retain $149 once for six months, and keep trial blocking
-off.
+payments ($174 total), and retain $149 once for six months. The original
+trial-blocking-off condition is superseded by the newer activation rule above.
 
 **Why:** The user explicitly selected "Implement and enable manual $29 renewals
 after testing" after the automatic six-payment cap could not be verified.

@@ -31,7 +31,7 @@ test("valid live receipt is pending, minimized, and never activates payment gate
   assert.equal(receipt.bodyHash.length, 64);
   assert.ok(!JSON.stringify(receipt).includes("fixture@example"));
   assert.deepEqual([BILLING_CONFIGURED, TRIAL_ENFORCEMENT_ENABLED], gates);
-  assert.equal(TRIAL_ENFORCEMENT_ENABLED, false);
+  assert.equal(TRIAL_ENFORCEMENT_ENABLED, true);
 });
 test("unsigned and incorrect-key deliveries are rejected", async () => {
   await assert.rejects(verifyLiveReceipt(body, {}, secret), { status: 403 });

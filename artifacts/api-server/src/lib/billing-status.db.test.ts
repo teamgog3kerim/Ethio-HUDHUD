@@ -6,7 +6,7 @@ import { eq, inArray } from "drizzle-orm";
 import { GetBillingStatusResponse } from "@workspace/api-zod";
 import { billingStatus } from "./billing-status";
 
-test("trial persists, signup inherits only the guest clock, and pilot access remains open", {
+test("48-hour trial persists, expired access is blocked, and signup cannot restart it", {
   skip: process.env.RUN_BILLING_DB_TESTS !== "1",
 }, async () => {
   const guestId = randomUUID();
@@ -21,8 +21,10 @@ test("trial persists, signup inherits only the guest clock, and pilot access rem
     assert.equal(initial.trial.state, "active");
     assert.equal(initial.isGuest, true);
     assert.equal(initial.configured, true);
-    assert.equal(initial.enforcementEnabled, false);
+    assert.equal(initial.enforcementEnabled, true);
     assert.equal(initial.fullCourseAccess, true);
+    assert.match(initial.message, /48/);
+    assert.doesNotMatch(initial.message, /الحجب غير مفعّل|مفتوحاً مؤقتاً/);
     assert.equal(initial.plan, "free");
     assert.equal(initial.reminder, null);
     assert.deepEqual(initial.offers.map(o => o.priceUsd), [29, 149]);
@@ -32,11 +34,13 @@ test("trial persists, signup inherits only the guest clock, and pilot access rem
     await db.update(courseTrials).set({ startedAt: expiredStart }).where(eq(courseTrials.learnerId, guest.id));
     const expired = await billingStatus(guest.id, null);
     assert.equal(expired.trial.state, "expired");
-    assert.equal(expired.fullCourseAccess, true);
+    assert.equal(expired.enforcementEnabled, true);
+    assert.equal(expired.fullCourseAccess, false);
     await billingStatus(account.id, userId);
     const inherited = await billingStatus(account.id, userId, guestId);
     assert.equal(inherited.isGuest, false);
     assert.equal(inherited.trial.startedAt, expiredStart.toISOString());
+    assert.equal(inherited.fullCourseAccess, false);
     const earlierStart = new Date(Date.now() - 5 * 86_400_000);
     await db.update(courseTrials).set({ startedAt: earlierStart }).where(eq(courseTrials.learnerId, account.id));
     await Promise.all(Array.from({ length: 4 }, () => billingStatus(account.id, userId, guestId)));
@@ -49,7 +53,8 @@ test("trial persists, signup inherits only the guest clock, and pilot access rem
       assert.equal(status.selectedPlan, choice);
       assert.equal(status.plan, "free");
       assert.equal(status.configured, true);
-      assert.equal(status.enforcementEnabled, false);
+      assert.equal(status.enforcementEnabled, true);
+      assert.equal(status.fullCourseAccess, false, "saving a plan is not payment");
       assert.equal(status.trial.startedAt.toISOString(), earlierStart.toISOString());
       assert.equal((await billingStatus(guest.id, null)).selectedPlan, null);
     }

@@ -4,9 +4,13 @@
 
 The owner approved **$29 one-time monthly purchases, renewed manually**, up to
 six payments, alongside **$149 once for six months**, for the next published
-build. Automatic monthly billing and expired-trial blocking remain disabled. Learning
-temporarily stays open and purchasing is optional; a real charge occurs only
-when a customer completes Polar checkout. Do not make a purchase automatically.
+build. Automatic monthly billing remains disabled. The owner subsequently
+approved activating the 48-hour trial restriction: after expiry, unpaid
+learners must subscribe to continue lessons or conversations. Paid access,
+valid complimentary grants, and administrators are exempt. Original trial
+dates and learning progress are preserved; a saved plan is not payment.
+Publish this latest build to activate the restriction publicly. A real charge
+occurs only when a customer completes Polar checkout. Do not make a purchase automatically.
 
 Sandbox purchases have their own
 records and customer IDs and **never grant real paid access**, modify admin
@@ -39,8 +43,9 @@ access resolver are now implemented. They use separate live purchase records,
 preference, success redirect, nor sandbox purchase grants paid access.
 `LIVE_CHECKOUT_LAUNCH_APPROVED`, `LIVE_MANUAL_MONTHLY_APPROVED` and
 `BILLING_CONFIGURED` are true with explicit owner approval.
-`LIVE_MONTHLY_CAP_APPROVED` (automatic renewal) and `TRIAL_ENFORCEMENT_ENABLED`
-remain false. Runtime checkout also requires the live token and webhook secret.
+`LIVE_MONTHLY_CAP_APPROVED` (automatic renewal) remains false.
+`TRIAL_ENFORCEMENT_ENABLED` is now true with explicit owner approval.
+Runtime checkout also requires the live token and webhook secret.
 The original recurring product is not an approved app checkout. No real purchase has
 been performed or authorized for the agent.
 
@@ -94,7 +99,8 @@ automatic subscriptions with manual renewals or allow indefinite charges.
 The owner has now explicitly approved a replacement monthly offering: $29 for
 one month, renewed manually, up to six monthly payments. Implement and enable
 that option after testing while retaining the $149 option and keeping trial
-blocking off. This requires a separate live **one-time** $29 USD product. The
+blocking off at that stage. The newer 48-hour enforcement approval supersedes
+that temporary hold. This requires a separate live **one-time** $29 USD product. The
 integration could read products but Polar rejected product creation with HTTP
 403. The owner created product `2ddb1c73-8e1e-404b-926c-af93db682651` in the
 dashboard; a live read verified it is active, one-time, exactly USD 2900 cents,
@@ -142,8 +148,8 @@ responses are not proof of a completed live payment round trip.
 - Monthly payments are manual one-time purchases, not automatic subscriptions.
   Access lasts through the paid period, or through a separately paid next
   period when it begins. No seventh monthly app checkout is permitted.
-- Unpaid renewal does not extend paid access. Trial blocking remains off, so
-  temporary pilot learning access is separate from verified paid access.
+- Unpaid renewal does not extend paid access. With trial enforcement enabled,
+  expired unpaid trials do not allow further course content or practice.
 - Refund approval is manual in Polar. A full refund removes its associated paid
   access; a partial refund leaves access unchanged.
 - Learning progress and original trial dates are preserved.

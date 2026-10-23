@@ -5,9 +5,9 @@ export const RENEWAL_NOTICE_DAYS = 4;
 // Owner approved $149 once and $29 manually renewed one-month access.
 // Billing readiness must never implicitly activate the separate trial gate.
 export const BILLING_CONFIGURED = true;
-// Staged only. Change this after verified live entitlements, checkout and
-// webhook handling are ready and the owner explicitly approves activation.
-export const TRIAL_ENFORCEMENT_ENABLED = false;
+// Owner explicitly requested enforcing paid access after the 48-hour trial.
+// Changing payment-provider readiness alone must never toggle this policy.
+export const TRIAL_ENFORCEMENT_ENABLED = true;
 
 export function courseAccessPolicy(input: {
   enforcementEnabled: boolean;

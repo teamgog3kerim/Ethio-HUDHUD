@@ -30,7 +30,7 @@ test("live entitlement isolation, freshness, grants and original trial are prese
     assert.equal(paid.plan, "six_month");
     assert.equal(paid.trial.startedAt, initial.trial.startedAt);
     assert.equal(paid.configured, true);
-    assert.equal(paid.enforcementEnabled, false);
+    assert.equal(paid.enforcementEnabled, true);
     assert.equal(paid.liveCheckoutEnabled, liveCheckoutEnabled());
     assert.equal(paid.liveMonthlyCheckoutEnabled, liveMonthlyEnabled());
     assert.equal((await liveAccess(other)).accessUntil, null);

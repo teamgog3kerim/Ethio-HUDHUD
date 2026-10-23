@@ -43,9 +43,10 @@ test("no reminder is invented without a valid future access expiry", () => {
   assert.equal(accessReminder("2026-10-18T12:00:00Z", "renewal_due", start), null);
 });
 
-test("approved checkout does not activate trial enforcement", () => {
+test("owner-approved trial enforcement blocks expired unpaid learners", () => {
   assert.equal(BILLING_CONFIGURED, true);
-  assert.equal(TRIAL_ENFORCEMENT_ENABLED, false);
+  assert.equal(TRIAL_ENFORCEMENT_ENABLED, true);
+  assert.equal(courseAccessPolicy({ enforcementEnabled: BILLING_CONFIGURED && TRIAL_ENFORCEMENT_ENABLED, trialState: "expired" }).fullCourseAccess, false);
   assert.equal(courseAccessPolicy({ enforcementEnabled: false, trialState: "expired" }).fullCourseAccess, true);
 });
 
