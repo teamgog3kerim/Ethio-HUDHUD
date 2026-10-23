@@ -36,3 +36,14 @@ returns the parsed object without validating its resource fields.
 **How to apply:** Check required identifiers and relevant resource fields before
 storing or reconciling either live or sandbox events. A signed event proves
 origin, not account ownership, current payment status, or paid access.
+
+Do not direct the owner to a presumed dashboard “Test delivery” button.
+
+**Why:** The owner’s Deliveries screenshots showed a search input, which was
+mistaken for a button twice. Polar’s documented sample-event workflow instead
+uses `polar webhook trigger` through a running CLI listener.
+
+**How to apply:** Distinguish delivery filters from actions. CLI samples use the
+listener’s signing secret and do not prove delivery through the registered
+production endpoint. Keep CLI testing isolated; do not replace a live signing
+secret just to run a sample, or ask for a real purchase to test receipt intake.
