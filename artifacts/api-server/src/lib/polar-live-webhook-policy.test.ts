@@ -23,13 +23,14 @@ function headers(payload = body, time = Math.floor(Date.now() / 1000)) {
   };
 }
 test("valid live receipt is pending, minimized, and never activates payment gates", async () => {
+  const gates = [BILLING_CONFIGURED, TRIAL_ENFORCEMENT_ENABLED];
   const receipt = await verifyLiveReceipt(body, headers(), secret);
   assert.equal(receipt.resourceId, id);
   assert.equal(receipt.state, "pending");
   assert.equal(receipt.productId, LIVE_COURSE_PRODUCTS.six_month);
   assert.equal(receipt.bodyHash.length, 64);
   assert.ok(!JSON.stringify(receipt).includes("fixture@example"));
-  assert.equal(BILLING_CONFIGURED, false);
+  assert.deepEqual([BILLING_CONFIGURED, TRIAL_ENFORCEMENT_ENABLED], gates);
   assert.equal(TRIAL_ENFORCEMENT_ENABLED, false);
 });
 test("unsigned and incorrect-key deliveries are rejected", async () => {

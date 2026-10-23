@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { liveCheckoutEnabled } from "../lib/polar-live";
 import { clerkClient, getAuth } from "@clerk/express";
 import { db, applicationSettings, adminAudit, appAccounts, accessGrants, completions, aiUsage, learners } from "@workspace/db";
 import { count, and, eq, gt, desc, like, isNull } from "drizzle-orm";
@@ -24,7 +25,7 @@ router.get("/overview", async (_req, res) => {
     db.select({ n: count() }).from(accessGrants).where(and(eq(accessGrants.enabled, true), gt(accessGrants.expiresAt, new Date()))),
     db.select({ n: count() }).from(appAccounts).where(and(eq(appAccounts.suspended, true), isNull(appAccounts.deletedAt))),
   ]);
-  res.json(GetAdminOverviewResponse.parse({ registeredUsers: directory.totalCount, learners: learnerCount[0]!.n, completedLessons: completionCount[0]!.n, aiRequests: usageCount[0]!.n, activeComplimentary: complimentaryCount[0]!.n, suspendedUsers: suspendedCount[0]!.n, billingConfigured: false }));
+  res.json(GetAdminOverviewResponse.parse({ registeredUsers: directory.totalCount, learners: learnerCount[0]!.n, completedLessons: completionCount[0]!.n, aiRequests: usageCount[0]!.n, activeComplimentary: complimentaryCount[0]!.n, suspendedUsers: suspendedCount[0]!.n, billingConfigured: liveCheckoutEnabled() }));
 });
 router.get("/settings", async (_req, res) => { res.json(await getAppSettings()); });
 router.put("/settings", async (req, res) => {

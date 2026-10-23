@@ -45,7 +45,7 @@ export function CoursePlans({ onChoose, selected, busy, paidOnly = false }: { on
       <p className="mt-2 text-sm text-muted-foreground">{t('برنامج الأمهرية لستة أشهر لمتحدثي العربية. الاختيار تفضيل فقط.', 'The six-month Amharic programme for Arabic speakers. Your choice is a preference only.')}</p>
       <p className="mt-2 rounded-2xl bg-secondary p-3 text-sm" data-testid="text-plans-note">
         {b?.liveCheckoutEnabled
-          ? t('يمكنك الدفع عبر Polar عند توفر الخطة؛ لا يُفتح الوصول إلا بعد تحقق الخادم من الدفع.', 'You can pay through Polar where the plan is available; access opens only after the server verifies payment.')
+          ? t('المتاح للشراء: ستة أشهر مقابل 149 دولاراً مرة واحدة دون تجديد تلقائي. الشهري غير متاح حالياً. يبقى التعلّم مفتوحاً مؤقتاً، ولا تُحصّل رسوم إلا عند إتمام الدفع عبر Polar.', 'Available to purchase: six months for $149 once, without automatic renewal. Monthly is currently unavailable. Learning temporarily remains open; charges occur only when you complete Polar checkout.')
           : b?.sandboxCheckoutEnabled
           ? t('يمكنك اختبار الدفع عبر Polar التجريبي دون أموال حقيقية. لا يفعّل الاختبار اشتراكًا حقيقيًا ولا يغيّر وصولك للدروس.', 'Polar sandbox checkout is available for testing without real money. A test does not activate a real subscription or change lesson access.')
           : b?.configured && b?.liveCheckoutEnabled

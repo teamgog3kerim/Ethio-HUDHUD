@@ -10,6 +10,7 @@ export default function Premium() {
   const q = useBilling();
   const b = q.data;
   const comp = b?.plan === 'complimentary';
+  const paid = b?.source === 'polar_live';
   const fmt = (s: string) => new Date(s).toLocaleString(lang === 'ar' ? 'ar' : 'en');
   const monthly = b?.offers.find((o) => o.id === 'monthly');
   const six = b?.offers.find((o) => o.id === 'six_month');
@@ -17,7 +18,9 @@ export default function Premium() {
     <Shell>
       <PageHead eyebrow="Premium" title={t('خطط الاشتراك', 'Subscription plans')} sub={b?.enforcementEnabled
         ? t('بعد تجربة 48 ساعة، يلزم الاشتراك لمتابعة الدروس والمحادثات.', 'After the 48-hour trial, subscribe to continue lessons and conversations.')
-        : t('كل التعلّم مفتوح خلال المرحلة التجريبية. لا رسوم ولا دفع الآن.', 'All learning is open during the pilot. No charges and no payment today.')} />
+        : b?.liveCheckoutEnabled
+        ? t('وصول ستة أشهر مقابل 149 دولاراً دفعة واحدة. الشراء اختياري حالياً، ويبقى التعلّم مفتوحاً مؤقتاً دون حجب.', 'Six months for $149 once. Purchasing is currently optional; learning temporarily remains open without blocking.')
+        : t('التعلّم مفتوح مؤقتاً. الدفع متاح فقط عندما تظهر صفحة دفع مفعّلة.', 'Learning is temporarily open. Payment is available only when an enabled checkout is shown.')} />
       {q.isLoading && <Skeleton className="h-48" />}
       {q.isError && <ErrorState onRetry={() => q.refetch()} />}
       {b && (
@@ -26,14 +29,15 @@ export default function Premium() {
             <dl className="space-y-3 text-sm">
               <div className="flex justify-between"><dt className="text-muted-foreground">{t('الخطة', 'Plan')}</dt><dd className="font-semibold" data-testid="text-plan">{b.plan}</dd></div>
               {b.selectedPlan && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">{t('اختيارك المحفوظ (ليس اشتراكًا مدفوعًا)', 'Saved choice (not a paid subscription)')}</dt><dd className="font-semibold" data-testid="text-selected-plan">{b.selectedPlan === 'trial' ? t('تجربة مجانية', 'Free trial') : b.selectedPlan === 'monthly' ? t('شهري', 'Monthly') : t('ستة أشهر', 'Six months')}</dd></div>}
-              <div className="flex justify-between"><dt className="text-muted-foreground">{t('الدفع', 'Checkout')}</dt><dd className="font-semibold" data-testid="text-configured">{t('غير مفعّل (Polar قيد الانتظار)', 'Not enabled (Polar pending)')}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-muted-foreground">{t('الدفع', 'Checkout')}</dt><dd className="font-semibold" data-testid="text-configured">{b.liveCheckoutEnabled ? t('149 دولاراً مرة واحدة عبر Polar', '$149 once through Polar') : t('غير متاح حالياً', 'Currently unavailable')}</dd></div>
               {b.dailyAiLimit !== undefined && <div className="flex justify-between gap-3"><dt className="text-muted-foreground">{t('طلبات المعلّم / 24 ساعة', 'AI requests / 24 hours')}</dt><dd>{b.dailyAiLimit}</dd></div>}
               {comp && b.accessExpiresAt && <div className="flex flex-wrap justify-between gap-3"><dt className="text-muted-foreground">{t('انتهاء المنحة المجانية', 'Complimentary expiry')}</dt><dd data-testid="text-access-expiry">{fmt(b.accessExpiresAt)}</dd></div>}
+              {paid && b.accessExpiresAt && <div className="flex flex-wrap justify-between gap-3"><dt className="text-muted-foreground">{t('الوصول المدفوع حتى', 'Paid access until')}</dt><dd data-testid="text-paid-expiry">{fmt(b.accessExpiresAt)}</dd></div>}
             </dl>
-            <p className="mt-4 rounded-2xl bg-secondary p-3 text-sm" dir="auto" data-testid="text-billing-message">{lang === 'ar' ? b.message : comp ? 'You have a temporary administrator grant, not a paid subscription. No payment is collected.' : !b.fullCourseAccess ? 'Your 48-hour trial has ended. Subscribe for $29 monthly or $149 for six months to continue. Your progress is saved.' : 'Polar checkout is not enabled. All learning stays open during the pilot, even after the two-day trial. No payment is collected.'}</p>
+            <p className="mt-4 rounded-2xl bg-secondary p-3 text-sm" dir="auto" data-testid="text-billing-message">{lang === 'ar' ? b.message : comp ? 'You have a temporary administrator grant, not a paid subscription.' : paid ? 'Your payment is verified. Your paid access ends on the date shown above.' : b.paymentVerificationPending ? 'Payment verification is pending. Do not pay again while we check.' : b.liveCheckoutEnabled ? 'Optional six-month access is $149 once, with no automatic renewal. Monthly checkout is unavailable. Learning temporarily remains open after the 48-hour trial; blocking is off. You are charged only if you complete checkout.' : 'Checkout is currently unavailable. Learning temporarily remains open; blocking is off.'}</p>
           </Card>
 
-          {!comp && (
+          {!comp && !paid && (
             <Card data-testid="card-trial">
               <h2 className="font-display text-lg font-bold">{t('التجربة المجانية 48 ساعة', 'Free 48-hour trial')}</h2>
               {b.trial.state === 'active' ? (
@@ -61,14 +65,15 @@ export default function Premium() {
                     ? t(`$${o.priceUsd} تتكرر طوال الدورة: $${o.sixMonthTotalUsd} لستة أشهر.`, `$${o.priceUsd} repeated over the course: $${o.sixMonthTotalUsd} for six months.`)
                     : t(`$${o.priceUsd} مرة واحدة لوصول ${o.durationMonths} أشهر.`, `$${o.priceUsd} once for ${o.durationMonths} months of access.`)}
                 </p>
-                {o.id === 'monthly' && <p className="mt-2 text-sm">{t('كل دفعة تغطي شهرًا واحدًا؛ يلزم تجديد الاشتراك للمتابعة في الشهر التالي.', 'Each payment covers one month; renew to continue the following month.')}</p>}
+                {o.id === 'monthly' && <p className="mt-2 text-sm" data-testid="text-monthly-unavailable">{t('خطة مقترحة غير متاحة للشراء حالياً. يمكنك حفظ تفضيلك فقط دون دفع.', 'Proposed plan, currently unavailable to purchase. You may save a preference only, without payment.')}</p>}
+                {o.id === 'six_month' && <p className="mt-2 text-sm">{t('لا تجديد تلقائي. تظهر أي ضريبة واجبة في صفحة Polar قبل إتمام الدفع.', 'No automatic renewal. Any applicable tax is shown by Polar before you complete payment.')}</p>}
                 {o.savingsUsd > 0 && <p className="mt-3 flex items-center gap-2 text-sm font-semibold" data-testid="text-savings"><Check className="size-4 text-primary" />{t(`توفير $${o.savingsUsd} (${o.savingsPercent}%)`, `Save $${o.savingsUsd} (${o.savingsPercent}%)`)}</p>}
-                <Link href={`/choose-plan?plan=${o.id}`} className="press mt-4 block rounded-2xl bg-primary px-4 py-3 text-center font-semibold text-primary-foreground" data-testid={`link-select-${o.id}`}>{t('اختر الخطة وتابع التعلّم', 'Choose plan and continue learning')}</Link>
+                <Link href={`/choose-plan?plan=${o.id}`} className="press mt-4 block rounded-2xl bg-primary px-4 py-3 text-center font-semibold text-primary-foreground" data-testid={`link-select-${o.id}`}>{o.id === 'monthly' ? t('حفظ تفضيل فقط', 'Save preference only') : t('عرض خطة الستة أشهر', 'View six-month plan')}</Link>
                 <Btn className="mt-3 w-full" disabled data-testid={`button-subscribe-${o.id}`}><Lock className="size-4" />{t('الدفع غير متاح بعد', 'Checkout not available yet')}</Btn>
               </Card>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground" data-testid="text-pricing-note">{t('تظهر تنبيهات التطبيق قبل الموعد الموثّق بأربعة أيام. إشعارات الخلفية اختيارية وتعتمد على إعداد الإرسال ودعم الجهاز وإذنك؛ راجع حالة التسليم في إعدادات التذكير. لا يتم إرسال بريد إلكتروني. الدفع عبر Polar مؤجّل، ولا يتم تحصيل رسوم أو منح اشتراك مدفوع الآن.', 'In-app alerts appear four days before a verified date. Optional background notifications depend on delivery setup, device support and permission; check the reminder settings for delivery status. No email is sent. Polar payments are deferred; no charges or paid subscriptions are activated now.')}</p>
+          <p className="text-sm text-muted-foreground" data-testid="text-pricing-note">{t('تظهر تنبيهات التطبيق قبل انتهاء الوصول الموثّق بأربعة أيام. إشعارات الخلفية اختيارية وتعتمد على الإعداد ودعم الجهاز وإذنك؛ راجع إعدادات التذكير لحالة التسليم. هذه التذكيرات لا ترسل بريداً إلكترونياً. حفظ الخطة ليس دفعاً؛ شراء الستة أشهر يتطلب إتمام الدفع عبر Polar. لا استردادات طوعية، مع مراعاة حقوق المستهلك الإلزامية وشروط المشتري في Polar.', 'In-app alerts appear four days before verified access expires. Optional background notifications depend on setup, device support and permission; check reminder settings for delivery status. These reminders do not send email. Saving a plan is not payment; a six-month purchase requires completing Polar checkout. No voluntary refunds, subject to mandatory consumer rights and Polar buyer terms.')}</p>
         </div>
       )}
     </Shell>

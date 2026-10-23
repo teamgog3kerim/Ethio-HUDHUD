@@ -19,12 +19,12 @@ const subscription = () => ({
 });
 const state = (orders = [order()], extra: Partial<Parameters<typeof livePaymentState>[0]> = {}) =>
   livePaymentState({ userId, plan: "six_month", orders, checkoutStatus: "succeeded", subscription: null, now, ...extra });
-test("launch and finite-cycle gates remain off; no live checkout SDK call is possible", async () => {
-  assert.equal(LIVE_CHECKOUT_LAUNCH_APPROVED, false);
+test("only six-month checkout is approved; monthly fails before any SDK request", async () => {
+  assert.equal(LIVE_CHECKOUT_LAUNCH_APPROVED, true);
   assert.equal(LIVE_MONTHLY_CAP_APPROVED, false);
-  for (const plan of ["monthly", "six_month"] as const) {
-    await assert.rejects(createLiveCheckout(userId, "fixture@example.invalid", plan), (e: { status: number }) => e.status === 503);
-  }
+  // Never call six-month creation in an automated test: it may create a real
+  // payable checkout now that the owner approved the launch.
+  await assert.rejects(createLiveCheckout(userId, "fixture@example.invalid", "monthly"), (e: { status: number }) => e.status === 503);
 });
 test("a successful redirect without a paid order grants nothing", () => {
   assert.equal(state([]).accessUntil, null);

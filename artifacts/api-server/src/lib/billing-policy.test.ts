@@ -24,7 +24,7 @@ test("plans match requested USD amounts and truthful six-month savings", () => {
   assert.equal(course.priceUsd, 149);
   assert.equal(monthly.sixMonthTotalUsd - course.priceUsd, course.savingsUsd);
   assert.equal(Math.round(course.savingsUsd / monthly.sixMonthTotalUsd * 1000) / 10, course.savingsPercent);
-  assert.equal(BILLING_CONFIGURED, false);
+  assert.equal(BILLING_CONFIGURED, true);
 });
 test("reminders begin exactly four days before expiry, remain visible, and stop at expiry", () => {
   const expiry = "2026-10-23T12:00:00.000Z";
@@ -41,8 +41,8 @@ test("no reminder is invented without a valid future access expiry", () => {
   assert.equal(accessReminder("2026-10-18T12:00:00Z", "renewal_due", start), null);
 });
 
-test("staged enforcement stays off until live billing rollout is approved", () => {
-  assert.equal(BILLING_CONFIGURED, false);
+test("approved checkout does not activate trial enforcement", () => {
+  assert.equal(BILLING_CONFIGURED, true);
   assert.equal(TRIAL_ENFORCEMENT_ENABLED, false);
   assert.equal(courseAccessPolicy({ enforcementEnabled: false, trialState: "expired" }).fullCourseAccess, true);
 });

@@ -20,7 +20,7 @@ test("trial persists, signup inherits only the guest clock, and pilot access rem
     const initial = GetBillingStatusResponse.parse(await billingStatus(guest.id, null));
     assert.equal(initial.trial.state, "active");
     assert.equal(initial.isGuest, true);
-    assert.equal(initial.configured, false);
+    assert.equal(initial.configured, true);
     assert.equal(initial.enforcementEnabled, false);
     assert.equal(initial.fullCourseAccess, true);
     assert.equal(initial.plan, "free");
@@ -48,7 +48,7 @@ test("trial persists, signup inherits only the guest clock, and pilot access rem
       const status = GetBillingStatusResponse.parse(await billingStatus(account.id, userId));
       assert.equal(status.selectedPlan, choice);
       assert.equal(status.plan, "free");
-      assert.equal(status.configured, false);
+      assert.equal(status.configured, true);
       assert.equal(status.enforcementEnabled, false);
       assert.equal(status.trial.startedAt.toISOString(), earlierStart.toISOString());
       assert.equal((await billingStatus(guest.id, null)).selectedPlan, null);

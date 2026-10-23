@@ -96,8 +96,17 @@ disabled.
 or waiting for an automatic six-payment cap.
 
 **How to apply:** Continue with the one-time Polar product without reopening the
-monthly-plan decision. This scope choice is not permission to make a purchase,
-publish automatically, or activate the expired-trial restriction.
+monthly-plan decision. The user subsequently explicitly approved:
+"Enable $149 checkout only; keep monthly and trial blocking off" for the next
+published build.
+
+**Why:** The user separately approved the checkout activation and its real
+payment consequences after choosing the six-month-first scope.
+
+**How to apply:** Enable only the one-time checkout in the prepared build.
+Keep monthly checkout and expired-trial blocking disabled. Do not ask for this
+same activation approval again. Publication stays user-controlled, and the
+agent is not authorized to make a real purchase.
 
 Native renewal pushes must check current device/account consent before presentation, not rely on unregistering a push token alone.
 

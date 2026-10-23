@@ -2,9 +2,9 @@ const DAY = 86_400_000;
 export const TRIAL_DAYS = 2;
 export const RENEWAL_NOTICE_DAYS = 4;
 
-// Deliberately not a configurable activation switch: live access enforcement
-// requires the deferred, verified Polar checkout/webhook implementation.
-export const BILLING_CONFIGURED = false;
+// Owner approved $149 checkout only. Monthly has its own disabled cap gate.
+// Billing readiness must never implicitly activate the separate trial gate.
+export const BILLING_CONFIGURED = true;
 // Staged only. Change this after verified live entitlements, checkout and
 // webhook handling are ready and the owner explicitly approves activation.
 export const TRIAL_ENFORCEMENT_ENABLED = false;

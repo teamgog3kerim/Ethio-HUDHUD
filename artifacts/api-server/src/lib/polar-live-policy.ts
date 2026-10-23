@@ -2,7 +2,8 @@ import { sixMonthsAfter, type SandboxPlan } from "./polar-sandbox-policy";
 import { LIVE_COURSE_PRODUCTS } from "./polar-live-webhook-policy";
 
 export type LivePlan = SandboxPlan;
-export const LIVE_CHECKOUT_LAUNCH_APPROVED = false;
+// Owner explicitly approved the $149 one-time checkout only.
+export const LIVE_CHECKOUT_LAUNCH_APPROVED = true;
 // A webhook-triggered cancellation alone is not a provider-enforced six-payment
 // cap. Keep monthly purchases blocked even if six-month checkout is launched.
 export const LIVE_MONTHLY_CAP_APPROVED = false;

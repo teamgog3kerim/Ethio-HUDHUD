@@ -2,9 +2,14 @@
 
 ## Current boundary
 
-Only the development sandbox is enabled. Sandbox purchases have their own
+The owner approved **live $149 one-time checkout only** for the next published
+build. Monthly checkout and expired-trial blocking remain disabled. Learning
+temporarily stays open and purchasing is optional; a real charge occurs only
+when a customer completes Polar checkout. Do not make a purchase automatically.
+
+Sandbox purchases have their own
 records and customer IDs and **never grant real paid access**, modify admin
-grants, or change learning progress. Live billing and paywalls remain disabled.
+grants, or change learning progress.
 The sandbox adapter is hard-coded to Polar's sandbox environment and refuses to
 operate when `NODE_ENV=production`.
 
@@ -31,9 +36,11 @@ The staged live checkout adapter, customer portal, reconciliation worker and pai
 access resolver are now implemented. They use separate live purchase records,
 `hudhud-live:` customer identities and current provider reads; neither a plan
 preference, success redirect, nor sandbox purchase grants paid access.
-`LIVE_CHECKOUT_LAUNCH_APPROVED`, `LIVE_MONTHLY_CAP_APPROVED`, `BILLING_CONFIGURED`
-and `TRIAL_ENFORCEMENT_ENABLED` remain false. No real purchase is authorized by
-these changes.
+`LIVE_CHECKOUT_LAUNCH_APPROVED` and `BILLING_CONFIGURED` are now true with explicit
+owner approval. `LIVE_MONTHLY_CAP_APPROVED` and `TRIAL_ENFORCEMENT_ENABLED` remain
+false. Runtime checkout also requires the live token and webhook secret. A
+monthly request is rejected before any provider call. No real purchase has
+been performed or authorized for the agent.
 
 Checkout creates a durable intent before calling Polar. Ambiguous timeouts stay
 unresolved instead of being blindly retried; the worker can recover the
@@ -70,8 +77,11 @@ Both live secrets are present in production configuration. The public checkout
 route still returned HTTP 404 when checked after this scope choice, so the
 published build does not yet expose the new checkout flow. Publish the prepared
 implementation and verify it before claiming the public payment flow is ready.
-Public checkout activation requires explicit approval; scope selection alone
-does not authorize a real purchase or the 48-hour access restriction.
+The owner subsequently explicitly approved enabling $149 checkout in the next
+published build while keeping monthly checkout and trial blocking off. This
+does not authorize an automatic purchase or publication. After publishing,
+verify the public route and verify a genuine provider-signed delivery; simulated
+test responses are not proof of a completed live payment round trip.
 
 ## Approved live-access rules — staged implementation
 

@@ -21,6 +21,7 @@ export default function ChoosePlan() {
   const [error, setError] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [retryOperation, setRetryOperation] = useState<'sandbox' | 'live' | 'portal'>('sandbox');
   const identity = useRef(userId);
   const version = useRef(0);
   identity.current = userId;
@@ -54,12 +55,13 @@ export default function ChoosePlan() {
     }
   };
   const paid = selected === 'monthly' || selected === 'six_month' ? selected : null;
-  const sandbox = !!paid && billing.data?.sandboxCheckoutEnabled === true;
+  const sandbox = !!paid && billing.data?.sandboxCheckoutEnabled === true && billing.data?.liveCheckoutEnabled !== true;
   const checkout = async () => {
     if (!paid || !userId || checkingOut || saving) return;
     const owner = userId, request = ++version.current;
     setCheckingOut(true);
     setCheckoutError(null);
+    setRetryOperation('sandbox');
     try {
       const result = await createSandboxCheckout({ plan: paid });
       if (identity.current !== owner || version.current !== request) return;
@@ -85,6 +87,7 @@ export default function ChoosePlan() {
     const owner = userId, request = ++version.current;
     setCheckingOut(true);
     setCheckoutError(null);
+    setRetryOperation('live');
     try {
       const result = await createLiveCheckout({ plan: paid });
       if (identity.current !== owner || version.current !== request) return;
@@ -104,6 +107,7 @@ export default function ChoosePlan() {
     const owner = userId;
     setCheckingOut(true);
     setCheckoutError(null);
+    setRetryOperation('portal');
     try {
       const r = await createLivePortal();
       if (identity.current !== owner) return;
@@ -130,11 +134,13 @@ export default function ChoosePlan() {
     <div className="mt-6 space-y-3 rounded-3xl border border-border bg-card p-5" aria-live="polite">
       <p className="text-sm text-muted-foreground">{billing.data?.enforcementEnabled
         ? t('التجربة مدتها 48 ساعة من أول استخدام. اختيار الخطة أو إنشاء حساب جديد لا يعيد التجربة ولا يفتح الدروس دون استحقاق موثّق.', 'The trial lasts 48 hours from first use. Selecting a plan or signing up does not restart it or unlock lessons without verified access.')
+        : bd?.liveCheckoutEnabled
+        ? t('حفظ الاختيار لا يُعدّ دفعاً. شراء الستة أشهر اختياري حالياً، ولا تُحصّل رسوم إلا بعد إتمام الدفع عبر Polar. يبقى التعلّم مفتوحاً مؤقتاً حتى بعد انتهاء تجربة 48 ساعة؛ الحجب غير مفعّل.', 'Saving a choice is not payment. The six-month purchase is currently optional; charges occur only when you complete Polar checkout. Learning temporarily remains open after the 48-hour trial; blocking is off.')
         : selected === 'monthly' || selected === 'six_month'
         ? t('سيُحفظ هذا الاختيار كتفضيل فقط. لم يتم الدفع أو تفعيل اشتراك مدفوع. يمكنك التعلّم مجانًا خلال المرحلة التجريبية حتى تفعيل Polar.', 'This saves a preference only. No payment or paid subscription is activated. You can learn free during the pilot until Polar is enabled.')
         : t('التجربة مدتها 48 ساعة من أول استخدام، ولا تبدأ مجددًا عند إنشاء الحساب أو تغيير الخطة. يبقى التعلّم مفتوحًا خلال المرحلة التجريبية.', 'Your trial lasts 48 hours from first use; signing up or changing plans does not restart it. Learning stays open during the pilot.')}</p>
       {sandbox && <p className="rounded-2xl bg-secondary p-3 text-sm" data-testid="text-sandbox-note">{t('هذا اختبار في بيئة Polar التجريبية فقط: لا رسوم حقيقية ولا استحقاق مدفوع حقيقي، ولن يتغير وصولك للدروس.', 'This is a Polar sandbox test only: no real charges and no real paid entitlement. Your learning access does not change.')}</p>}
-      {checkoutError && <div role="alert"><p className="text-sm text-destructive">{checkoutError}</p><ErrorState what={t('بدء الدفع التجريبي', 'starting sandbox checkout')} onRetry={() => void checkout()} /></div>}
+      {checkoutError && <div role="alert"><p className="text-sm text-destructive">{checkoutError}</p><ErrorState what={retryOperation === 'portal' ? t('فتح بوابة الفوترة', 'opening the billing portal') : retryOperation === 'live' ? t('بدء الدفع', 'starting checkout') : t('بدء الدفع التجريبي', 'starting sandbox checkout')} onRetry={() => void (retryOperation === 'portal' ? portal() : retryOperation === 'live' ? liveCheckout() : checkout())} /></div>}
       {(pending || livePurchase || hasPortal) && <div className="rounded-2xl bg-secondary p-3 text-sm" data-testid="text-live-existing">
         <p>{pending ? t('ما زال التحقق من دفعة سابقة معلّقًا. لا تبدأ دفعًا جديدًا قبل اكتمال التحقق من الخادم.', 'Verification of an earlier payment is still pending. Do not start another checkout until the server finishes verifying.') : livePurchase ? t('لديك خطة مدفوعة سارية. أدرها من بوابة الفوترة بدل الدفع مرة أخرى.', 'You have an active paid plan. Manage it in the billing portal instead of paying again.') : t('يمكنك مراجعة مشترياتك السابقة من بوابة الفوترة.', 'You can review past purchases in the billing portal.')}</p>
         {hasPortal && <Btn className="mt-3" variant="outline" disabled={checkingOut} onClick={() => void portal()} data-testid="button-live-portal">{t('افتح بوابة الفوترة', 'Open billing portal')}</Btn>}
@@ -143,6 +149,7 @@ export default function ChoosePlan() {
       {live && !livePurchase && !pending && <div className="space-y-3 rounded-2xl border border-border p-3 text-sm" data-testid="text-live-terms">
         <p>{planLine}{offer ? ` $${offer.priceUsd}` : ''}</p>
         <p>{t('لا توجد استردادات طوعية، مع مراعاة حقوق المستهلك الإلزامية وشروط المشتري في Polar. حفظ التفضيل ليس دفعًا.', 'No voluntary refunds, subject to mandatory consumer rights and Polar buyer terms. Saving a preference is not payment.')}</p>
+        <p className="text-sm text-muted-foreground">{t('تظهر أي ضريبة واجبة والإجمالي النهائي في صفحة Polar قبل تأكيد الدفع.', 'Any applicable tax and the final total are shown by Polar before you confirm payment.')}</p>
         <Btn disabled={checkingOut || saving || !bd} onClick={() => void liveCheckout()} data-testid="button-live-checkout">
           {checkingOut ? t('جارٍ فتح الدفع…', 'Opening checkout…') : t('تابع إلى الدفع الآمن عبر Polar', 'Continue to secure Polar checkout')}
         </Btn>
