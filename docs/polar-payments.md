@@ -65,6 +65,23 @@ The configured return origin is the verified public domain
 `https://ethiohudhud.com`. If the production domain changes, update the adapter
 and Polar endpoint settings together.
 
+### Provider readiness is separate from app activation
+
+An enabled app checkout flag and successfully processed checkout webhooks do
+not prove that Polar will accept payment. A checkout displaying “Payments are
+currently unavailable” was traced to the live product's organization's public
+payment-status response: `organization_status: created`, `payment_ready: false`.
+The owner must resolve readiness in the same organization's Finance → Account.
+Payout setup by itself is not proof of payment activation. Recheck readiness
+before describing purchases as available to customers.
+
+Polar's own checkout reads GET /v1/organizations/{id}/payment-status. This public
+read does not require adding organizations:read to the existing token.
+Do not test with real cards: Polar directs integration testing to sandbox, or
+free/100%-discount production checks. Such free checks must not bypass this
+app's full-price paid-entitlement policy. A genuine customer's completed
+purchase remains distinct from a merchant test.
+
 The configured $29 live product is an ongoing monthly recurring product. Before
 enabling it, resolve a reliable six-payment billing cap; canceling only when a
 webhook happens to observe six orders is insufficient. Do not silently replace

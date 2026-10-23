@@ -13,3 +13,4 @@
 - [Study scheduling](study-scheduling.md) — fewer study weekdays group activities within 180 calendar days; dates remain suggestions, not progress or notification consent.
 - [Friend invitations](friend-invitations.md) — learner-confirmed Arabic invitations include the verified public domain, never preview or identity links.
 - [Polar sandbox testing](polar-sandbox-testing.md) — sandbox validates email domains; use isolated test identities and SDK signature validation across signing changes.
+- [Polar live readiness](polar-live-readiness.md) — checkout creation and signed webhooks do not prove payments are enabled; check provider readiness and avoid real-card test purchases.
