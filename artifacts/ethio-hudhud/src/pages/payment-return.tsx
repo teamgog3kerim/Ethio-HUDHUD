@@ -70,7 +70,7 @@ function Verified({ id, userId, env }: { id: string; userId: string; env: Env })
   if (!c) return <Skeleton className="h-48" />;
   const nav = <div className="mt-4 flex flex-wrap gap-3">
     <LinkBtn href="/learn" testId="link-return-learn">{t('تابع إلى الدروس', 'Continue to lessons')}</LinkBtn>
-    <LinkBtn href="/choose-plan" variant="outline" testId="link-return-plans">{t('العودة إلى الخطط', 'Back to plans')}</LinkBtn>
+    <LinkBtn href="/choose-plan" variant="outline" testId="link-return-plans">{t('الاشتراك والفوترة', 'Subscription & billing')}</LinkBtn>
   </div>;
   return <Card aria-live="polite" data-testid={`state-checkout-${c.status}`}>
     {c.status === 'pending' && <>
@@ -83,8 +83,10 @@ function Verified({ id, userId, env }: { id: string; userId: string; env: Env })
       {until && live && c.plan === 'monthly' ? <p className="mt-2 text-sm" data-testid="text-monthly-period">{starts ? t(`الفترة: من ${new Date(starts).toLocaleDateString()} إلى ${until}.`, `Period: ${new Date(starts).toLocaleDateString()} to ${until}.`) : t(`حتى ${until}.`, `Until ${until}.`)} {future ? t('تبدأ هذه الفترة لاحقاً بعد التغطية الحالية؛ لا وصول جديد الآن.', 'This period starts later, after your current coverage; it does not grant new access now.') : ''} {t('شهر واحد، دون تجديد تلقائي.', 'One month, no automatic renewal.')}</p> : until && <p className="mt-2 text-sm">{live ? t(`حتى ${until}`, `Access until ${until}`) : t(`تاريخ الاختبار: ${until}`, `Test period until ${until}`)}</p>}
       {c.cancelAtPeriodEnd && <p className="mt-1 text-sm text-muted-foreground">{t('سيُلغى عند نهاية الفترة.', 'Set to cancel at period end.')}</p>}
       <p className="mt-2 text-sm text-muted-foreground">{testNote}</p>
-      {portalError && <div className="mt-3"><ErrorState what={live ? t('فتح بوابة الفوترة', 'opening the billing portal') : t('فتح بوابة الفوترة التجريبية', 'opening the sandbox billing portal')} onRetry={() => void openPortal()} /></div>}
-      <Btn className="mt-4" variant="outline" disabled={portalBusy} onClick={() => void openPortal()} data-testid="button-sandbox-portal">{portalBusy ? t('جارٍ فتح البوابة…', 'Opening portal…') : live ? t('افتح بوابة الفوترة', 'Open billing portal') : t('افتح بوابة الفوترة التجريبية', 'Open sandbox billing portal')}</Btn>
+      {!live && <>
+        {portalError && <div className="mt-3"><ErrorState what={t('فتح بوابة الفوترة التجريبية', 'opening the sandbox billing portal')} onRetry={() => void openPortal()} /></div>}
+        <Btn className="mt-4" variant="outline" disabled={portalBusy} onClick={() => void openPortal()} data-testid="button-sandbox-portal">{portalBusy ? t('جارٍ فتح البوابة…', 'Opening portal…') : t('افتح بوابة الفوترة التجريبية', 'Open sandbox billing portal')}</Btn>
+      </>}
     </>}
     {c.status === 'refunded' && <>
       <h2 className="font-display text-xl font-extrabold">{live ? t('تم استرداد الدفع', 'Purchase refunded') : t('تم استرداد الدفع التجريبي', 'Sandbox purchase refunded')}</h2>

@@ -25,40 +25,40 @@ for (const lang of ['ar', 'en'] as const) {
       await expect(page.getByTestId('link-trial-plans')).toHaveAttribute('href', '/premium');
       await layout(page, lang);
       await page.getByTestId('link-trial-plans').click();
-      await expect(page).toHaveURL('/premium');
-      await expect(page.getByTestId('text-trial-expired')).toContainText(text('لا يوجد حجب', 'nothing is blocked'));
-      await expect(page.getByTestId('link-premium-signup')).toHaveAttribute('href', '/sign-up');
+      await expect(page).toHaveURL('/choose-plan');
+      await expect(page.getByTestId('text-trial-expired')).toContainText(text('الدروس ما زالت مفتوحة', 'Lessons remain open'));
+      await page.getByTestId('button-choose-monthly').check();
+      await expect(page.getByTestId('button-plan-signup')).toBeVisible();
       await account(page, true);
-      await expect(page.getByTestId('link-premium-signup')).toHaveCount(0);
+      await expect(page.getByTestId('button-plan-signup')).toHaveCount(0);
       await expect(page.getByTestId('link-trial-signup')).toHaveCount(0);
       await expect(banner).toContainText(text('اطّلع على الخطط', 'See the plans'));
       await expect(banner).not.toContainText(text('تقدم الضيف', 'Guest progress'));
       await expect.poll(() => billing.reads.includes('billing-account')).toBe(true);
       // Read-only fixture rejects all profile/progress/transfer writes.
       await page.reload();
-      await expect(page.getByTestId('link-premium-signup')).toHaveCount(0);
+      await expect(page.getByTestId('button-plan-signup')).toHaveCount(0);
       await expect(page.getByTestId('text-trial-expired')).toBeVisible();
       await layout(page, lang);
     });
 
-    test('pricing uses contract offers and keeps Polar checkout disabled', async ({ page }) => {
+    test('pricing uses contract offers and unavailable checkout has no fake subscribe buttons', async ({ page }) => {
       await page.goto('/premium');
-      await expect(page.getByTestId('text-configured')).toHaveText(text('غير مفعّل (Polar قيد الانتظار)', 'Not enabled (Polar pending)'));
+      await expect(page).toHaveURL('/choose-plan');
       await expect(page.getByTestId('text-price-monthly')).toContainText('$29');
       await expect(page.getByTestId('text-total-monthly')).toContainText('$174');
       await expect(page.getByTestId('text-price-six_month')).toContainText('$149');
       await expect(page.getByTestId('text-total-six_month')).toContainText(text('6 أشهر', '6 months'));
       await expect(page.getByTestId('text-savings')).toContainText('$25 (14.4%)');
       for (const id of ['monthly', 'six_month']) {
-        const button = page.getByTestId(`button-subscribe-${id}`);
-        await expect(button).toBeDisabled();
-        await expect(button).toHaveAccessibleName(text('الدفع غير متاح بعد', 'Checkout not available yet'));
-        // A DOM click on a disabled button must still produce no checkout request.
-        await button.evaluate(el => (el as HTMLButtonElement).click());
+        await expect(page.getByTestId(`button-subscribe-${id}`)).toHaveCount(0);
+        await page.getByTestId(`button-choose-${id}`).check();
+        await expect(page.getByTestId('button-live-checkout')).toHaveCount(0);
+        await expect(page.getByTestId('button-sandbox-checkout')).toHaveCount(0);
+        await expect(page.getByTestId('button-plan-signup')).toBeVisible();
       }
-      await expect(page.getByTestId('text-billing-message')).toContainText(text('لا يتم تحصيل رسوم', 'No payment is collected'));
-      await expect(page.getByTestId('text-pricing-note')).toContainText(text('إشعارات الخلفية اختيارية', 'Optional background notifications'));
-      await expect(page.getByTestId('text-pricing-note')).toContainText(text('لا يتم إرسال بريد إلكتروني', 'No email is sent'));
+      await expect(page.getByTestId('text-plans-note')).toContainText(text('الدفع غير متاح', 'Payment is currently unavailable'));
+      await expect(page.getByTestId('text-pricing-note')).toContainText(text('لا ترسل بريداً إلكترونياً', 'do not send email'));
       await layout(page, lang);
     });
 
@@ -89,7 +89,7 @@ for (const lang of ['ar', 'en'] as const) {
       await expect(page.getByTestId('banner-trial-expired')).toBeVisible();
       await expect(page.getByTestId('text-trial-expired')).toBeVisible();
       await expect(page.getByTestId('text-trial-countdown')).toHaveCount(0);
-      await expect(page).toHaveURL('/premium');
+      await expect(page).toHaveURL('/choose-plan');
     });
 
     test('returning to the window refreshes billing before the next poll', async ({ page, context, billing }) => {
@@ -115,20 +115,20 @@ for (const lang of ['ar', 'en'] as const) {
       billing.hold = true;
       await page.goto('/premium');
       await expect.poll(() => billing.pending.length).toBeGreaterThan(0);
-      await expect(page.locator('main .skel')).toBeVisible();
+      await expect(page.locator('main .skel').first()).toBeVisible();
       await expect(page.getByTestId('billing-notice')).toHaveCount(0);
-      await expect(page.getByTestId('card-offer-monthly')).toHaveCount(0);
+      await expect(page.getByTestId('card-plan-monthly')).toHaveCount(0);
       await layout(page, lang);
       billing.fail = true;
       billing.release();
-      await expect(page.getByTestId('state-error')).toBeVisible();
+      await expect(page.getByRole('alert').first()).toBeVisible();
       await expect(page.getByTestId('billing-notice')).toHaveCount(0);
-      await expect(page.getByTestId('card-offer-monthly')).toHaveCount(0);
+      await expect(page.getByTestId('card-plan-monthly')).toHaveCount(0);
       await layout(page, lang);
       billing.fail = false;
       await page.getByTestId('button-retry').click();
-      await expect(page.getByTestId('card-offer-monthly')).toBeVisible();
-      await expect(page.getByTestId('state-error')).toHaveCount(0);
+      await expect(page.getByTestId('card-plan-monthly')).toBeVisible();
+      await expect(page.getByRole('alert')).toHaveCount(0);
       billing.fail = true;
       billing.hold = true;
       // A fresh page clears the successful response; verify that both pending
@@ -175,10 +175,10 @@ for (const lang of ['ar', 'en'] as const) {
         if (kind === 'complimentary_expiring') {
           await expect(page.getByTestId('text-complimentary-expiry')).toContainText(text('منحة مجانية حتى', 'Complimentary access until'));
           await expect(page.getByTestId('text-access-expiry')).toBeVisible();
-          await expect(page.getByTestId('card-billing')).toContainText(text('انتهاء المنحة المجانية', 'Complimentary expiry'));
+          await expect(page.getByTestId('card-billing')).toContainText(text('انتهاء المنحة', 'Complimentary expiry'));
           await expect(page.getByTestId('card-trial')).toHaveCount(0);
           await expect(page.getByTestId('banner-trial-expired')).toHaveCount(0);
-          await expect(page.getByTestId('text-plan')).toHaveText('complimentary');
+          await expect(page.getByTestId('text-plan')).toHaveText(text('منحة مجانية', 'Complimentary'));
         }
         await layout(page, lang);
       });

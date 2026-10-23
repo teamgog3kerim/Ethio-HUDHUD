@@ -1,185 +1,169 @@
 import { useAuth } from '@clerk/react';
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Redirect, useLocation } from 'wouter';
+import { useLocation } from 'wouter';
 import { createLiveCheckout, createLivePortal, createSandboxCheckout, getGetBillingStatusQueryKey, selectCoursePlan } from '@workspace/api-client-react';
 import { CoursePlans, safePolarUrl } from '@/components/course-plans';
+import { PlanStatusDetails } from '@/components/plan-status-details';
 import { Shell } from '@/components/shell';
-import { Btn, ErrorState, PageHead, Skeleton } from '@/components/bits';
+import { Btn, PageHead, Skeleton } from '@/components/bits';
 import { useBilling } from '@/components/billing-notice';
 import { useApp } from '@/lib/app';
+import { planAction } from '@/lib/plan-action';
 import { parsePlanChoice, type PlanChoice } from '@/lib/plan-choice';
+
+type Op = 'trial' | 'sandbox' | 'live' | 'portal';
 
 export default function ChoosePlan() {
   const { isLoaded, isSignedIn, userId } = useAuth();
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const [, navigate] = useLocation();
   const billing = useBilling();
   const cache = useQueryClient();
   const [choice, setChoice] = useState<PlanChoice | null>(() => parsePlanChoice(new URLSearchParams(window.location.search).get('plan')));
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(false);
-  const [checkingOut, setCheckingOut] = useState(false);
-  const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [retryOperation, setRetryOperation] = useState<'sandbox' | 'live' | 'portal'>('sandbox');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [errorOp, setErrorOp] = useState<'main' | 'portal2'>('main');
+  const busyRef = useRef(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const identity = useRef(userId);
   const version = useRef(0);
   identity.current = userId;
   useEffect(() => {
     // A late response from another account must not navigate or populate cache.
     version.current++;
-    setSaving(false);
-    setCheckingOut(false);
-    setCheckoutError(null);
-    setError(false);
+    busyRef.current = false; setBusy(false); setError(null); setNotice(null);
     setChoice(parsePlanChoice(new URLSearchParams(window.location.search).get('plan')));
     return () => { version.current++; };
   }, [userId]);
-  const requested = choice ?? parsePlanChoice(billing.data?.selectedPlan);
-  const selected = billing.data?.enforcementEnabled && billing.data.trial.state === 'expired' && requested === 'trial' ? null : requested;
-  const save = async () => {
-    if (!selected || !userId || saving) return;
-    const owner = userId, request = ++version.current;
-    setSaving(true);
-    setError(false);
-    try {
-      const result = await selectCoursePlan({ plan: selected });
-      if (identity.current !== owner || version.current !== request) return;
-      cache.setQueryData(getGetBillingStatusQueryKey(), result);
-      // A stored preference is not payment and must not bypass the access gate.
-      if (result.fullCourseAccess) navigate('/learn');
-    } catch {
-      if (identity.current === owner && version.current === request) setError(true);
-    } finally {
-      if (identity.current === owner && version.current === request) setSaving(false);
-    }
-  };
-  const paid = selected === 'monthly' || selected === 'six_month' ? selected : null;
-  const sandbox = !!paid && billing.data?.sandboxCheckoutEnabled === true && billing.data?.liveCheckoutEnabled !== true;
-  const checkout = async () => {
-    if (!paid || !userId || checkingOut || saving) return;
-    const owner = userId, request = ++version.current;
-    setCheckingOut(true);
-    setCheckoutError(null);
-    setRetryOperation('sandbox');
-    try {
-      const result = await createSandboxCheckout({ plan: paid });
-      if (identity.current !== owner || version.current !== request) return;
-      const url = safePolarUrl(result.checkoutUrl);
-      if (!url) { setCheckoutError(t('تعذر التحقق من رابط الدفع التجريبي.', 'Could not verify the sandbox checkout URL.')); setCheckingOut(false); return; }
-      window.location.assign(url);
-    } catch (error) {
-      if (identity.current === owner && version.current === request) {
-        const detail = (error as { data?: { error?: unknown } }).data?.error;
-        setCheckoutError(typeof detail === 'string' ? detail : t('تعذر بدء الدفع التجريبي. حاول مرة أخرى.', 'Could not start sandbox checkout. Try again.'));
-        setCheckingOut(false);
-      }
-    }
-  };
+
   const bd = billing.data;
-  const fmtDate = (s: string) => new Date(s).toLocaleDateString(undefined, { dateStyle: 'medium' });
-  const resumeMonthly = bd?.resumablePlan === 'monthly';
-  const count = typeof bd?.monthlyPaymentCount === 'number' ? bd.monthlyPaymentCount : null;
-  const limit = typeof bd?.monthlyPaymentLimit === 'number' ? bd.monthlyPaymentLimit : null;
-  const capReached = count !== null && limit !== null && count >= limit;
-  const monthlyAllowed = bd?.monthlyCanPurchase === true || resumeMonthly;
-  const livePurchase = (!!bd?.paidPlan && bd.fullCourseAccess === true)
-    || !!(bd?.monthlyPaidThrough && Date.parse(bd.monthlyPaidThrough) > Date.now());
-  const hasPortal = bd?.hasLivePurchase === true;
-  const pendingRaw = bd?.paymentVerificationPending === true;
-  const pending = pendingRaw && !(paid === 'monthly' && resumeMonthly);
-  const live = !!paid && bd?.liveCheckoutEnabled === true && (paid === 'six_month' || (bd?.liveMonthlyCheckoutEnabled === true && monthlyAllowed));
-  const paidBlock = livePurchase && !(paid === 'monthly' && live);
-  const monthlyOff = paid === 'monthly' && bd?.liveMonthlyCheckoutEnabled !== true;
-  const liveCheckout = async () => {
-    if (!paid || !userId || checkingOut || saving || !live || paidBlock || pending) return;
+  const trialHidden = !!bd?.enforcementEnabled && bd.trial.state === 'expired';
+  const requested = choice ?? parsePlanChoice(bd?.paidPlan) ?? parsePlanChoice(bd?.selectedPlan);
+  const selected = trialHidden && requested === 'trial' ? null : requested;
+  const a = planAction(bd, selected, !!isSignedIn, billing.isError);
+  const paid = a.paid;
+
+  const run = async (op: Op) => {
+    if (!userId || busyRef.current || a.kind !== op) return;
     const owner = userId, request = ++version.current;
-    setCheckingOut(true);
-    setCheckoutError(null);
-    setRetryOperation('live');
-    try {
-      const result = await createLiveCheckout({ plan: paid });
-      if (identity.current !== owner || version.current !== request) return;
-      const url = safePolarUrl(result.checkoutUrl, 'live');
-      if (!url) { setCheckoutError(t('تعذر التحقق من رابط الدفع.', 'Could not verify the checkout URL.')); setCheckingOut(false); return; }
+    const current = () => identity.current === owner && version.current === request;
+    busyRef.current = true; setBusy(true); setError(null); setErrorOp('main'); setNotice(null);
+    const done = () => { busyRef.current = false; setBusy(false); };
+    const fail = (e: unknown, fallback: string) => {
+      if (!current()) return;
+      const detail = (e as { data?: { error?: unknown } }).data?.error;
+      setError(typeof detail === 'string' ? detail : fallback);
+      done();
+    };
+    const go = (raw: string | null | undefined, env: 'sandbox' | 'live', bad: string) => {
+      const url = safePolarUrl(raw, env);
+      if (!url) { setError(bad); done(); return; }
       window.location.assign(url);
-    } catch (e) {
-      if (identity.current === owner && version.current === request) {
-        const detail = (e as { data?: { error?: unknown } }).data?.error;
-        setCheckoutError(typeof detail === 'string' ? detail : t('تعذر بدء الدفع. حاول مرة أخرى.', 'Could not start checkout. Try again.'));
-        setCheckingOut(false);
+    };
+    try {
+      if (op === 'trial' && selected) {
+        const result = await selectCoursePlan({ plan: selected });
+        if (!current()) return;
+        cache.setQueryData(getGetBillingStatusQueryKey(), result);
+        if (result.fullCourseAccess) navigate('/learn');
+        else setNotice(t('حُفظت التجربة. تُفتح الدروس عند توثيق الاستحقاق من الخادم.', 'Trial saved. Lessons open once the server verifies access.'));
+        done();
+      } else if (op === 'sandbox' && paid) {
+        const r = await createSandboxCheckout({ plan: paid });
+        if (current()) go(r.checkoutUrl, 'sandbox', t('تعذر التحقق من رابط الدفع التجريبي.', 'Could not verify the sandbox checkout URL.'));
+      } else if (op === 'live' && paid) {
+        const r = await createLiveCheckout({ plan: paid });
+        if (current()) go(r.checkoutUrl, 'live', t('تعذر التحقق من رابط الدفع.', 'Could not verify the checkout URL.'));
+      } else if (op === 'portal') {
+        const r = await createLivePortal();
+        if (current()) go(r.url, 'live', t('تعذر التحقق من رابط البوابة.', 'Could not verify the portal URL.'));
       }
+    } catch (e) {
+      fail(e, op === 'portal' ? t('تعذر فتح بوابة الفوترة.', 'Could not open the billing portal.')
+        : op === 'sandbox' ? t('تعذر بدء الدفع التجريبي. حاول مرة أخرى.', 'Could not start sandbox checkout. Try again.')
+        : op === 'live' ? t('تعذر بدء الدفع. حاول مرة أخرى.', 'Could not start checkout. Try again.')
+        : t('تعذر حفظ اختيار التجربة. حاول مرة أخرى.', 'Could not save your trial choice. Try again.'));
     }
   };
-  const portal = async () => {
-    if (!userId || checkingOut) return;
-    const owner = userId;
-    setCheckingOut(true);
-    setCheckoutError(null);
-    setRetryOperation('portal');
+  // Secondary portal link is a live operation independent of the selected plan's main action.
+  const openPortal = async () => {
+    if (!userId || busyRef.current) return;
+    const owner = userId, request = ++version.current;
+    const current = () => identity.current === owner && version.current === request;
+    busyRef.current = true; setBusy(true); setError(null); setErrorOp('portal2');
     try {
       const r = await createLivePortal();
-      if (identity.current !== owner) return;
+      if (!current()) return;
       const url = safePolarUrl(r.url, 'live');
-      if (!url) { setCheckoutError(t('تعذر التحقق من رابط البوابة.', 'Could not verify the portal URL.')); setCheckingOut(false); return; }
+      if (!url) { setError(t('تعذر التحقق من رابط البوابة.', 'Could not verify the portal URL.')); busyRef.current = false; setBusy(false); return; }
       window.location.assign(url);
     } catch (e) {
-      if (identity.current === owner) {
-        const detail = (e as { data?: { error?: unknown } }).data?.error;
-        setCheckoutError(typeof detail === 'string' ? detail : t('تعذر فتح بوابة الفوترة.', 'Could not open the billing portal.'));
-        setCheckingOut(false);
-      }
+      if (!current()) return;
+      const d = (e as { data?: { error?: unknown } }).data?.error;
+      setError(typeof d === 'string' ? d : t('تعذر فتح بوابة الفوترة.', 'Could not open the billing portal.'));
+      busyRef.current = false; setBusy(false);
     }
   };
-  const planLine = paid === 'six_month'
-    ? t('ستة أشهر دفعة واحدة، وصول لمدة 6 أشهر، دون تجديد تلقائي.', 'Six months, one payment, 6 months of access, no auto-renewal.')
-    : t('شهر واحد مقابل 29 دولاراً لكل عملية شراء تختارها، بحد أقصى ست دفعات (174 دولاراً)، دون خصم تلقائي. يُضاف الشهر التالي بعد نهاية التغطية الحالية.', 'One month for $29 per purchase you choose, max six payments ($174), no automatic charge. Early renewal adds the next month after current coverage.');
-  const offer = bd?.offers.find(o => o.id === paid);
+
   if (!isLoaded) return <Skeleton className="m-8 h-64" />;
-  if (!isSignedIn) return <Redirect to={`/sign-up${choice ? `?plan=${choice}` : ''}`} replace />;
+  const fmt = (s: string) => new Date(s).toLocaleString(lang === 'ar' ? 'ar' : 'en');
+  const retry = !!error && errorOp === 'main';
+  const label: Record<string, string> = {
+    signup: t('أنشئ حسابًا لمتابعة هذه الخطة', 'Create an account to continue with this plan'),
+    trial: busy ? t('جارٍ الحفظ…', 'Saving…') : t('ابدأ التجربة وتابع إلى الدروس', 'Start trial and continue to lessons'),
+    live: busy ? t('جارٍ فتح الدفع…', 'Opening checkout…') : t('تابع إلى الدفع الآمن عبر Polar', 'Continue to secure Polar checkout'),
+    sandbox: busy ? t('جارٍ فتح الدفع التجريبي…', 'Opening sandbox checkout…') : t('ابدأ الدفع التجريبي (بدون رسوم)', 'Start sandbox checkout (no charge)'),
+    status: t('تحقق من حالة الدفع', 'Check payment status'),
+    refresh: t('أعد تحميل الخطط', 'Reload plans'),
+    portal: busy ? t('جارٍ فتح البوابة…', 'Opening portal…') : t('افتح بوابة الفوترة', 'Open billing portal'),
+  };
+  const testId: Record<string, string> = { signup: 'button-plan-signup', trial: 'button-plan-continue', live: 'button-live-checkout', sandbox: 'button-sandbox-checkout', status: 'button-payment-status', refresh: 'button-retry', portal: 'button-live-portal' };
+  const onMain = () => {
+    if (a.kind === 'signup') navigate(`/sign-up${selected ? `?plan=${selected}` : ''}`);
+    else if (a.kind === 'status' || a.kind === 'refresh') { if (!billing.isFetching) void billing.refetch(); }
+    else if (a.kind === 'trial' || a.kind === 'sandbox' || a.kind === 'live' || a.kind === 'portal') void run(a.kind);
+  };
+  const hasMain = ['signup', 'trial', 'sandbox', 'live', 'portal', 'status', 'refresh'].includes(a.kind);
+  const comp = bd?.plan === 'complimentary';
+  const paidSrc = bd?.source === 'polar_live';
+  const expiry = bd?.accessExpiresAt ?? bd?.paidPeriodEndsAt;
+  const gist = bd?.enforcementEnabled
+    ? t('التجربة 48 ساعة من أول استخدام. اختيار خطة أو إنشاء حساب لا يعيد التجربة ولا يفتح الدروس دون استحقاق موثّق.', 'The trial lasts 48 hours from first use. Selecting a plan or signing up does not restart it or unlock lessons without verified access.')
+    : t('الشراء اختياري حالياً ولا تُحصّل رسوم إلا بعد إتمام الدفع عبر Polar. يبقى التعلّم مفتوحاً مؤقتاً.', 'Purchasing is optional for now; you are charged only after completing Polar checkout. Learning temporarily stays open.');
+
   return <Shell>
-    <PageHead title={t('اختر خطتك وابدأ التعلّم', 'Choose your plan and start learning')} sub={t('احفظ اختيارك في حسابك، ثم انتقل إلى الدروس والمحادثات.', 'Save your choice to your account, then continue to lessons and conversations.')} />
-    <CoursePlans selected={selected} onChoose={plan => { setChoice(plan); setError(false); setCheckoutError(null); }} busy={saving || checkingOut} paidOnly={billing.data?.enforcementEnabled && billing.data.trial.state === 'expired'} />
-    <div className="mt-6 space-y-3 rounded-3xl border border-border bg-card p-5" aria-live="polite">
-      <p className="text-sm text-muted-foreground">{billing.data?.enforcementEnabled
-        ? t('التجربة مدتها 48 ساعة من أول استخدام. اختيار الخطة أو إنشاء حساب جديد لا يعيد التجربة ولا يفتح الدروس دون استحقاق موثّق.', 'The trial lasts 48 hours from first use. Selecting a plan or signing up does not restart it or unlock lessons without verified access.')
-        : bd?.liveCheckoutEnabled
-        ? t('حفظ الاختيار لا يُعدّ دفعاً. الشراء اختياري حالياً، ولا تُحصّل رسوم إلا بعد إتمام الدفع عبر Polar. يبقى التعلّم مفتوحاً مؤقتاً حتى بعد انتهاء تجربة 48 ساعة؛ الحجب غير مفعّل.', 'Saving a choice is not payment. Purchasing is currently optional; charges occur only when you complete Polar checkout. Learning temporarily remains open after the 48-hour trial; blocking is off.')
-        : selected === 'monthly' || selected === 'six_month'
-        ? t('سيُحفظ هذا الاختيار كتفضيل فقط. لم يتم الدفع أو تفعيل اشتراك مدفوع. يمكنك التعلّم مجانًا خلال المرحلة التجريبية حتى تفعيل Polar.', 'This saves a preference only. No payment or paid subscription is activated. You can learn free during the pilot until Polar is enabled.')
-        : t('التجربة مدتها 48 ساعة من أول استخدام، ولا تبدأ مجددًا عند إنشاء الحساب أو تغيير الخطة. يبقى التعلّم مفتوحًا خلال المرحلة التجريبية.', 'Your trial lasts 48 hours from first use; signing up or changing plans does not restart it. Learning stays open during the pilot.')}</p>
-      {sandbox && <p className="rounded-2xl bg-secondary p-3 text-sm" data-testid="text-sandbox-note">{t('هذا اختبار في بيئة Polar التجريبية فقط: لا رسوم حقيقية ولا استحقاق مدفوع حقيقي، ولن يتغير وصولك للدروس.', 'This is a Polar sandbox test only: no real charges and no real paid entitlement. Your learning access does not change.')}</p>}
-      {checkoutError && <div role="alert"><p className="text-sm text-destructive">{checkoutError}</p><ErrorState what={retryOperation === 'portal' ? t('فتح بوابة الفوترة', 'opening the billing portal') : retryOperation === 'live' ? t('بدء الدفع', 'starting checkout') : t('بدء الدفع التجريبي', 'starting sandbox checkout')} onRetry={() => void (retryOperation === 'portal' ? portal() : retryOperation === 'live' ? liveCheckout() : checkout())} /></div>}
-      {(pendingRaw || livePurchase || hasPortal) && <div className="rounded-2xl bg-secondary p-3 text-sm" data-testid="text-live-existing">
-        <p>{pendingRaw && !pending ? t('لديك دفعة شهرية قيد المتابعة. يمكنك استئناف الدفع نفسه بأمان.', 'You have a monthly checkout in progress. You can safely resume that same checkout.') : pending ? t('ما زال التحقق من دفعة سابقة معلّقًا. لا تبدأ دفعًا جديدًا قبل اكتمال التحقق من الخادم.', 'Verification of an earlier payment is still pending. Do not start another checkout until the server finishes verifying.') : livePurchase ? (paid === 'monthly' && live ? t('الباقة الحالية سارية. الإيصالات والسجل في بوابة الفوترة؛ التجديد اليدوي لا يحتاج إليها.', 'Your current plan is active. Receipts and history are in the billing portal; you do not need it to renew manually.') : t('لديك خطة مدفوعة سارية. لا حاجة لدفع مرة أخرى؛ الإيصالات في بوابة الفوترة.', 'You have an active paid plan. No need to pay again; receipts are in the billing portal.')) : t('يمكنك مراجعة مشترياتك السابقة من بوابة الفوترة.', 'You can review past purchases in the billing portal.')}</p>
-        {hasPortal && <Btn className="mt-3" variant="outline" disabled={checkingOut} onClick={() => void portal()} data-testid="button-live-portal">{t('افتح بوابة الفوترة', 'Open billing portal')}</Btn>}
-      </div>}
-      {monthlyOff && <p className="rounded-2xl bg-secondary p-3 text-sm" data-testid="text-monthly-cap-pending">{t('الدفع الشهري غير متاح حالياً بسبب الإعداد. يمكنك حفظ تفضيلك فقط دون رسوم.', 'Monthly checkout is unavailable because of current configuration. Saving your preference does not charge you.')}</p>}
-      {paid === 'monthly' && !monthlyOff && <div className="space-y-1 rounded-2xl bg-secondary p-3 text-sm" data-testid="text-monthly-status">
-        {count !== null && limit !== null ? <p>{t(`الدفعات الشهرية: ${count} من ${limit}.`, `Monthly payments: ${count} of ${limit}.`)}</p> : <p>{t('تعذّر تحديد عدد الدفعات؛ الدفع الشهري متوقف حتى يؤكد الخادم.', 'Payment count unavailable; monthly checkout stays off until the server confirms.')}</p>}
-        {capReached && <p className="font-semibold">{t('بلغت الحد الأقصى: ست دفعات شهرية. لا مزيد من الدفعات الشهرية.', 'Cap reached: six monthly payments. No further monthly payments.')}</p>}
-        {bd?.monthlyPaidThrough && <p>{t(`مدفوع حتى ${fmtDate(bd.monthlyPaidThrough)}.`, `Paid through ${fmtDate(bd.monthlyPaidThrough)}.`)}</p>}
-        {!capReached && !monthlyAllowed && bd?.monthlyNextPurchaseAt && <p>{t(`يفتح التجديد في ${fmtDate(bd.monthlyNextPurchaseAt)}، قبل انتهاء التغطية بأربعة أيام.`, `Renewal opens ${fmtDate(bd.monthlyNextPurchaseAt)}, four days before coverage ends.`)}</p>}
-        {!capReached && !monthlyAllowed && !bd?.monthlyNextPurchaseAt && <p>{t('التجديد غير متاح الآن.', 'Renewal is not available right now.')}</p>}
-        {resumeMonthly && <p>{t('لديك دفع شهري غير مكتمل؛ سيُستأنف الطلب نفسه.', 'You have an unfinished monthly checkout; the same one will be resumed.')}</p>}
-      </div>}
-      {live && !paidBlock && !pending && <div className="space-y-3 rounded-2xl border border-border p-3 text-sm" data-testid="text-live-terms">
-        <p>{planLine}{offer ? ` $${offer.priceUsd}` : ''}</p>
-        <p>{t('لا توجد استردادات طوعية، مع مراعاة حقوق المستهلك الإلزامية وشروط المشتري في Polar. حفظ التفضيل ليس دفعًا.', 'No voluntary refunds, subject to mandatory consumer rights and Polar buyer terms. Saving a preference is not payment.')}</p>
-        <p className="text-sm text-muted-foreground">{t('تظهر أي ضريبة واجبة والإجمالي النهائي في صفحة Polar قبل تأكيد الدفع.', 'Any applicable tax and the final total are shown by Polar before you confirm payment.')}</p>
-        <Btn disabled={checkingOut || saving || !bd} onClick={() => void liveCheckout()} data-testid="button-live-checkout">
-          {checkingOut ? t('جارٍ فتح الدفع…', 'Opening checkout…') : t('تابع إلى الدفع الآمن عبر Polar', 'Continue to secure Polar checkout')}
-        </Btn>
-      </div>}
-      {sandbox && <Btn disabled={checkingOut || saving || !billing.data} onClick={() => void checkout()} data-testid="button-sandbox-checkout">
-        {checkingOut ? t('جارٍ فتح الدفع التجريبي…', 'Opening sandbox checkout…') : t('ابدأ الدفع التجريبي (بدون رسوم)', 'Start sandbox checkout (no charge)')}
-      </Btn>}
-      {error && <ErrorState what={t('حفظ اختيار الخطة', 'saving your plan choice')} onRetry={() => void save()} />}
-      <Btn variant={sandbox || live ? 'outline' : undefined} disabled={!selected || saving || checkingOut || !billing.data || billing.isError} onClick={() => void save()} data-testid="button-plan-continue">
-        {saving ? t('جارٍ حفظ الاختيار…', 'Saving your choice…') : billing.data?.enforcementEnabled && !billing.data.fullCourseAccess
-          ? t('احفظ اختيار الاشتراك (لا يفتح الدروس)', 'Save subscription choice (does not unlock lessons)')
-          : t('احفظ الاختيار وتابع إلى الدروس', 'Save choice and continue to lessons')}
-      </Btn>
-    </div>
+    <PageHead title={t('الاشتراك والفوترة', 'Subscription & billing')} sub={t('اختر خطتك أدناه، ثم تابع إلى الدفع أو إدارة الفوترة من مكان واحد.', 'Choose your plan below, then continue to payment or manage billing in one place.')} />
+    {bd && <div className="mb-5 flex flex-wrap gap-x-6 gap-y-1 rounded-2xl border border-border bg-card px-4 py-3 text-sm" data-testid="card-billing">
+      <p><span className="text-muted-foreground">{t('الخطة الحالية: ', 'Current plan: ')}</span><span className="font-semibold" data-testid="text-plan">{comp ? t('منحة مجانية', 'Complimentary') : bd.paidPlan === 'monthly' ? t('شهري', 'Monthly') : bd.paidPlan === 'six_month' ? t('ستة أشهر', 'Six months') : t('بدون اشتراك مدفوع', 'No paid plan')}</span></p>
+      {bd.selectedPlan && <p><span className="text-muted-foreground">{t('الاختيار المحفوظ: ', 'Saved choice: ')}</span><span className="font-semibold" data-testid="text-selected-plan">{bd.selectedPlan === 'trial' ? t('تجربة مجانية', 'Free trial') : bd.selectedPlan === 'monthly' ? t('شهري', 'Monthly') : t('ستة أشهر', 'Six months')}</span></p>}
+      <p className="basis-full font-semibold" data-testid="text-access-state">{comp ? t('منحة مجانية سارية', 'Complimentary access is active') : paidSrc && bd.fullCourseAccess ? t('وصول مدفوع موثّق وساري', 'Verified paid access is active') : bd.hasLivePurchase || bd.paidPlan ? t('انتهى الوصول المدفوع الموثّق أو لم يعد ساريًا', 'Verified paid access has ended or is not active') : bd.isGuest ? t('زائر: لا وصول مدفوع', 'Guest: no paid access') : t('لا وصول مدفوع موثّق', 'No verified paid access')}</p>
+      {comp && expiry && <p data-testid="text-access-expiry"><span className="text-muted-foreground">{t('انتهاء المنحة: ', 'Complimentary expiry: ')}</span>{fmt(expiry)}</p>}
+      {paidSrc && expiry && <p data-testid="text-paid-expiry"><span className="text-muted-foreground">{t('الوصول المدفوع حتى: ', 'Paid access until: ')}</span>{fmt(expiry)}</p>}
+      {!comp && !paidSrc && bd.trial.state === 'active' && <p data-testid="card-trial"><span data-testid="text-trial-countdown">{t(`التجربة: متبقٍ ${bd.trial.daysRemaining} يوم، تنتهي ${fmt(bd.trial.endsAt)}`, `Trial: ${bd.trial.daysRemaining} day(s) left, ends ${fmt(bd.trial.endsAt)}`)}</span></p>}
+      {bd.trial.state === 'expired' && !comp && !paidSrc && <p data-testid="card-trial"><span data-testid="text-trial-expired">{bd.fullCourseAccess ? t('انتهت التجربة. الدروس ما زالت مفتوحة.', 'Trial ended. Lessons remain open.') : t('انتهت التجربة. اختر اشتراكاً للمتابعة. تقدمك محفوظ.', 'Your trial has ended. Choose a subscription to continue. Your progress is saved.')}</span></p>}
+    </div>}
+    <CoursePlans selected={selected} onChoose={plan => { setChoice(plan); setError(null); setNotice(null); }} busy={busy} paidOnly={trialHidden} />
+    <section className="mt-6 space-y-3 rounded-3xl border border-border bg-card p-5" aria-live="polite" aria-busy={busy || billing.isLoading} data-testid="section-plan-action">
+      <h2 className="font-display text-xl font-bold">{t('راجع اختيارك وتابع', 'Review your choice and continue')}</h2>
+      {selected && <p className="font-semibold" data-testid="text-checkout-summary">{selected === 'trial'
+        ? t('تجربة مجانية · 48 ساعة · دون دفع', 'Free trial · 48 hours · no payment')
+        : selected === 'monthly'
+          ? t(`شهر واحد · $${bd?.offers.find(o => o.id === 'monthly')?.priceUsd ?? 29} · دفع يدوي`, `One month · $${bd?.offers.find(o => o.id === 'monthly')?.priceUsd ?? 29} · manual payment`)
+          : t(`ستة أشهر · $${bd?.offers.find(o => o.id === 'six_month')?.priceUsd ?? 149} · دفعة واحدة`, `Six months · $${bd?.offers.find(o => o.id === 'six_month')?.priceUsd ?? 149} · one payment`)}</p>}
+      <p className="text-sm text-muted-foreground" data-testid="text-billing-message">{gist}</p>
+      {billing.isLoading && <Skeleton className="h-12" />}
+      <PlanStatusDetails bd={bd} a={a} selected={selected} />
+      {notice && <p className="rounded-2xl bg-secondary p-3 text-sm" role="status">{notice}</p>}
+      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
+      {billing.isError && <p className="text-sm text-destructive" role="alert">{t('تعذّر تحميل أو تحديث بيانات الفوترة. الإجراءات متوقفة حتى إعادة التحميل.', 'Could not load or refresh billing data. Actions are paused until it reloads.')}</p>}
+      {billing.isError && !bd ? <Btn className="w-full" onClick={() => void billing.refetch()} data-testid="button-retry">{t('إعادة المحاولة', 'Retry')}</Btn>
+        : hasMain ? <Btn className="min-h-11 w-full" disabled={busy || ((a.kind === 'status' || a.kind === 'refresh') && billing.isFetching)} onClick={onMain} data-testid={testId[a.kind]} data-action={a.kind}>
+          {retry && a.kind !== 'signup' ? `${t('إعادة المحاولة: ', 'Retry: ')}${label[a.kind]}` : label[a.kind]}
+        </Btn> : null}
+      {a.kind === 'unavailable' && <p className="text-sm text-muted-foreground" data-testid="text-plan-unavailable">{t('لا إجراء متاحاً لهذه الخطة الآن؛ راجع التفاصيل أعلاه.', 'No action is available for this plan right now; see the details above.')}</p>}
+      {a.portalSecondary && <button type="button" disabled={busy || billing.isError} onClick={() => void openPortal()} className="press inline-flex min-h-11 items-center text-sm font-semibold text-primary underline" data-testid="link-live-portal">{errorOp === 'portal2' && error ? t('إعادة المحاولة: بوابة الفوترة', 'Retry: billing portal') : t('الإيصالات والسجل في بوابة الفوترة', 'Receipts and history in the billing portal')}</button>}
+      <p className="text-xs text-muted-foreground" data-testid="text-pricing-note">{t('تظهر تنبيهات التطبيق قبل انتهاء الوصول الموثّق بأربعة أيام ولا ترسل بريداً إلكترونياً. لا استردادات طوعية، مع مراعاة حقوق المستهلك الإلزامية وشروط المشتري في Polar.', 'In-app alerts appear four days before verified access expires and do not send email. No voluntary refunds, subject to mandatory consumer rights and Polar buyer terms.')}</p>
+    </section>
   </Shell>;
 }

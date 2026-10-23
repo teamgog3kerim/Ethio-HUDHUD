@@ -95,7 +95,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const core = items.filter((i) => coreHrefs.includes(i.href));
   const rest = [
     ...items.filter((i) => !coreHrefs.includes(i.href)),
-    { href: '/premium', icon: Sparkles, label: 'Premium' },
+    { href: '/premium', icon: Sparkles, label: t('الاشتراك والفوترة', 'Subscription & billing') },
     { href: '/account', icon: UserRound, label: t('الحساب', 'Account') },
     ...(isAdmin ? [{ href: '/admin', icon: ShieldCheck, label: t('الإدارة', 'Administration') }] : []),
   ];
@@ -137,7 +137,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </Link>
           )}
           <Link href="/premium" className="press flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:bg-muted" data-testid="nav-premium">
-            <Sparkles className="size-4" /> Premium
+            <Sparkles className="size-4" /> {t('الاشتراك والفوترة', 'Subscription & billing')}
           </Link>
           <AuthButtons />
           <Toggles />
@@ -224,7 +224,7 @@ export function Footer() {
       <div className="mb-2 flex justify-center gap-5">
         <Link href="/privacy" className="hover:text-foreground" data-testid="link-privacy">{t('الخصوصية', 'Privacy')}</Link>
         <Link href="/terms" className="hover:text-foreground" data-testid="link-terms">{t('الشروط', 'Terms')}</Link>
-        <Link href="/premium" className="hover:text-foreground" data-testid="link-premium">Premium</Link>
+        <Link href="/premium" className="hover:text-foreground" data-testid="link-premium">{t('الاشتراك والفوترة', 'Subscription & billing')}</Link>
         {settings.data?.supportEmail && <a href={`mailto:${settings.data.supportEmail}`} className="hover:text-foreground" data-testid="link-support">{t('الدعم', 'Support')}</a>}
       </div>
       <p>{t('تعلّم الأمهرية بالعربية مع هدهد.', 'Learn Amharic with HUDHUD.')}</p>

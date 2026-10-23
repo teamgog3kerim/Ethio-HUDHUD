@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react';
-import { Btn, Card, ErrorState, LinkBtn, Skeleton } from '@/components/bits';
+import { Card, ErrorState, LinkBtn, Skeleton } from '@/components/bits';
 import { useBilling } from '@/components/billing-notice';
 import { useApp } from '@/lib/app';
 
@@ -21,7 +21,7 @@ export function CoursePlans({ onChoose, selected, busy, paidOnly = false }: { on
   const b = q.data;
   const monthly = b?.offers.find((o) => o.id === 'monthly');
   const six = b?.offers.find((o) => o.id === 'six_month');
-  const current = selected ?? b?.selectedPlan;
+  const current = onChoose ? selected : selected ?? b?.selectedPlan;
   const expired = b?.enforcementEnabled && b.trial.state === 'expired';
   const hideTrial = paidOnly || expired;
 
@@ -30,9 +30,10 @@ export function CoursePlans({ onChoose, selected, busy, paidOnly = false }: { on
     const text = isSel ? t('مختارة', 'Selected') : label;
     if (onChoose) {
       return (
-        <Btn className="mt-4 w-full" variant={isSel ? 'primary' : 'outline'} disabled={busy} aria-pressed={isSel} onClick={() => onChoose(id)} data-testid={`button-choose-${id}`}>
-          {isSel && <Check className="size-4" />}{text}
-        </Btn>
+        <label className={`mt-auto flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border p-3 text-sm font-semibold ${isSel ? 'border-primary bg-secondary' : 'border-input'} ${busy ? 'pointer-events-none opacity-60' : ''}`}>
+          <input type="radio" name="course-plan" value={id} checked={isSel} disabled={busy} onChange={() => onChoose(id)} className="size-5 shrink-0 accent-[hsl(var(--primary))]" aria-label={label} data-testid={`button-choose-${id}`} />
+          {text}
+        </label>
       );
     }
     return <LinkBtn href={`/choose-plan?plan=${id}`} variant={isSel ? 'primary' : 'outline'} className="mt-4 w-full" testId={`button-choose-${id}`}>{text}</LinkBtn>;
@@ -52,12 +53,12 @@ export function CoursePlans({ onChoose, selected, busy, paidOnly = false }: { on
           ? t('يمكنك اختبار الدفع عبر Polar التجريبي دون أموال حقيقية. لا يفعّل الاختبار اشتراكًا حقيقيًا ولا يغيّر وصولك للدروس.', 'Polar sandbox checkout is available for testing without real money. A test does not activate a real subscription or change lesson access.')
           : !b
             ? t('جارٍ التحقق من الخطط المتاحة…', 'Checking available plans…')
-            : t('الدفع غير متاح حاليًا. اختيار خطة لا يُحصّل رسومًا ولا يمنح وصولًا مدفوعًا.', 'Payment is currently unavailable. Choosing a plan does not charge you or grant paid access.')}
+            : t('الدفع غير متاح حاليًا. اختيار خطة لا يُحصّل رسومًا ولا يمنح وصولًا مدفوعًا.', 'Payment is currently unavailable. Selecting a plan does not charge you or grant paid access.')}
       </p>
       {q.isLoading && <div className="mt-4 grid gap-4 md:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-56" />)}</div>}
-      {(q.isError || (b && (!monthly || !six))) && <div className="mt-4"><ErrorState what={t('الخطط', 'plans')} onRetry={() => q.refetch()} /></div>}
+      {(q.isError || (b && (!monthly || !six))) && <div className="mt-4">{onChoose ? <p role="alert" className="text-sm text-destructive">{t('تعذّر عرض الخطط المتاحة. أعد تحميلها أدناه.', 'Could not display available plans. Reload them below.')}</p> : <ErrorState what={t('الخطط', 'plans')} onRetry={() => q.refetch()} />}</div>}
       {b && monthly && six && (
-        <div className={`mt-4 grid gap-4 ${hideTrial ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
+        <div role={onChoose ? 'radiogroup' : undefined} aria-label={onChoose ? t('خطة التعلّم', 'Learning plan') : undefined} className={`mt-4 grid gap-4 ${hideTrial ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
           {!hideTrial && <Card data-testid="card-plan-trial" className={cls('trial')}>
             <p className="text-xs font-bold uppercase tracking-widest text-primary">{t('تجربة مجانية', 'Free trial')}</p>
             <p className="font-display mt-2 text-3xl font-extrabold">{t('يومان', '48 hours')}</p>
@@ -69,16 +70,16 @@ export function CoursePlans({ onChoose, selected, busy, paidOnly = false }: { on
           </Card>}
           <Card data-testid="card-plan-monthly" className={cls('monthly')}>
             <p className="text-xs font-bold uppercase tracking-widest text-primary">{t('شهري', 'Monthly')}</p>
-            <p className="font-display mt-2 text-3xl font-extrabold">${monthly.priceUsd}<span className="text-base font-medium text-muted-foreground"> {t('/ شهر واحد', '/ one month')}</span></p>
-            <p className="mt-2 text-sm text-muted-foreground">{t(`شهر واحد لكل دفعة يدوية، حتى 6 دفعات ($${monthly.sixMonthTotalUsd}). لا تجديد تلقائي.`, `One month per manual payment, up to 6 payments ($${monthly.sixMonthTotalUsd}). No auto-renewal.`)}</p>
-            {current === 'monthly' && b.liveCheckoutEnabled !== true && !b.sandboxCheckoutEnabled && <p className="mt-2 text-xs text-muted-foreground" data-testid="text-plan-monthly-cap">{t('شراء الشهري غير متاح بسبب الإعداد الحالي. الاختيار تفضيل فقط ولا رسوم.', 'Monthly purchase is unavailable under the current configuration. Choosing it is a preference only, with no charge.')}</p>}
+            <p className="font-display mt-2 text-3xl font-extrabold" data-testid="text-price-monthly">${monthly.priceUsd}<span className="text-base font-medium text-muted-foreground"> {t('/ شهر واحد', '/ one month')}</span></p>
+            <p className="mb-4 mt-2 text-sm text-muted-foreground" data-testid="text-total-monthly">{t(`شهر واحد لكل دفعة يدوية، حتى 6 دفعات ($${monthly.sixMonthTotalUsd}). لا تجديد تلقائي.`, `One month per manual payment, up to 6 payments ($${monthly.sixMonthTotalUsd}). No auto-renewal.`)}</p>
+            {current === 'monthly' && b.liveCheckoutEnabled !== true && !b.sandboxCheckoutEnabled && <p className="mt-2 text-xs text-muted-foreground" data-testid="text-plan-monthly-cap">{t('شراء الشهري غير متاح بسبب الإعداد الحالي. لا رسوم.', 'Monthly purchase is unavailable under the current configuration. Nothing is charged.')}</p>}
             {action('monthly', t('اختر الشهري', 'Choose monthly'))}
           </Card>
           <Card data-testid="card-plan-six_month" className={cls('six_month', 'border-primary')}>
             <p className="text-xs font-bold uppercase tracking-widest text-primary">{t('ستة أشهر دفعة واحدة', 'Six months, once')}</p>
-            <p className="font-display mt-2 text-3xl font-extrabold">${six.priceUsd}<span className="text-base font-medium text-muted-foreground"> {t('مرة واحدة', 'one time')}</span></p>
-            <p className="mt-2 text-sm text-muted-foreground">{t(`وصول ${six.durationMonths} أشهر.`, `${six.durationMonths} months of access.`)}</p>
-            {six.savingsUsd > 0 && <p className="mt-2 flex items-center gap-2 text-sm font-semibold"><Check className="size-4 text-primary" />{t(`توفير $${six.savingsUsd} (${six.savingsPercent}%)`, `Save $${six.savingsUsd} (${six.savingsPercent}%)`)}</p>}
+            <p className="font-display mt-2 text-3xl font-extrabold" data-testid="text-price-six_month">${six.priceUsd}<span className="text-base font-medium text-muted-foreground"> {t('مرة واحدة', 'one time')}</span></p>
+            <p className="mt-2 text-sm text-muted-foreground" data-testid="text-total-six_month">{t(`وصول ${six.durationMonths} أشهر.`, `${six.durationMonths} months of access.`)}</p>
+            {six.savingsUsd > 0 && <p className="mb-4 mt-2 flex items-center gap-2 text-sm font-semibold" data-testid="text-savings"><Check className="size-4 text-primary" />{t(`توفير $${six.savingsUsd} (${six.savingsPercent}%)`, `Save $${six.savingsUsd} (${six.savingsPercent}%)`)}</p>}
             {action('six_month', t('اختر ستة أشهر', 'Choose six months'))}
           </Card>
         </div>

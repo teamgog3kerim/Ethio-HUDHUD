@@ -30,7 +30,7 @@ const clerk = {
 };
 export const useAuth = () => {
   const userId = useSyncExternalStore(subscribe, () => identity);
-  return { isSignedIn: !!userId, userId };
+  return { isLoaded: true, isSignedIn: !!userId, userId };
 };
 export const useClerk = () => clerk;
 // Account renders optional email details; this adapter never loads real users.

@@ -6,6 +6,7 @@ import Learn from '@/pages/learn';
 import Lesson from '@/pages/lesson';
 import Dashboard from '@/pages/dashboard';
 import Premium from '@/pages/premium';
+import ChoosePlan from '@/pages/choose-plan';
 import Account from '@/pages/account';
 import { ClerkQueryClientCacheInvalidator } from '@/components/clerk-query-cache-invalidator';
 import './styles.css';
@@ -25,6 +26,7 @@ createRoot(document.getElementById('root')!).render(
       <Switch>
         <Route path="/account" component={Account} />
         <Route path="/premium" component={Premium} />
+        <Route path="/choose-plan" component={ChoosePlan} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/lesson/:id" component={Lesson} />
         <Route component={Learn} />
