@@ -16,10 +16,13 @@ operate when `NODE_ENV=production`.
   access; a partial refund leaves access unchanged.
 - Learning progress and original trial dates are preserved.
 
-These access rules are approved, but are not a published customer refund policy.
-The refund window and eligibility conditions remain undecided. The merchant has
-deferred completing Polar approval/payout setup. Live activation stays blocked
-until those items are resolved and the implementation and rollout are approved.
+The merchant confirms live-payment approval and completed payout setup.
+The customer refund policy supplied by the merchant is **no refunds**.
+Customer-facing terms must preserve mandatory legal rights and Polar's buyer
+terms; this does not eliminate handling for provider-approved refunds or
+payment corrections. This policy still needs to be shown before live checkout.
+Live activation remains blocked until implementation, verification, and explicit
+rollout approval.
 The sandbox currently fails closed on partial refunds; that is test behavior,
 not the approved live partial-refund rule.
 

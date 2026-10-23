@@ -51,11 +51,19 @@ progress and original trial dates.
 **Why:** The user explicitly approved these proposed rules.
 
 **How to apply:** Implement these rules for live billing without treating their
-approval as permission to activate live payments. The user now confirms that
-Polar payout setup is complete and requests resuming live integration step by
-step. Live-payment approval still needs confirmation, and the customer refund
-window and eligibility terms remain undecided. Obtain those terms and confirm
-merchant readiness before live activation; do not invent a public refund policy.
+approval as permission to activate live payments. The user confirms that Polar
+payout setup is complete and live payments are approved, and requests resuming
+live integration step by step. Their customer refund policy is: "No refunds."
+Implementation, verification, and explicit rollout approval remain necessary.
+
+**Why:** The user confirmed both merchant readiness items and supplied the
+refund policy when asked.
+
+**How to apply:** State the no-refunds policy before checkout, without claiming
+it overrides mandatory consumer rights or Polar's buyer terms. Preserve the
+approved full/partial refund access handling for legally required or
+provider-approved refunds, disputes, and corrections. Merchant readiness alone
+does not activate checkout or expired-trial restrictions.
 
 Offer all three choices on the public home page and learner home, and let learners choose a free trial, monthly, or six-month plan after sign-up before continuing to lessons.
 
