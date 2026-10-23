@@ -51,10 +51,11 @@ progress and original trial dates.
 **Why:** The user explicitly approved these proposed rules.
 
 **How to apply:** Implement these rules for live billing without treating their
-approval as permission to activate live payments. The user deferred Polar
-approval/payout completion and has not decided the customer refund window or
-eligibility terms. Obtain those terms and confirm merchant readiness before
-live activation; do not invent a public refund policy.
+approval as permission to activate live payments. The user now confirms that
+Polar payout setup is complete and requests resuming live integration step by
+step. Live-payment approval still needs confirmation, and the customer refund
+window and eligibility terms remain undecided. Obtain those terms and confirm
+merchant readiness before live activation; do not invent a public refund policy.
 
 Offer all three choices on the public home page and learner home, and let learners choose a free trial, monthly, or six-month plan after sign-up before continuing to lessons.
 
