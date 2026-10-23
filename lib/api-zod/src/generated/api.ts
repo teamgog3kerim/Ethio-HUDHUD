@@ -427,6 +427,27 @@ export const ClearChatResponse = zod.object({
 
 
 /**
+ * @summary Verify raw signed live Polar bytes and durably queue a receipt; never grants access by itself
+ */
+export const receiveLivePolarWebhookHeaderWebhookIdMax = 255;
+
+
+
+export const ReceiveLivePolarWebhookHeader = zod.object({
+  "webhook-id": zod.string().max(receiveLivePolarWebhookHeaderWebhookIdMax),
+  "webhook-timestamp": zod.string(),
+  "webhook-signature": zod.string()
+})
+
+export const ReceiveLivePolarWebhookBody = zod.object({
+  "type": zod.string(),
+  "data": zod.record(zod.string(), zod.unknown())
+})
+
+export const ReceiveLivePolarWebhookResponse = zod.void()
+
+
+/**
  * @summary Receive a signed Polar sandbox event; raw bytes verified by the Polar SDK
  */
 export const ReceiveSandboxWebhookHeader = zod.object({

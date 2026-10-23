@@ -10,6 +10,7 @@ import cookieParser from "cookie-parser";
 import { rateLimit } from "express-rate-limit";
 import { HttpError } from "./lib/http-error";
 import { handleSandboxWebhook } from "./lib/polar-sandbox";
+import { handleLiveWebhook } from "./lib/polar-live-webhook";
 
 const app: Express = express();
 
@@ -41,6 +42,19 @@ const allowedOrigins = new Set([
 ].filter(Boolean).map(host => `https://${host}`));
 app.use(cors({ credentials: true, origin: (origin, callback) => callback(null, !!origin && allowedOrigins.has(origin)) }));
 // Raw signed payload, before JSON parsing, Clerk auth and browser CSRF checks.
+app.post("/api/billing/polar/live/webhook",
+  rateLimit({ windowMs: 60_000, limit: 600, standardHeaders: "draft-7", legacyHeaders: false }),
+  express.raw({ type: "application/json", limit: "128kb" }),
+  async (req, res): Promise<void> => {
+    if (!Buffer.isBuffer(req.body)) throw new HttpError(400, "Expected JSON webhook");
+    await handleLiveWebhook(req.body, {
+      "webhook-id": req.get("webhook-id") ?? "",
+      "webhook-timestamp": req.get("webhook-timestamp") ?? "",
+      "webhook-signature": req.get("webhook-signature") ?? "",
+    });
+    // Accepted into durable storage, NOT proof of payment or completed access.
+    res.status(202).end();
+  });
 app.post("/api/billing/polar/sandbox/webhook", express.raw({ type: "application/json", limit: "128kb" }), async (req, res) => {
   if (!Buffer.isBuffer(req.body)) throw new HttpError(400, "Expected JSON webhook");
   await handleSandboxWebhook(req.body, {

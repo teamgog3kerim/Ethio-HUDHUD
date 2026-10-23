@@ -1,6 +1,6 @@
 ---
 name: Polar sandbox testing
-description: Sandbox payment identity constraints and webhook signing compatibility.
+description: Sandbox identity constraints, signing compatibility, and SDK resource-validation limits for sandbox and live webhooks.
 ---
 
 Polar sandbox rejects checkout email addresses whose domain does not accept mail,
@@ -25,3 +25,14 @@ Webhooks, older ones use a different key derivation. Current SDKs support both.
 **How to apply:** Verify the raw request body before JSON parsing or account
 middleware. Follow the installed SDK's versioned API, not older camelCase
 examples, and never print payloads, bearer tokens, or complete checkout URLs.
+
+Validate resource fields after the SDK verifies a webhook; SDK TypeScript types
+are not proof that the received resource matches that type.
+
+**Why:** Inspection of the installed versioned SDK showed that webhook validation
+checks the signature, timestamp, JSON parsing, and recognized event type, then
+returns the parsed object without validating its resource fields.
+
+**How to apply:** Check required identifiers and relevant resource fields before
+storing or reconciling either live or sandbox events. A signed event proves
+origin, not account ownership, current payment status, or paid access.

@@ -190,6 +190,27 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/HealthStatus" }
+  /billing/polar/live/webhook:
+    post:
+      operationId: receiveLivePolarWebhook
+      summary: Verify raw signed live Polar bytes and durably queue a receipt; never grants access by itself
+      parameters:
+        - { name: webhook-id, in: header, required: true, schema: { type: string, maxLength: 255 } }
+        - { name: webhook-timestamp, in: header, required: true, schema: { type: string } }
+        - { name: webhook-signature, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PolarWebhookEnvelope" }
+      responses:
+        "202": { description: Receipt durably queued or duplicate acknowledged; not a paid entitlement }
+        "400": { description: Invalid JSON resource }
+        "403": { description: "Invalid, expired or unsupported signed webhook" }
+        "409": { description: Same event ID reused with different payload bytes }
+        "413": { description: Request too large }
+        "429": { description: Rate limit reached; retry later }
+        "503": { description: Live webhook signing secret not configured }
   /billing/polar/sandbox/webhook:
     post:
       operationId: receiveSandboxWebhook

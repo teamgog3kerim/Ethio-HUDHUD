@@ -8,6 +8,32 @@ grants, or change learning progress. Live billing and paywalls remain disabled.
 The sandbox adapter is hard-coded to Polar's sandbox environment and refuses to
 operate when `NODE_ENV=production`.
 
+## Staged live webhook intake
+
+The owner has saved `POLAR_LIVE_WEBHOOK_SECRET` through secure secret tooling.
+`POST /api/billing/polar/live/webhook` now validates exact raw request bytes with
+the official Polar SDK before durable insertion into a separate live receipt
+queue. It runs before browser CSRF and Clerk sign-in middleware. It is not
+protected by a learner login; its authentication is the webhook signature.
+
+HTTP 202 means **receipt durably stored or duplicate acknowledged**, not payment
+verified or access activated. Receipts retain routing identifiers and a hash,
+not customer email, addresses, raw payloads, or credentials. Unrelated/sandbox
+product IDs are ignored. Signed malformed resources fail validation; invalid,
+stale, and future signatures are rejected. Conflicting reuse of a signed event
+ID is rejected. A database failure is not acknowledged, allowing Polar retries.
+
+There is not yet a live reconciliation worker, account-linked live checkout,
+live customer portal, or paid-entitlement resolver. Pending receipts must not be
+marked processed until provider state and account ownership are reconciled.
+This staged receiver must be published before Polar delivery tests can succeed
+against the public domain. No publication or real purchase has been performed.
+
+The configured $29 live product is an ongoing monthly recurring product. Before
+enabling it, resolve a reliable six-payment billing cap; canceling only when a
+webhook happens to observe six orders is insufficient. Do not silently replace
+automatic subscriptions with manual renewals or allow indefinite charges.
+
 ## Approved live-access rules — implementation still pending
 
 - Monthly cancellation stops renewal; access lasts through the paid period.

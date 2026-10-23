@@ -1348,6 +1348,94 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(getClearChatMutationOptions(options));
     }
 
+export const getReceiveLivePolarWebhookUrl = () => {
+
+
+
+
+  return `/api/billing/polar/live/webhook`
+}
+
+/**
+ * @summary Verify raw signed live Polar bytes and durably queue a receipt; never grants access by itself
+ */
+export const receiveLivePolarWebhook = async (polarWebhookEnvelope: PolarWebhookEnvelope, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<void>(getReceiveLivePolarWebhookUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(polarWebhookEnvelope)
+  }
+);}
+
+
+
+
+
+export const getReceiveLivePolarWebhookMutationKey = () => ['receiveLivePolarWebhook'] as const;
+
+export const getReceiveLivePolarWebhookMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveLivePolarWebhook>>, TError,ReceiveLivePolarWebhookMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof receiveLivePolarWebhook>>, TError,ReceiveLivePolarWebhookMutationVariables, TContext> => {
+
+const mutationKey = getReceiveLivePolarWebhookMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof receiveLivePolarWebhook>>, ReceiveLivePolarWebhookMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  receiveLivePolarWebhook(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReceiveLivePolarWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof receiveLivePolarWebhook>>>
+    export type ReceiveLivePolarWebhookMutationBody = BodyType<PolarWebhookEnvelope>
+    export type ReceiveLivePolarWebhookMutationError = ErrorType<void>
+    export type ReceiveLivePolarWebhookMutationVariables = {data: BodyType<PolarWebhookEnvelope>}
+
+    /**
+ * @summary Verify raw signed live Polar bytes and durably queue a receipt; never grants access by itself
+ */
+export const useReceiveLivePolarWebhook = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof receiveLivePolarWebhook>>, TError,ReceiveLivePolarWebhookMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof receiveLivePolarWebhook>>,
+        TError,
+        ReceiveLivePolarWebhookMutationVariables,
+        TContext
+      > => {
+      return useMutation(getReceiveLivePolarWebhookMutationOptions(options));
+    }
+
 export const getReceiveSandboxWebhookUrl = () => {
 
 
