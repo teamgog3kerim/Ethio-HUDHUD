@@ -21,16 +21,20 @@ The user initially deferred Polar setup, then explicitly requested completing th
 
 After exactly 48 hours, learners without valid access must be directed to a
 $29 monthly or $149 six-month subscription instead of continuing lessons or
-conversations. Prepare this restriction now, but activate it only when live
-payments are ready; preserve progress and the original trial clock.
+conversations. Keep this prepared restriction off until the first genuine
+payment and its course access have been verified; preserve progress and the
+original trial clock.
 
-**Why:** The user explicitly requested the restriction, then chose to prepare
-it without blocking learners while live payments remain unavailable.
+**Why:** The user explicitly requested the restriction, then chose:
+"Wait until the first genuine payment is verified (recommended)." This
+supersedes the earlier readiness-only activation condition.
 
 **How to apply:** Enforce on the server as well as the learner interface.
 Preserve administrator access and valid complimentary grants. Do not treat a
 saved plan preference or sandbox payment as paid access. Preparing the gate is
-not permission to enable it or to charge customers.
+not permission to enable it or to charge customers. Checkout availability,
+provider readiness, sandbox tests, and checkout-update receipts do not satisfy
+the genuine-payment verification condition.
 
 Sandbox purchases must never activate real paid entitlements or replace an
 administrator's complimentary grant.
