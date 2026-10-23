@@ -193,10 +193,11 @@ function LessonView({ id }: { id: string }) {
 
           {phase === 'result' && result && (
             <div className="rise space-y-4" data-testid="panel-result">
+              <div role="status" aria-live="polite" className="sr-only">{result.passed ? t('أحسنت، نجحت في الدرس', 'Well done, lesson passed') : t('لم تصل إلى حدّ النجاح بعد. يمكنك المحاولة مرة أخرى.', 'Not at the pass mark yet. You can try again.')}</div>
               <Card className={cn('pop text-center', result.passed ? 'border-primary' : 'border-destructive/50')}>
                 <p className="font-display text-5xl font-extrabold" data-testid="text-score">{Math.round(result.score <= 1 ? result.score * 100 : result.score)}%</p>
                 <p className="mt-2 text-lg font-semibold">{result.passed ? t('أحسنت، نجحت في الدرس', 'Well done, lesson passed') : t('لم تصل إلى حدّ النجاح بعد', 'Not at the pass mark yet')}</p>
-                {result.passed && <p className="mt-1 text-sm text-primary">+{result.xpEarned} XP</p>}
+                {result.passed ? <p className="mt-1 text-sm text-primary">+{result.xpEarned} XP</p> : <p className="mt-1 text-sm text-muted-foreground">{t('الخطأ جزء من التعلّم. راجع الشرح أدناه ثم أعد المحاولة.', 'Mistakes are part of learning. Read the notes below, then try again.')}</p>}
               </Card>
               {result.feedback.map((f, i) => {
                 const ex = lesson.exercises[i];
@@ -217,10 +218,10 @@ function LessonView({ id }: { id: string }) {
                 );
               })}
               <div className="flex flex-wrap gap-3">
-                {result.passed && pos?.next && <LinkBtn href={`/lesson/${pos.next.id}`} variant="gold" testId="link-next-lesson">{t('الدرس التالي', 'Next lesson')}<NextIcon className="size-4" /></LinkBtn>}
-                {!result.passed && <Btn onClick={retry} data-testid="button-retry-lesson"><RotateCw className="size-4" />{t('أعد المحاولة', 'Try again')}</Btn>}
-                <LinkBtn href="/learn" variant={result.passed ? 'primary' : 'outline'} testId="link-back-learn">{t('العودة إلى الدروس', 'Back to lessons')}</LinkBtn>
-                {result.passed && <LinkBtn href="/review" variant="gold" testId="link-to-review">{t('راجع الكلمات', 'Review words')}</LinkBtn>}
+                {result.passed && pos?.next && <LinkBtn href={`/lesson/${pos.next.id}`} variant="gold" size="lg" testId="link-next-lesson">{t('الدرس التالي', 'Next lesson')}<NextIcon className="size-4" /></LinkBtn>}
+                {!result.passed && <Btn size="lg" onClick={retry} data-testid="button-retry-lesson"><RotateCw className="size-4" />{t('أعد المحاولة', 'Try again')}</Btn>}
+                <LinkBtn href="/learn" variant="outline" testId="link-back-learn">{t('العودة إلى الدروس', 'Back to lessons')}</LinkBtn>
+                {result.passed && <LinkBtn href="/review" variant="outline" testId="link-to-review">{t('راجع الكلمات', 'Review words')}</LinkBtn>}
               </div>
             </div>
           )}

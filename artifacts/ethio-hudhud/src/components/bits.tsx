@@ -16,12 +16,12 @@ export function btnClass(v: Variant = 'primary', s: Size = 'md', extra = '') {
     danger: 'bg-destructive text-destructive-foreground',
   };
   const ss: Record<Size, string> = {
-    sm: 'h-9 px-3.5 text-sm',
-    md: 'h-11 px-5 text-[15px]',
-    lg: 'h-14 px-8 text-lg',
+    sm: 'min-h-11 px-3.5 text-sm',
+    md: 'min-h-11 px-5 py-2 text-[15px]',
+    lg: 'min-h-14 px-8 py-2 text-lg',
   };
   return cn(
-    'press inline-flex items-center justify-center gap-2 rounded-2xl font-semibold disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap',
+    'press inline-flex items-center justify-center gap-2 rounded-2xl font-semibold disabled:opacity-50 disabled:pointer-events-none text-center leading-snug',
     vv[v], ss[s], extra,
   );
 }
@@ -61,7 +61,7 @@ export function Am({ children, className }: { children: ReactNode; className?: s
 export function ErrorState({ onRetry, what }: { onRetry?: () => void; what?: string }) {
   const { t } = useApp();
   return (
-    <Card className="flex flex-col items-center gap-3 py-10 text-center" data-testid="state-error">
+    <Card className="flex flex-col items-center gap-3 py-10 text-center" data-testid="state-error" role="alert">
       <AlertTriangle className="size-8 text-destructive" />
       <p className="font-semibold">{t('تعذّر تحميل ', 'Could not load ') + (what ?? t('البيانات', 'data'))}</p>
       <p className="text-sm text-muted-foreground">{t('تحقق من الاتصال ثم حاول مرة أخرى.', 'Check your connection and try again.')}</p>
@@ -115,9 +115,9 @@ export function PageHead({ eyebrow, title, sub, right }: { eyebrow?: string; tit
   );
 }
 
-export function ProgressBar({ value, className }: { value: number; className?: string }) {
+export function ProgressBar({ value, className, label }: { value: number; className?: string; label?: string }) {
   return (
-    <div className={cn('h-2.5 overflow-hidden rounded-full bg-muted', className)} role="progressbar" aria-valuenow={Math.round(value)}>
+    <div className={cn('h-2.5 overflow-hidden rounded-full bg-muted', className)} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(value)} aria-label={label}>
       <div className="h-full origin-left rounded-full bg-gradient-to-r from-primary to-gold transition-[width] duration-700 rtl:origin-right" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
     </div>
   );

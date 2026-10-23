@@ -80,9 +80,11 @@ export default function Dashboard() {
                   <p className="font-display truncate font-bold">{lang === 'ar' ? next.l.titleAr : next.l.titleEn}</p>
                   <Am className="text-sm text-gold">{next.l.titleAm}</Am>
                 </div>
-                <LinkBtn href={`/lesson/${next.l.id}`} variant="gold" testId="button-next-lesson"><Play className="size-4" /> {t('ابدأ', 'Start')}</LinkBtn>
+                <LinkBtn href={`/lesson/${next.l.id}`} variant="gold" size="lg" testId="button-next-lesson"><Play className="size-4" /> {t('ابدأ', 'Start')}</LinkBtn>
               </div>
-            ) : <p>{t('أنهيت كل الدروس المتاحة. راجع كلماتك.', 'All available lessons are done. Review your words.')}</p>}
+            ) : courses.isError ? <p className="text-white/80">{t('تعذّر تحديد الدرس التالي الآن.', 'We could not work out your next lesson right now.')}</p>
+            : courses.data && courses.data.some((c) => c.lessons.length > 0) ? <p>{t('أنهيت كل الدروس المتاحة. راجع كلماتك.', 'All available lessons are done. Review your words.')}</p>
+            : <p className="text-white/80">{t('لا دروس متاحة بعد.', 'No lessons are available yet.')}</p>}
           </div>
         </section>
 
@@ -102,8 +104,8 @@ export default function Dashboard() {
             <div className="mb-2 flex items-center gap-2 font-display font-bold"><Layers className="size-5 text-primary" />{t('المراجعة', 'Review')}</div>
             {vocab.isLoading ? <Skeleton className="h-10" /> : (
               <>
-                <p className="text-muted-foreground" data-testid="text-due">{dueCount > 0 ? t(`${dueCount} كلمة مستحقة للمراجعة`, `${dueCount} words due`) : t('لا كلمات مستحقة الآن.', 'No words due right now.')}</p>
-                <LinkBtn href="/review" variant={dueCount ? 'primary' : 'outline'} size="sm" className="mt-3" testId="button-review">{t('افتح المراجعة', 'Open review')}</LinkBtn>
+                <p className="text-muted-foreground" data-testid="text-due">{vocab.isError ? t('تعذّر تحميل المراجعة.', 'Could not load review.') : dueCount > 0 ? t(`${dueCount} كلمة مستحقة للمراجعة`, `${dueCount} words due`) : t('لا كلمات مستحقة الآن.', 'No words due right now.')}</p>
+                <LinkBtn href="/review" variant="outline" size="sm" className="mt-3" testId="button-review">{t('افتح المراجعة', 'Open review')}</LinkBtn>
               </>
             )}
           </Card>

@@ -1,10 +1,10 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@clerk/react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   BarChart3, BookOpen, CalendarRange, Home, Languages, Layers, LogIn, UserPlus, MessageCircle,
-  Moon, ShieldCheck, Sparkles, Sun, UserRound, Type,
+  Menu, Moon, ShieldCheck, Sparkles, Sun, UserRound, Type,
 } from 'lucide-react';
 import {
   getGetProfileQueryKey, useGetAdminAccess, useGetProfile, useSaveProfile, useGetPublicSettings,
@@ -16,6 +16,7 @@ import { Logo } from '@/components/logo';
 import { useApp } from '@/lib/app';
 import { toInput } from '@/lib/options';
 import { cn } from '@/lib/utils';
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet';
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
@@ -31,7 +32,7 @@ export function Toggles({ className }: { className?: string }) {
     setLang(next);
     if (profile) save.mutate({ data: { ...toInput(profile), language: next } });
   };
-  const cls = 'press grid size-10 place-items-center rounded-xl border border-border bg-card text-foreground';
+  const cls = 'press grid size-11 place-items-center rounded-xl border border-border bg-card text-foreground';
   return (
     <div className={cn('flex items-center gap-2', className)}>
       <button type="button" onClick={flip} className={cn(cls, 'w-auto gap-1.5 px-3 text-sm font-semibold')} data-testid="button-lang" aria-label={t('تبديل اللغة', 'Switch language')}>
@@ -87,8 +88,21 @@ export function Shell({ children }: { children: ReactNode }) {
     { href: '/progress', icon: BarChart3, label: t('التقدّم', 'Progress') },
   ];
   const active = (h: string) => loc === h || loc.startsWith(h + '/');
+  const [more, setMore] = useState(false);
+  const moreTrigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => { setMore(false); }, [loc]);
+  const coreHrefs = ['/dashboard', '/learn', '/review', '/tutor'];
+  const core = items.filter((i) => coreHrefs.includes(i.href));
+  const rest = [
+    ...items.filter((i) => !coreHrefs.includes(i.href)),
+    { href: '/premium', icon: Sparkles, label: 'Premium' },
+    { href: '/account', icon: UserRound, label: t('الحساب', 'Account') },
+    ...(isAdmin ? [{ href: '/admin', icon: ShieldCheck, label: t('الإدارة', 'Administration') }] : []),
+  ];
+  const moreActive = rest.some((i) => active(i.href));
   return (
     <div className="grain min-h-[100dvh] bg-background">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-[70] focus:rounded-xl focus:bg-primary focus:px-4 focus:py-3 focus:text-primary-foreground">{t('تخطَّ إلى المحتوى', 'Skip to content')}</a>
       <aside data-testid="desktop-sidebar" className="fixed inset-y-0 start-0 z-30 hidden w-64 flex-col border-e border-border bg-card/70 p-4 backdrop-blur shell-desktop:flex">
         <Brand />
         <nav className="mt-8 flex flex-1 flex-col gap-1">
@@ -101,6 +115,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 'press flex items-center gap-3 rounded-2xl px-4 py-3 font-medium',
                 active(i.href) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground',
               )}
+              aria-current={active(i.href) ? 'page' : undefined}
             >
               <i.icon className="size-5" /> {i.label}
             </Link>
@@ -149,20 +164,37 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="app-content mx-auto min-w-0 w-full max-w-5xl pt-6 shell-desktop:ms-64 shell-desktop:w-[calc(100%_-_16rem)] shell-desktop:max-w-none shell-desktop:px-12 shell-desktop:pb-12 shell-desktop:pt-10">
+      <main id="main-content" tabIndex={-1} className="app-content outline-none mx-auto min-w-0 w-full max-w-5xl pt-6 shell-desktop:ms-64 shell-desktop:w-[calc(100%_-_16rem)] shell-desktop:max-w-none shell-desktop:px-12 shell-desktop:pb-12 shell-desktop:pt-10">
         <div className="mx-auto min-w-0 max-w-5xl"><PlatformNotices /><BillingNotice />{children}</div>
       </main>
 
-      <nav data-testid="mobile-tabs" className="app-mobile-tabs fixed inset-x-0 bottom-0 z-30 grid grid-cols-7 border-t border-border bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur shell-desktop:hidden">
-        {items.map((i) => (
-          <Link key={i.href} href={i.href} data-testid={`tab-${i.href.slice(1)}`} className={cn('flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium', active(i.href) ? 'text-primary' : 'text-muted-foreground')}>
-            <span className={cn('grid h-7 w-11 place-items-center rounded-full transition-colors', active(i.href) && 'bg-primary/15')}>
-              <i.icon className="size-[18px]" />
+      <nav data-testid="mobile-tabs" aria-label={t('التنقل الرئيسي', 'Main navigation')} className="app-mobile-tabs fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-border bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur shell-desktop:hidden">
+        {core.map((i) => (
+          <Link key={i.href} href={i.href} data-testid={`tab-${i.href.slice(1)}`} aria-current={active(i.href) ? 'page' : undefined} className={cn('flex min-h-14 flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] font-medium', active(i.href) ? 'text-primary' : 'text-muted-foreground')}>
+            <span className={cn('grid h-7 w-12 place-items-center rounded-full transition-colors', active(i.href) && 'bg-primary/15')}>
+              <i.icon className="size-5" />
             </span>
             {i.label}
           </Link>
         ))}
+        <button ref={moreTrigger} type="button" data-testid="tab-more" aria-haspopup="dialog" aria-expanded={more} onClick={() => setMore(true)} className={cn('flex min-h-14 flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] font-medium', moreActive ? 'text-primary' : 'text-muted-foreground')}>
+          <span className={cn('grid h-7 w-12 place-items-center rounded-full transition-colors', moreActive && 'bg-primary/15')}><Menu className="size-5" /></span>
+          {t('المزيد', 'More')}
+        </button>
       </nav>
+      <Sheet open={more} onOpenChange={setMore}>
+        <SheetContent side="bottom" data-testid="sheet-more" closeLabel={t('إغلاق', 'Close')} onCloseAutoFocus={(event) => { event.preventDefault(); moreTrigger.current?.focus(); }} className="max-h-[85dvh] overflow-y-auto rounded-t-3xl pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+          <SheetTitle className="font-display">{t('المزيد', 'More')}</SheetTitle>
+          <SheetDescription className="sr-only">{t('بقية صفحات التطبيق', 'The rest of the app')}</SheetDescription>
+          <nav aria-label={t('المزيد', 'More')} className="mt-3 grid gap-1">
+            {rest.map((i) => (
+              <Link key={i.href} href={i.href} onClick={() => setMore(false)} data-testid={`tab-${i.href.slice(1)}`} aria-current={active(i.href) ? 'page' : undefined} className={cn('flex min-h-12 items-center gap-3 rounded-2xl px-4 font-medium', active(i.href) ? 'bg-primary text-primary-foreground' : 'hover:bg-muted')}>
+                <i.icon className="size-5" /> {i.label}
+              </Link>
+            ))}
+          </nav>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

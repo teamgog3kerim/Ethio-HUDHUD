@@ -36,15 +36,20 @@ function toError(value: unknown): Error {
 }
 
 function DefaultFallback({ error, resetError }: ErrorFallbackProps) {
+  // This fallback also renders outside AppProvider, so it must not require
+  // translation, routing, authentication, or query contexts to recover.
+  let english = document.documentElement.lang === 'en';
+  try { english = localStorage.getItem('hh-lang') === 'en'; } catch { /* Use document language. */ }
+  const t = (ar: string, en: string) => english ? en : ar;
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 p-6">
-      <div className="max-w-lg w-full text-center">
-        <h1 className="text-xl font-semibold text-gray-900">
-          Something went wrong
+    <div dir={english ? 'ltr' : 'rtl'} lang={english ? 'en' : 'ar'} className="min-h-[100dvh] w-full flex items-center justify-center bg-background p-6 text-foreground">
+      <div role="alert" className="max-w-lg w-full rounded-3xl border border-border bg-card p-6 text-center sm:p-10">
+        <p className="mb-3 font-bold text-primary">HUDHUD</p>
+        <h1 className="font-display text-2xl font-bold">
+          {t('تعذّر عرض هذه الصفحة', 'This page could not be displayed')}
         </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          This part of the app hit an error. The rest of the app is still
-          running.
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          {t('حاول مرة أخرى. إذا استمرت المشكلة، عُد إلى الصفحة الرئيسية.', 'Try again. If the problem continues, return to the home page.')}
         </p>
         {/* Dev only: messages can carry API responses and other internals. */}
         {import.meta.env.DEV ? (
@@ -55,10 +60,13 @@ function DefaultFallback({ error, resetError }: ErrorFallbackProps) {
         <button
           type="button"
           onClick={resetError}
-          className="mt-4 rounded bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700"
+          className="mt-6 inline-flex min-h-12 items-center justify-center rounded-2xl bg-primary px-6 py-3 font-semibold text-primary-foreground"
         >
-          Try again
+          {t('إعادة المحاولة', 'Try again')}
         </button>
+        <a href={import.meta.env.BASE_URL} className="mt-3 flex min-h-11 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold text-primary underline underline-offset-4">
+          {t('العودة إلى الرئيسية', 'Back to home')}
+        </a>
       </div>
     </div>
   );

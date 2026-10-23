@@ -41,16 +41,18 @@ export function CoursePlans({ onChoose, selected, busy, paidOnly = false }: { on
 
   return (
     <section id="course-plans" data-testid="section-course-plans" aria-busy={busy || q.isLoading}>
-      <h2 className="font-display text-2xl font-extrabold sm:text-3xl">{t('اختر خطتك ثم انتقل إلى الدروس', 'Choose a plan, then proceed to lessons')}</h2>
-      <p className="mt-2 text-sm text-muted-foreground">{t('برنامج الأمهرية لستة أشهر لمتحدثي العربية. الاختيار تفضيل فقط.', 'The six-month Amharic programme for Arabic speakers. Your choice is a preference only.')}</p>
+      <h2 className="font-display text-2xl font-extrabold sm:text-3xl">{hideTrial ? t('اختر طريقة الدفع لمتابعة التعلّم', 'Choose how to pay to continue learning') : t('اختر خطتك للتعلّم', 'Choose your learning plan')}</h2>
+      <p className="mt-2 text-sm text-muted-foreground">{t('نفس البرنامج في الخطتين المدفوعتين. اختر الدفع لشهر أو لستة أشهر مرة واحدة.', 'Both paid options include the same programme. Pay for one month or six months at once.')}</p>
       <p className="mt-2 rounded-2xl bg-secondary p-3 text-sm" data-testid="text-plans-note">
         {b?.liveCheckoutEnabled
-          ? t('المتاح للشراء: ستة أشهر مقابل 149 دولاراً مرة واحدة، أو شهر مقابل 29 دولاراً لكل شراء يدوي (حتى ست دفعات) دون تجديد تلقائي عند فتح الشهري. يبقى التعلّم مفتوحاً مؤقتاً، ولا تُحصّل رسوم إلا عند إتمام الدفع عبر Polar.', 'Available to purchase: six months for $149 once, or one month for $29 per manual purchase (max six, no automatic renewal) when monthly is open. Learning temporarily remains open; charges occur only when you complete Polar checkout.')
+          ? b.enforcementEnabled
+            ? t('تجربتك المجانية 48 ساعة. بعدها يلزم تأكيد الدفع لمتابعة الدروس. لا تجديد تلقائي، ولا رسوم بمجرد اختيار خطة.', 'Your free trial lasts 48 hours. After that, confirmed payment is required to continue lessons. No automatic renewal or charge just for choosing a plan.')
+            : t('التعلّم مفتوح حاليًا. لا تُحصّل رسوم إلا عند إتمام الدفع عبر Polar، ولا تجديد تلقائي.', 'Learning is currently open. You are charged only when you complete Polar checkout. No automatic renewal.')
           : b?.sandboxCheckoutEnabled
           ? t('يمكنك اختبار الدفع عبر Polar التجريبي دون أموال حقيقية. لا يفعّل الاختبار اشتراكًا حقيقيًا ولا يغيّر وصولك للدروس.', 'Polar sandbox checkout is available for testing without real money. A test does not activate a real subscription or change lesson access.')
-          : b?.configured && b?.liveCheckoutEnabled
-            ? t('اختيار الخطة وحده لا يفتح الدروس؛ يلزم تأكيد الدفع لإتمام الاشتراك.', 'Choosing a plan alone does not unlock lessons; payment must be confirmed to activate access.')
-            : t('الدفع الحقيقي عبر Polar غير مفعّل: اختيار خطة مدفوعة تفضيل فقط، ولا رسوم ولا استحقاق مدفوع الآن. التعلّم يبقى مفتوحًا.', 'Live Polar payments are not enabled: choosing a paid plan is a preference only, with no charges or paid entitlement. Learning stays open.')}
+          : !b
+            ? t('جارٍ التحقق من الخطط المتاحة…', 'Checking available plans…')
+            : t('الدفع غير متاح حاليًا. اختيار خطة لا يُحصّل رسومًا ولا يمنح وصولًا مدفوعًا.', 'Payment is currently unavailable. Choosing a plan does not charge you or grant paid access.')}
       </p>
       {q.isLoading && <div className="mt-4 grid gap-4 md:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-56" />)}</div>}
       {(q.isError || (b && (!monthly || !six))) && <div className="mt-4"><ErrorState what={t('الخطط', 'plans')} onRetry={() => q.refetch()} /></div>}

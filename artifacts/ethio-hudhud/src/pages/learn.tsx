@@ -53,7 +53,10 @@ export default function Learn() {
               <p className="text-sm text-muted-foreground">{t('تقدّمك الكلي', 'Overall progress')}</p>
               <p className="font-display text-3xl font-extrabold tabular-nums" data-testid="text-overall"><bdi dir="ltr">{path.completed} / {path.total}</bdi> <bdi dir="ltr" className="text-lg text-primary">{path.percent}%</bdi></p>
               <ProgressBar className="mt-2" value={path.percent} />
-              <p className="mt-2 text-xs text-muted-foreground">{t('يُحسب الدرس عند اجتياز اختباره بنسبة ٧٥٪، وليس عند فتحه.', 'A lesson counts after passing its quiz at 75%, not just opening it.')}</p>
+              <details className="mt-2 text-xs text-muted-foreground" data-testid="details-programme">
+                <summary className="min-h-11 cursor-pointer py-3 font-semibold text-primary">{t('تفاصيل البرنامج', 'Programme details')}</summary>
+                <p>{t('يُحسب الدرس عند اجتياز اختباره بنسبة ٧٥٪، وليس عند فتحه.', 'A lesson counts after passing its quiz at 75%, not just opening it.')}</p>
+              </details>
             </div>
             {path.nextLesson
               ? <Link href={`/lesson/${path.nextLesson.id}`} data-testid="link-continue-learning" className={btnClass('gold', 'lg')}><Play className="size-5 rtl:-scale-x-100" />{t('تابع التعلّم', 'Continue learning')}</Link>
@@ -81,7 +84,7 @@ export default function Learn() {
           <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label={t('نوع التعلّم', 'Learning view')}>
             {(['all', 'courses', 'conversations'] as const).map(v => (
               <button key={v} type="button" aria-pressed={view === v} data-testid={`button-view-${v}`} onClick={() => setView(v)}
-                className={cn('press rounded-full border px-5 py-2 text-sm font-semibold', view === v ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card')}>
+                className={cn('press min-h-11 rounded-full border px-5 py-2 text-sm font-semibold', view === v ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card')}>
                 {v === 'all' ? `${t('الكل', 'All')} (${path.total})` : v === 'courses' ? `${t('الدروس', 'Lessons')} (${lessonCount})` : `${t('المحادثات', 'Conversations')} (${convCount})`}
               </button>
             ))}
@@ -103,9 +106,9 @@ export default function Learn() {
 
             <Card key={`${cur.course.id}-${view}`} className="rise" data-testid="panel-course">
               <div className="flex items-center justify-between gap-2">
-                <button type="button" className="press grid size-10 place-items-center rounded-full border border-border disabled:opacity-40" disabled={idx === 0} onClick={() => go(idx - 1)} aria-label={t('الشهر السابق', 'Previous month')} data-testid="button-prev-month"><Prev className="size-5" /></button>
+                <button type="button" className="press grid size-11 place-items-center rounded-full border border-border disabled:opacity-40" disabled={idx === 0} onClick={() => go(idx - 1)} aria-label={t('الشهر السابق', 'Previous month')} data-testid="button-prev-month"><Prev className="size-5" /></button>
                 <p className="text-center text-sm font-bold text-primary">{t('الشهر', 'Month')} <bdi dir="ltr">{cur.course.month} / {months.length}</bdi></p>
-                <button type="button" className="press grid size-10 place-items-center rounded-full border border-border disabled:opacity-40" disabled={idx === months.length - 1} onClick={() => go(idx + 1)} aria-label={t('الشهر التالي', 'Next month')} data-testid="button-next-month"><Next className="size-5" /></button>
+                <button type="button" className="press grid size-11 place-items-center rounded-full border border-border disabled:opacity-40" disabled={idx === months.length - 1} onClick={() => go(idx + 1)} aria-label={t('الشهر التالي', 'Next month')} data-testid="button-next-month"><Next className="size-5" /></button>
               </div>
               <h2 className="font-display mt-3 text-2xl font-extrabold">{title(cur.course)}</h2>
               <p className="mt-1 text-muted-foreground">{cur.course.description}</p>

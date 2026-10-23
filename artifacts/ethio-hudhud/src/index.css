@@ -161,6 +161,11 @@
 .flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .flip-back { transform: rotateY(180deg); }
 
+button:not([data-slot]), a { touch-action: manipulation; }
+.app-content :is(p, h1, h2, h3, li) { overflow-wrap: anywhere; }
+.press:focus-visible, .lift:focus-visible { outline-width: 3px; }
 @media (prefers-reduced-motion: reduce) {
+  .press:hover, .lift:hover { transform: none; }
+  .flap, .dot { animation: none !important; }
   *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
 }
