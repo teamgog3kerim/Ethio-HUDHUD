@@ -71,9 +71,11 @@ An enabled app checkout flag and successfully processed checkout webhooks do
 not prove that Polar will accept payment. A checkout displaying “Payments are
 currently unavailable” was traced to the live product's organization's public
 payment-status response: `organization_status: created`, `payment_ready: false`.
-The owner must resolve readiness in the same organization's Finance → Account.
-Payout setup by itself is not proof of payment activation. Recheck readiness
-before describing purchases as available to customers.
+The owner subsequently completed the review. A fresh live check confirmed
+`organization_status: active` and `payment_ready: true`; this provider block
+is now resolved. Payout setup by itself was not proof of payment activation.
+Recheck readiness before describing purchases as available to customers.
+This readiness confirmation is not a completed-payment entitlement test.
 
 Polar's own checkout reads GET /v1/organizations/{id}/payment-status. This public
 read does not require adding organizations:read to the existing token.
