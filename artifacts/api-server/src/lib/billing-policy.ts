@@ -2,7 +2,7 @@ const DAY = 86_400_000;
 export const TRIAL_DAYS = 2;
 export const RENEWAL_NOTICE_DAYS = 4;
 
-// Owner approved $149 checkout only. Monthly has its own disabled cap gate.
+// Owner approved $149 once and $29 manually renewed one-month access.
 // Billing readiness must never implicitly activate the separate trial gate.
 export const BILLING_CONFIGURED = true;
 // Staged only. Change this after verified live entitlements, checkout and
@@ -34,7 +34,7 @@ export function isCourseResource(method: string, path: string) {
   );
 }
 export const COURSE_OFFERS = [
-  { id: "monthly" as const, priceUsd: 29, durationMonths: 6, billing: "monthly" as const, sixMonthTotalUsd: 174, savingsUsd: 0, savingsPercent: 0 },
+  { id: "monthly" as const, priceUsd: 29, durationMonths: 1, billing: "one_time" as const, sixMonthTotalUsd: 174, savingsUsd: 0, savingsPercent: 0 },
   { id: "six_month" as const, priceUsd: 149, durationMonths: 6, billing: "one_time" as const, sixMonthTotalUsd: 149, savingsUsd: 25, savingsPercent: 14.4 },
 ];
 

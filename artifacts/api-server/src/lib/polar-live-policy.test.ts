@@ -1,8 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { livePaymentState, liveCustomerId, safeLiveUrl, LIVE_CHECKOUT_LAUNCH_APPROVED, LIVE_MONTHLY_CAP_APPROVED } from "./polar-live-policy";
+import { livePaymentState, liveCustomerId, safeLiveUrl, LIVE_CHECKOUT_LAUNCH_APPROVED, LIVE_MONTHLY_CAP_APPROVED, LIVE_MANUAL_MONTHLY_APPROVED } from "./polar-live-policy";
 import { LIVE_COURSE_PRODUCTS } from "./polar-live-webhook-policy";
-import { createLiveCheckout } from "./polar-live";
 
 const userId = "isolated-live-policy-fixture";
 const now = new Date("2026-11-05T00:00:00Z");
@@ -19,12 +18,11 @@ const subscription = () => ({
 });
 const state = (orders = [order()], extra: Partial<Parameters<typeof livePaymentState>[0]> = {}) =>
   livePaymentState({ userId, plan: "six_month", orders, checkoutStatus: "succeeded", subscription: null, now, ...extra });
-test("only six-month checkout is approved; monthly fails before any SDK request", async () => {
+test("both one-time offers are approved but automatic monthly billing remains off", () => {
   assert.equal(LIVE_CHECKOUT_LAUNCH_APPROVED, true);
   assert.equal(LIVE_MONTHLY_CAP_APPROVED, false);
-  // Never call six-month creation in an automated test: it may create a real
-  // payable checkout now that the owner approved the launch.
-  await assert.rejects(createLiveCheckout(userId, "fixture@example.invalid", "monthly"), (e: { status: number }) => e.status === 503);
+  assert.equal(LIVE_MANUAL_MONTHLY_APPROVED, true);
+  // Purchase tests inject a provider. Never create a real payable test session.
 });
 test("a successful redirect without a paid order grants nothing", () => {
   assert.equal(state([]).accessUntil, null);
@@ -51,28 +49,24 @@ test("wrong account, currency, product, price, coupons and disputes cannot grant
   ];
   for (const row of invalid) assert.equal(state([row]).accessUntil, null);
 });
-test("canceling renewal preserves the already paid period, but revocation removes it", () => {
-  const sub = { ...subscription(), current_period_end: "2026-12-01T00:00:00Z", cancel_at_period_end: true };
-  const result = state([order("monthly")], { plan: "monthly", subscription: sub });
-  assert.equal(result.accessUntil?.toISOString(), "2026-12-01T00:00:00.000Z");
-  assert.equal(state([order("monthly")], { plan: "monthly", subscription: { ...sub, status: "canceled", ended_at: now.toISOString() } }).accessUntil, null);
+test("manual monthly payment covers one calendar month without a subscription", () => {
+  const result = state([order("monthly")], { plan: "monthly", now: new Date("2026-10-15T00:00:00Z") });
+  assert.equal(result.accessUntil?.toISOString(), "2026-11-01T00:00:00.000Z");
+  assert.equal(result.completedOrderId, "isolated-order");
 });
-test("an old monthly payment cannot cover an unpaid current period", () => {
-  const sub = { ...subscription(), current_period_start: "2026-11-01T00:00:00Z", current_period_end: "2026-12-01T00:00:00Z" };
-  assert.equal(state([order("monthly")], { plan: "monthly", subscription: sub }).accessUntil, null);
+test("old manual payments expire without invented renewal or grace", () => {
+  assert.equal(state([order("monthly")], { plan: "monthly", now: new Date("2026-11-01T00:00:00Z") }).accessUntil, null);
+  assert.equal(state([], { plan: "monthly" }).accessUntil, null);
 });
-test("failed renewal gets exactly three days grace in either provider period representation", () => {
-  const graceNow = new Date("2026-11-02T12:00:00Z");
-  const oldBounds = { ...subscription(), status: "past_due" };
-  const newBounds = { ...oldBounds, current_period_start: "2026-11-01T00:00:00Z", current_period_end: "2026-12-01T00:00:00Z" };
-  for (const sub of [oldBounds, newBounds]) {
-    const result = state([order("monthly")], { plan: "monthly", subscription: sub, now: graceNow });
-    assert.equal(result.accessUntil?.toISOString(), "2026-11-04T00:00:00.000Z");
-    assert.equal(state([order("monthly")], { plan: "monthly", subscription: sub, now: new Date("2026-11-04T00:00:00Z") }).accessUntil, null);
-  }
+test("manual refunds revoke access without erasing completed payment proof", () => {
+  const result = state([{ ...order("monthly"), refunded_amount: 2900, status: "refunded" }], { plan: "monthly" });
+  assert.equal(result.status, "refunded");
+  assert.equal(result.accessUntil, null);
+  assert.equal(result.completedOrderId, "isolated-order");
+  assert.equal(state([{ ...order("monthly"), refunded_amount: 100, status: "partially_refunded" }], { plan: "monthly", now: new Date("2026-10-15T00:00:00Z") }).status, "paid");
 });
-test("initial failed payment gets no grace and subscription identity must match", () => {
-  assert.equal(state([], { plan: "monthly", subscription: { ...subscription(), status: "past_due" } }).accessUntil, null);
+test("recurring subscriptions cannot masquerade as approved manual payments", () => {
+  assert.throws(() => state([order("monthly")], { plan: "monthly", subscription: subscription() }));
   assert.throws(() => state([order("monthly")], { plan: "monthly", subscription: { ...subscription(), customer: { external_id: "another-account" } } }));
 });
 test("expiry and replay do not extend a six-month payment", () => {

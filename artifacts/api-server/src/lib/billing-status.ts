@@ -39,6 +39,8 @@ export async function billingStatus(learnerId: string, userId: string | null, gu
     hasVerifiedPaidAccess: paidAccess,
   });
   const [learner] = await db.select({ preferences: learners.preferences }).from(learners).where(eq(learners.id, learnerId));
+  const paidReminderExpiry = payment.paidPlan === "monthly"
+    ? payment.monthlyPaidThrough ?? payment.paidPeriodEndsAt : payment.paidPeriodEndsAt;
   return {
     ...effective,
     ...payment,
@@ -53,7 +55,9 @@ export async function billingStatus(learnerId: string, userId: string | null, gu
     offers: COURSE_OFFERS,
     reminder: access.plan === "complimentary"
       ? accessReminder(access.accessExpiresAt, "complimentary_expiring")
-      : accessReminder(payment.paidPeriodEndsAt, payment.paidPlan === "monthly" && !payment.cancelAtPeriodEnd ? "renewal_due" : "course_expiring"),
+      : accessReminder(paidReminderExpiry, payment.paidPlan === "monthly"
+        && payment.monthlyPaymentCount < payment.monthlyPaymentLimit
+        ? "renewal_due" : "course_expiring"),
     message: access.plan === "complimentary"
       ? "لديك منحة مجانية مؤقتة من الإدارة وليست اشتراكاً مدفوعاً. لا يتم تحصيل أي رسوم."
       : paidAccess
@@ -63,7 +67,7 @@ export async function billingStatus(learnerId: string, userId: string | null, gu
       : !policy.fullCourseAccess
         ? "انتهت تجربتك المجانية لمدة 48 ساعة. اشترك مقابل 29 دولاراً شهرياً أو 149 دولاراً لستة أشهر لمتابعة الدروس والمحادثات. تم حفظ تقدمك."
         : liveCheckoutEnabled()
-          ? "يمكنك شراء وصول ستة أشهر مقابل 149 دولاراً دفعة واحدة عبر Polar دون تجديد تلقائي. الدفع الشهري غير متاح حالياً. يبقى التعلّم مفتوحاً مؤقتاً بعد تجربة 48 ساعة؛ الحجب غير مفعّل. لا تُحصّل رسوم إلا عند إتمام الدفع بنفسك."
+          ? "يمكنك شراء شهر مقابل 29 دولاراً مع تجديد يدوي حتى ست دفعات، أو ستة أشهر مقابل 149 دولاراً مرة واحدة. لا تجديد تلقائي. يبقى التعلّم مفتوحاً مؤقتاً بعد تجربة 48 ساعة؛ الحجب غير مفعّل. لا تُحصّل رسوم إلا عند إتمام الدفع بنفسك."
         : "الدفع عبر Polar غير مفعّل بعد. تُعرض الخطط المقترحة فقط، ويظل التعلّم مفتوحاً خلال المرحلة التجريبية حتى بعد انتهاء تجربة اليومين. لا يتم تحصيل أي رسوم.",
   };
 }

@@ -16,6 +16,8 @@ export interface PolarCheckout {
   /** @nullable */
   checkoutUrl: string | null;
   /** @nullable */
+  accessStartsAt?: Date | null;
+  /** @nullable */
   accessUntil: Date | null;
   /** @nullable */
   subscriptionStatus: string | null;

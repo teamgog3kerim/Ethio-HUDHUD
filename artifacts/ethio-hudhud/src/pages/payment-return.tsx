@@ -62,6 +62,8 @@ function Verified({ id, userId, env }: { id: string; userId: string; env: Env })
   };
   const c = q.data;
   const stalled = c?.status === 'pending' && c.id === id && (cache.getQueryState(q.queryKey)?.dataUpdateCount ?? 0) >= MAX_POLLS;
+  const starts = c?.accessStartsAt ?? null;
+  const future = !!starts && new Date(starts).getTime() > Date.now();
   const until = c?.accessUntil ? new Date(c.accessUntil).toLocaleDateString() : null;
   const testNote = live ? t('الحالة أعلاه من الخادم. إن بدا شيء غير متوقع فافتح بوابة الفوترة أو أعد التحقق.', 'The status above comes from the server. If anything looks unexpected, open the billing portal or check again.') : t('هذا اختبار في بيئة Polar التجريبية فقط: لا رسوم حقيقية ولا استحقاق مدفوع حقيقي، ولم يتغير وصولك للدروس.', 'Sandbox test only: no real charges and no real paid entitlement. Your learning access has not changed.');
   if (q.isError) return <ErrorState what={live ? t('التحقق من الدفع', 'verifying the payment') : t('التحقق من الدفع التجريبي', 'verifying the sandbox checkout')} onRetry={() => void q.refetch()} />;
@@ -78,7 +80,7 @@ function Verified({ id, userId, env }: { id: string; userId: string; env: Env })
     </>}
     {c.status === 'paid' && <>
       <h2 className="font-display text-xl font-extrabold">{live ? t('تم التحقق من الدفع', 'Purchase verified') : t('تم التحقق من الدفع التجريبي', 'Sandbox purchase verified')}</h2>
-      {until && <p className="mt-2 text-sm">{t(`تاريخ الاختبار: ${until}`, `Test period until ${until}`)}</p>}
+      {until && live && c.plan === 'monthly' ? <p className="mt-2 text-sm" data-testid="text-monthly-period">{starts ? t(`الفترة: من ${new Date(starts).toLocaleDateString()} إلى ${until}.`, `Period: ${new Date(starts).toLocaleDateString()} to ${until}.`) : t(`حتى ${until}.`, `Until ${until}.`)} {future ? t('تبدأ هذه الفترة لاحقاً بعد التغطية الحالية؛ لا وصول جديد الآن.', 'This period starts later, after your current coverage; it does not grant new access now.') : ''} {t('شهر واحد، دون تجديد تلقائي.', 'One month, no automatic renewal.')}</p> : until && <p className="mt-2 text-sm">{live ? t(`حتى ${until}`, `Access until ${until}`) : t(`تاريخ الاختبار: ${until}`, `Test period until ${until}`)}</p>}
       {c.cancelAtPeriodEnd && <p className="mt-1 text-sm text-muted-foreground">{t('سيُلغى عند نهاية الفترة.', 'Set to cancel at period end.')}</p>}
       <p className="mt-2 text-sm text-muted-foreground">{testNote}</p>
       {portalError && <div className="mt-3"><ErrorState what={live ? t('فتح بوابة الفوترة', 'opening the billing portal') : t('فتح بوابة الفوترة التجريبية', 'opening the sandbox billing portal')} onRetry={() => void openPortal()} /></div>}

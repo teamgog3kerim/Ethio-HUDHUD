@@ -2,8 +2,9 @@
 
 ## Current boundary
 
-The owner approved **live $149 one-time checkout only** for the next published
-build. Monthly checkout and expired-trial blocking remain disabled. Learning
+The owner approved **$29 one-time monthly purchases, renewed manually**, up to
+six payments, alongside **$149 once for six months**, for the next published
+build. Automatic monthly billing and expired-trial blocking remain disabled. Learning
 temporarily stays open and purchasing is optional; a real charge occurs only
 when a customer completes Polar checkout. Do not make a purchase automatically.
 
@@ -36,10 +37,11 @@ The staged live checkout adapter, customer portal, reconciliation worker and pai
 access resolver are now implemented. They use separate live purchase records,
 `hudhud-live:` customer identities and current provider reads; neither a plan
 preference, success redirect, nor sandbox purchase grants paid access.
-`LIVE_CHECKOUT_LAUNCH_APPROVED` and `BILLING_CONFIGURED` are now true with explicit
-owner approval. `LIVE_MONTHLY_CAP_APPROVED` and `TRIAL_ENFORCEMENT_ENABLED` remain
-false. Runtime checkout also requires the live token and webhook secret. A
-monthly request is rejected before any provider call. No real purchase has
+`LIVE_CHECKOUT_LAUNCH_APPROVED`, `LIVE_MANUAL_MONTHLY_APPROVED` and
+`BILLING_CONFIGURED` are true with explicit owner approval.
+`LIVE_MONTHLY_CAP_APPROVED` (automatic renewal) and `TRIAL_ENFORCEMENT_ENABLED`
+remain false. Runtime checkout also requires the live token and webhook secret.
+The original recurring product is not an approved app checkout. No real purchase has
 been performed or authorized for the agent.
 
 Checkout creates a durable intent before calling Polar. Ambiguous timeouts stay
@@ -93,28 +95,55 @@ The owner has now explicitly approved a replacement monthly offering: $29 for
 one month, renewed manually, up to six monthly payments. Implement and enable
 that option after testing while retaining the $149 option and keeping trial
 blocking off. This requires a separate live **one-time** $29 USD product. The
-current live integration can read products, but Polar rejected product creation
-with HTTP 403; the owner needs to create this product in the dashboard and
-provide its Product ID. No manual product was created or connected by that
-failed request. Do not reuse or activate the original recurring product.
+integration could read products but Polar rejected product creation with HTTP
+403. The owner created product `2ddb1c73-8e1e-404b-926c-af93db682651` in the
+dashboard; a live read verified it is active, one-time, exactly USD 2900 cents,
+and in the same organization as the $149 product. It is now the app's monthly
+product. Do not reuse or activate the original recurring product.
 
-The owner chose to finalize the **$149 one-time, six-month plan first** and keep
-monthly checkout disabled. A read-only live product check confirmed that its
-product is active, non-recurring and has one active fixed USD 14900-cent price.
-Both live secrets are present in production configuration. The public checkout
-route still returned HTTP 404 when checked after this scope choice, so the
-published build does not yet expose the new checkout flow. Publish the prepared
-implementation and verify it before claiming the public payment flow is ready.
-The owner subsequently explicitly approved enabling $149 checkout in the next
-published build while keeping monthly checkout and trial blocking off. This
-does not authorize an automatic purchase or publication. After publishing,
-verify the public route and verify a genuine provider-signed delivery; simulated
-test responses are not proof of a completed live payment round trip.
+### Manual monthly safeguards
 
-## Approved live-access rules — staged implementation
+Each successful monthly purchase covers one calendar month. A first purchase
+or a return after expiry starts at the original order date. Renewal opens four
+days before existing paid coverage ends; early renewal starts after that
+coverage, not on the click date. The next prepaid period does not grant access
+before its start if the current period is refunded. There is no automatic
+renewal, past-due charge, or invented failed-auto-renewal grace.
 
-- Monthly cancellation stops renewal; access lasts through the paid period.
-- Failed monthly renewals receive three days' grace before paid lessons lock.
+Per-account database locks serialize intent reservation and payment
+reconciliation. Creating/pending attempts block new sessions; a pending
+same-plan checkout is reused. Unknown provider timeouts preserve the durable
+intent for metadata recovery, never a blind second creation.
+
+The immutable monthly order proof and original period boundaries make the
+six-payment limit independent of webhooks arriving on time or a server being
+continuously awake. Refunded completed payments still consume a slot; unpaid,
+failed and expired attempts do not. A unique provider order ID prevents a
+replayed order being credited to another period. Full refunds revoke the
+associated period, partial refunds preserve its dates, and neither changes
+progress or resets the counter. Prepaid coverage moves the reminder date
+forward; payment six produces course-expiry wording, not a seventh renewal.
+
+The additive monthly ledger fields are applied in development. Publish the
+latest build through Replit to apply the production schema and enable the
+manual option publicly. Unit/database and browser-fixture verification must
+never be described as a real production payment.
+
+The first launch enabled only the **$149 one-time, six-month plan**. The owner
+then completed Polar review and the organization became payment-ready. Signed
+`checkout.updated` receipts returned 202, proving intake, not a paid order.
+The owner subsequently approved the separate manual $29 monthly product as
+well. Republish the latest build before treating that new option as public.
+No approval here authorizes an automatic purchase or publication; simulated
+responses are not proof of a completed live payment round trip.
+
+## Approved live-access rules
+
+- Monthly payments are manual one-time purchases, not automatic subscriptions.
+  Access lasts through the paid period, or through a separately paid next
+  period when it begins. No seventh monthly app checkout is permitted.
+- Unpaid renewal does not extend paid access. Trial blocking remains off, so
+  temporary pilot learning access is separate from verified paid access.
 - Refund approval is manual in Polar. A full refund removes its associated paid
   access; a partial refund leaves access unchanged.
 - Learning progress and original trial dates are preserved.
@@ -135,8 +164,9 @@ rollout approval.
 The sandbox currently fails closed on partial refunds; that is test behavior,
 not the approved live partial-refund rule.
 
-Both live products were verified using read-only requests: USD 29 recurring
-monthly, and USD 149 one-time. No live checkout or charge was created.
+Both approved live products were verified with read-only requests: USD 29
+one-time monthly and USD 149 one-time six-month access. The original recurring
+product remains unused. No automated live checkout or charge was created.
 
 ## Development configuration
 

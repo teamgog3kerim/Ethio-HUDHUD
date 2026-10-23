@@ -4,16 +4,16 @@ import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { HttpError } from "./http-error";
 import { logger } from "./logger";
 import { LIVE_COURSE_PRODUCTS } from "./polar-live-webhook-policy";
-import { assertSandboxProduct } from "./polar-sandbox-policy";
+import { assertLiveProduct, manualMonthlyState, monthlyPeriod, MONTHLY_PAYMENT_LIMIT } from "./manual-monthly";
 import {
-  LIVE_CHECKOUT_LAUNCH_APPROVED, LIVE_MONTHLY_CAP_APPROVED, LIVE_VERIFICATION_TTL,
+  LIVE_CHECKOUT_LAUNCH_APPROVED, LIVE_MANUAL_MONTHLY_APPROVED, LIVE_VERIFICATION_TTL,
   liveCustomerId, livePaymentState, safeLiveUrl, type LivePlan,
 } from "./polar-live-policy";
 
 export function liveCheckoutEnabled() {
   return LIVE_CHECKOUT_LAUNCH_APPROVED && !!process.env.POLAR_LIVE_ACCESS_TOKEN && !!process.env.POLAR_LIVE_WEBHOOK_SECRET;
 }
-export function liveMonthlyEnabled() { return liveCheckoutEnabled() && LIVE_MONTHLY_CAP_APPROVED; }
+export function liveMonthlyEnabled() { return liveCheckoutEnabled() && LIVE_MANUAL_MONTHLY_APPROVED; }
 export function liveApi() {
   if (!process.env.POLAR_LIVE_ACCESS_TOKEN) throw new HttpError(503, "اتصال Polar المباشر غير متاح.");
   return createPolar({ accessToken: process.env.POLAR_LIVE_ACCESS_TOKEN, timeout: 8 });
@@ -36,6 +36,7 @@ export function liveCheckoutResponse(row: LivePurchase) {
     status: row.status === "creating" ? "pending" : row.status,
     checkoutUrl: row.status === "pending" && row.expiresAt && row.expiresAt > new Date() && row.checkoutUrl ? safeLiveUrl(row.checkoutUrl) : null,
     accessUntil: row.accessUntil?.toISOString() ?? null,
+    accessStartsAt: row.monthlyPeriodStart?.toISOString() ?? null,
     subscriptionStatus: row.subscriptionStatus, cancelAtPeriodEnd: row.cancelAtPeriodEnd,
     verifiedAt: row.verifiedAt?.toISOString() ?? null,
   };
@@ -65,26 +66,26 @@ export async function attachLiveCheckout(checkout: Pick<models.Checkout, "id" | 
   });
 }
 
-export async function createLiveCheckout(userId: string, email: string, plan: LivePlan) {
+export async function createLiveCheckout(userId: string, email: string, plan: LivePlan, provider?: ReturnType<typeof liveApi>) {
   // These guards run before any SDK request or durable purchase is created.
   if (!liveCheckoutEnabled() || (plan === "monthly" && !liveMonthlyEnabled())) {
     throw new HttpError(503, plan === "monthly"
-      ? "الدفع الشهري غير مفعّل حتى تأكيد إيقاف التحصيل بعد ست دفعات."
+      ? "الدفع الشهري اليدوي غير متاح حالياً."
       : "الدفع المباشر غير مفعّل بعد. لم يتم تحصيل أي رسوم.");
   }
   await assertLiveAccount(userId);
-  const api = liveApi();
+  const api = provider ?? liveApi();
   const product = await liveCall(() => api.products.get(LIVE_COURSE_PRODUCTS[plan]));
-  try { assertSandboxProduct(plan, product); }
+  try { assertLiveProduct(plan, product); }
   catch { throw new HttpError(503, "سعر المنتج أو مدته لا يطابق الخطة المعروضة."); }
   // Refresh prior purchases first. A provider outage must not cause a second
   // checkout to be offered while the first payment is unresolved.
   const previous = await db.select().from(polarLivePurchases).where(eq(polarLivePurchases.userId, userId));
-  for (const row of previous) if (row.checkoutId) await refreshLiveCheckout(userId, row.checkoutId);
+  for (const row of previous) if (row.checkoutId) await refreshLiveCheckout(userId, row.checkoutId, api);
   const intent = await db.transaction(async tx => {
     await tx.execute(accountLock(userId));
     const rows = await tx.select().from(polarLivePurchases).where(eq(polarLivePurchases.userId, userId));
-    const active = rows.find(r => (r.accessUntil && r.accessUntil > new Date())
+    const active = rows.find(r => (r.accessUntil && r.accessUntil > new Date() && (plan !== "monthly" || r.plan !== "monthly"))
       || (r.subscriptionId && r.subscriptionStatus !== "canceled"));
     if (active) throw new HttpError(409, "لديك اشتراك أو وصول قائم. استخدم بوابة الفوترة.");
     const unresolved = rows.find(r => r.status === "creating" || r.status === "pending");
@@ -92,7 +93,15 @@ export async function createLiveCheckout(userId: string, email: string, plan: Li
       if (unresolved.status === "pending" && unresolved.plan === plan && unresolved.expiresAt && unresolved.expiresAt > new Date()) return unresolved;
       throw new HttpError(409, "توجد عملية دفع معلّقة. تحقّق منها قبل بدء عملية أخرى.");
     }
-    const [row] = await tx.insert(polarLivePurchases).values({ userId, plan }).returning();
+    const manual = manualMonthlyState(rows);
+    if (plan === "monthly" && !manual.monthlyCanPurchase) {
+      throw new HttpError(409, manual.monthlyPaymentCount >= MONTHLY_PAYMENT_LIMIT
+        ? "اكتملت الدفعات الشهرية الست. لن يتم تحصيل دفعة سابعة."
+        : "التجديد اليدوي متاح خلال الأيام الأربعة الأخيرة قبل انتهاء الوصول، أو بعد انتهائه.");
+    }
+    const [row] = await tx.insert(polarLivePurchases).values({
+      userId, plan, monthlyOrdinal: plan === "monthly" ? manual.monthlyPaymentCount + 1 : null,
+    }).returning();
     return row!;
   });
   if (intent.checkoutId) return liveCheckoutResponse(intent);
@@ -104,7 +113,8 @@ export async function createLiveCheckout(userId: string, email: string, plan: Li
     checkout = await api.checkouts.create({
       products: [LIVE_COURSE_PRODUCTS[plan]], external_customer_id: liveCustomerId(userId),
       customer_email: email, allow_trial: false, allow_discount_codes: false, currency: "usd",
-      metadata: { application: "hudhud", environment: "live", plan, hudhud_intent: intent.id },
+      metadata: { application: "hudhud", environment: "live", plan, hudhud_intent: intent.id,
+        ...(plan === "monthly" ? { monthly_payment_number: intent.monthlyOrdinal! } : {}) },
       success_url: `${origin}/billing/return?environment=live&checkout_id={CHECKOUT_ID}`,
       return_url: `${origin}/billing/cancel?environment=live`,
     });
@@ -148,12 +158,31 @@ export async function refreshLiveCheckout(userId: string, checkoutId: string, ap
     let payment;
     try { payment = livePaymentState({ userId, plan, checkoutStatus: checkout.status, orders, subscription }); }
     catch { throw new HttpError(403, "تعذر إثبات ملكية الاشتراك."); }
-    // Defense in depth only, not the launch prerequisite for a finite plan.
-    if (subscription && payment.paidCycles >= 6 && !subscription.cancel_at_period_end && subscription.status === "active") {
-      subscription = await liveCall(() => api.subscriptions.update(subscriptionId!, { cancel_at_period_end: true }));
+    let period = row.monthlyPeriodStart && row.paidUntil
+      ? { start: row.monthlyPeriodStart, end: row.paidUntil } : null;
+    if (plan === "monthly" && payment.completedOrderId && payment.completedAt) {
+      if (row.monthlyOrderId && row.monthlyOrderId !== payment.completedOrderId) {
+        throw new HttpError(403, "تحتاج عملية الدفع إلى مراجعة. لن يبدأ دفع جديد.");
+      }
+      if (!row.monthlyPaidAt) {
+        const others = (await tx.select().from(polarLivePurchases).where(eq(polarLivePurchases.userId, userId)))
+          .filter(r => r.id !== row.id);
+        if (manualMonthlyState(others).monthlyPaymentCount >= MONTHLY_PAYMENT_LIMIT) {
+          throw new HttpError(409, "اكتملت الدفعات الست. تحتاج هذه العملية إلى مراجعة الفوترة.");
+        }
+        period = monthlyPeriod(payment.completedAt, others);
+      }
+      if (!period) throw new HttpError(403, "تعذر إثبات فترة الوصول المدفوعة.");
+      payment = livePaymentState({ userId, plan, checkoutStatus: checkout.status, orders, subscription, monthlyPeriod: period });
     }
     const [saved] = await tx.update(polarLivePurchases).set({
-      status: payment.status, paidUntil: payment.paidUntil, accessUntil: payment.accessUntil,
+      status: payment.status, paidUntil: plan === "monthly" ? period?.end ?? payment.paidUntil : payment.paidUntil,
+      accessUntil: payment.accessUntil,
+      ...(plan === "monthly" ? {
+        monthlyOrderId: row.monthlyOrderId ?? payment.completedOrderId,
+        monthlyPaidAt: row.monthlyPaidAt ?? payment.completedAt,
+        monthlyPeriodStart: row.monthlyPeriodStart ?? period?.start ?? null,
+      } : {}),
       subscriptionId, subscriptionStatus: subscription?.status ?? null,
       cancelAtPeriodEnd: subscription?.cancel_at_period_end ?? false,
       verifiedAt: new Date(), nextCheckAt: new Date(Date.now() + LIVE_VERIFICATION_TTL), attempts: 0,

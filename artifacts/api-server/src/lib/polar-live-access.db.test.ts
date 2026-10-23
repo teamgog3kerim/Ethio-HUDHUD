@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { liveAccess } from "./polar-live-access";
 import { billingStatus } from "./billing-status";
 import { getAccessState, defaultAppSettings } from "./app-settings";
-import { liveCheckoutEnabled } from "./polar-live";
+import { liveCheckoutEnabled, liveMonthlyEnabled } from "./polar-live";
 
 test("live entitlement isolation, freshness, grants and original trial are preserved", async () => {
   const userId = `isolated-live-access-${randomUUID()}`;
@@ -32,7 +32,7 @@ test("live entitlement isolation, freshness, grants and original trial are prese
     assert.equal(paid.configured, true);
     assert.equal(paid.enforcementEnabled, false);
     assert.equal(paid.liveCheckoutEnabled, liveCheckoutEnabled());
-    assert.equal(paid.liveMonthlyCheckoutEnabled, false);
+    assert.equal(paid.liveMonthlyCheckoutEnabled, liveMonthlyEnabled());
     assert.equal((await liveAccess(other)).accessUntil, null);
     const access = await getAccessState(userId, defaultAppSettings);
     assert.equal(access.dailyAiLimit, defaultAppSettings.complimentaryAiDailyLimit);

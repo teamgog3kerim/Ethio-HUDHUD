@@ -6,6 +6,7 @@
  */
 import type { AccessReminder } from './accessReminder';
 import type { BillingStatusPaidPlan } from './billingStatusPaidPlan';
+import type { BillingStatusResumablePlan } from './billingStatusResumablePlan';
 import type { BillingStatusSelectedPlan } from './billingStatusSelectedPlan';
 import type { BillingStatusSource } from './billingStatusSource';
 import type { CourseOffer } from './courseOffer';
@@ -22,6 +23,17 @@ export interface BillingStatus {
   sandboxCheckoutEnabled?: boolean;
   liveCheckoutEnabled?: boolean;
   liveMonthlyCheckoutEnabled?: boolean;
+  /** @minimum 0 */
+  monthlyPaymentCount?: number;
+  /** @minimum 1 */
+  monthlyPaymentLimit?: number;
+  monthlyCanPurchase?: boolean;
+  /** @nullable */
+  monthlyNextPurchaseAt?: Date | null;
+  /** @nullable */
+  monthlyPaidThrough?: Date | null;
+  /** @nullable */
+  resumablePlan?: BillingStatusResumablePlan;
   hasLivePurchase?: boolean;
   paymentVerificationPending?: boolean;
   /** @nullable */

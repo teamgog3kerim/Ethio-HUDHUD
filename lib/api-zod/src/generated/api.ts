@@ -439,6 +439,7 @@ export const CreateLiveCheckoutResponse = zod.object({
   "plan": zod.enum(['monthly', 'six_month']),
   "status": zod.enum(['pending', 'paid', 'failed', 'expired', 'refunded']),
   "checkoutUrl": zod.string().nullable(),
+  "accessStartsAt": zod.coerce.date().nullish(),
   "accessUntil": zod.coerce.date().nullable(),
   "subscriptionStatus": zod.string().nullable(),
   "cancelAtPeriodEnd": zod.boolean(),
@@ -459,6 +460,7 @@ export const GetLiveCheckoutResponse = zod.object({
   "plan": zod.enum(['monthly', 'six_month']),
   "status": zod.enum(['pending', 'paid', 'failed', 'expired', 'refunded']),
   "checkoutUrl": zod.string().nullable(),
+  "accessStartsAt": zod.coerce.date().nullish(),
   "accessUntil": zod.coerce.date().nullable(),
   "subscriptionStatus": zod.string().nullable(),
   "cancelAtPeriodEnd": zod.boolean(),
@@ -526,6 +528,7 @@ export const CreateSandboxCheckoutResponse = zod.object({
   "plan": zod.enum(['monthly', 'six_month']),
   "status": zod.enum(['pending', 'paid', 'failed', 'expired', 'refunded']),
   "checkoutUrl": zod.string().nullable(),
+  "accessStartsAt": zod.coerce.date().nullish(),
   "accessUntil": zod.coerce.date().nullable(),
   "subscriptionStatus": zod.string().nullable(),
   "cancelAtPeriodEnd": zod.boolean(),
@@ -546,6 +549,7 @@ export const GetSandboxCheckoutResponse = zod.object({
   "plan": zod.enum(['monthly', 'six_month']),
   "status": zod.enum(['pending', 'paid', 'failed', 'expired', 'refunded']),
   "checkoutUrl": zod.string().nullable(),
+  "accessStartsAt": zod.coerce.date().nullish(),
   "accessUntil": zod.coerce.date().nullable(),
   "subscriptionStatus": zod.string().nullable(),
   "cancelAtPeriodEnd": zod.boolean(),
@@ -569,6 +573,9 @@ export const SelectCoursePlanBody = zod.object({
   "plan": zod.enum(['trial', 'monthly', 'six_month'])
 })
 
+export const selectCoursePlanResponseMonthlyPaymentCountMin = 0;
+
+
 export const selectCoursePlanResponseTrialDaysRemainingMin = 0;
 export const selectCoursePlanResponseTrialDaysRemainingMax = 2;
 
@@ -584,6 +591,12 @@ export const SelectCoursePlanResponse = zod.object({
   "sandboxCheckoutEnabled": zod.boolean().optional(),
   "liveCheckoutEnabled": zod.boolean().optional(),
   "liveMonthlyCheckoutEnabled": zod.boolean().optional(),
+  "monthlyPaymentCount": zod.number().int().min(selectCoursePlanResponseMonthlyPaymentCountMin).optional(),
+  "monthlyPaymentLimit": zod.number().int().min(1).optional(),
+  "monthlyCanPurchase": zod.boolean().optional(),
+  "monthlyNextPurchaseAt": zod.coerce.date().nullish(),
+  "monthlyPaidThrough": zod.coerce.date().nullish(),
+  "resumablePlan": zod.union([zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish(),
   "hasLivePurchase": zod.boolean().optional(),
   "paymentVerificationPending": zod.boolean().optional(),
   "paidPlan": zod.union([zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish(),
@@ -697,6 +710,9 @@ export const RemoveReminderDeviceParams = zod.object({
 export const RemoveReminderDeviceResponse = zod.void()
 
 
+export const getBillingStatusResponseMonthlyPaymentCountMin = 0;
+
+
 export const getBillingStatusResponseTrialDaysRemainingMin = 0;
 export const getBillingStatusResponseTrialDaysRemainingMax = 2;
 
@@ -712,6 +728,12 @@ export const GetBillingStatusResponse = zod.object({
   "sandboxCheckoutEnabled": zod.boolean().optional(),
   "liveCheckoutEnabled": zod.boolean().optional(),
   "liveMonthlyCheckoutEnabled": zod.boolean().optional(),
+  "monthlyPaymentCount": zod.number().int().min(getBillingStatusResponseMonthlyPaymentCountMin).optional(),
+  "monthlyPaymentLimit": zod.number().int().min(1).optional(),
+  "monthlyCanPurchase": zod.boolean().optional(),
+  "monthlyNextPurchaseAt": zod.coerce.date().nullish(),
+  "monthlyPaidThrough": zod.coerce.date().nullish(),
+  "resumablePlan": zod.union([zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish(),
   "hasLivePurchase": zod.boolean().optional(),
   "paymentVerificationPending": zod.boolean().optional(),
   "paidPlan": zod.union([zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish(),

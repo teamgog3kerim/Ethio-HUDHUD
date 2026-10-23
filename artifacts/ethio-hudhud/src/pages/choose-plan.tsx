@@ -77,13 +77,22 @@ export default function ChoosePlan() {
     }
   };
   const bd = billing.data;
-  const livePurchase = !!bd?.paidPlan && bd.fullCourseAccess === true;
+  const fmtDate = (s: string) => new Date(s).toLocaleDateString(undefined, { dateStyle: 'medium' });
+  const resumeMonthly = bd?.resumablePlan === 'monthly';
+  const count = typeof bd?.monthlyPaymentCount === 'number' ? bd.monthlyPaymentCount : null;
+  const limit = typeof bd?.monthlyPaymentLimit === 'number' ? bd.monthlyPaymentLimit : null;
+  const capReached = count !== null && limit !== null && count >= limit;
+  const monthlyAllowed = bd?.monthlyCanPurchase === true || resumeMonthly;
+  const livePurchase = (!!bd?.paidPlan && bd.fullCourseAccess === true)
+    || !!(bd?.monthlyPaidThrough && Date.parse(bd.monthlyPaidThrough) > Date.now());
   const hasPortal = bd?.hasLivePurchase === true;
-  const pending = bd?.paymentVerificationPending === true;
-  const live = !!paid && bd?.liveCheckoutEnabled === true && (paid === 'six_month' || bd?.liveMonthlyCheckoutEnabled === true);
-  const monthlyCapPending = paid === 'monthly' && (bd?.liveMonthlyCheckoutEnabled !== true);
+  const pendingRaw = bd?.paymentVerificationPending === true;
+  const pending = pendingRaw && !(paid === 'monthly' && resumeMonthly);
+  const live = !!paid && bd?.liveCheckoutEnabled === true && (paid === 'six_month' || (bd?.liveMonthlyCheckoutEnabled === true && monthlyAllowed));
+  const paidBlock = livePurchase && !(paid === 'monthly' && live);
+  const monthlyOff = paid === 'monthly' && bd?.liveMonthlyCheckoutEnabled !== true;
   const liveCheckout = async () => {
-    if (!paid || !userId || checkingOut || saving || !live || livePurchase || pending) return;
+    if (!paid || !userId || checkingOut || saving || !live || paidBlock || pending) return;
     const owner = userId, request = ++version.current;
     setCheckingOut(true);
     setCheckoutError(null);
@@ -124,7 +133,7 @@ export default function ChoosePlan() {
   };
   const planLine = paid === 'six_month'
     ? t('ستة أشهر دفعة واحدة، وصول لمدة 6 أشهر، دون تجديد تلقائي.', 'Six months, one payment, 6 months of access, no auto-renewal.')
-    : t('اشتراك شهري يتجدد شهريًا حتى الإلغاء.', 'Monthly subscription, renews monthly until cancelled.');
+    : t('شهر واحد مقابل 29 دولاراً لكل عملية شراء تختارها، بحد أقصى ست دفعات (174 دولاراً)، دون خصم تلقائي. يُضاف الشهر التالي بعد نهاية التغطية الحالية.', 'One month for $29 per purchase you choose, max six payments ($174), no automatic charge. Early renewal adds the next month after current coverage.');
   const offer = bd?.offers.find(o => o.id === paid);
   if (!isLoaded) return <Skeleton className="m-8 h-64" />;
   if (!isSignedIn) return <Redirect to={`/sign-up${choice ? `?plan=${choice}` : ''}`} replace />;
@@ -135,18 +144,26 @@ export default function ChoosePlan() {
       <p className="text-sm text-muted-foreground">{billing.data?.enforcementEnabled
         ? t('التجربة مدتها 48 ساعة من أول استخدام. اختيار الخطة أو إنشاء حساب جديد لا يعيد التجربة ولا يفتح الدروس دون استحقاق موثّق.', 'The trial lasts 48 hours from first use. Selecting a plan or signing up does not restart it or unlock lessons without verified access.')
         : bd?.liveCheckoutEnabled
-        ? t('حفظ الاختيار لا يُعدّ دفعاً. شراء الستة أشهر اختياري حالياً، ولا تُحصّل رسوم إلا بعد إتمام الدفع عبر Polar. يبقى التعلّم مفتوحاً مؤقتاً حتى بعد انتهاء تجربة 48 ساعة؛ الحجب غير مفعّل.', 'Saving a choice is not payment. The six-month purchase is currently optional; charges occur only when you complete Polar checkout. Learning temporarily remains open after the 48-hour trial; blocking is off.')
+        ? t('حفظ الاختيار لا يُعدّ دفعاً. الشراء اختياري حالياً، ولا تُحصّل رسوم إلا بعد إتمام الدفع عبر Polar. يبقى التعلّم مفتوحاً مؤقتاً حتى بعد انتهاء تجربة 48 ساعة؛ الحجب غير مفعّل.', 'Saving a choice is not payment. Purchasing is currently optional; charges occur only when you complete Polar checkout. Learning temporarily remains open after the 48-hour trial; blocking is off.')
         : selected === 'monthly' || selected === 'six_month'
         ? t('سيُحفظ هذا الاختيار كتفضيل فقط. لم يتم الدفع أو تفعيل اشتراك مدفوع. يمكنك التعلّم مجانًا خلال المرحلة التجريبية حتى تفعيل Polar.', 'This saves a preference only. No payment or paid subscription is activated. You can learn free during the pilot until Polar is enabled.')
         : t('التجربة مدتها 48 ساعة من أول استخدام، ولا تبدأ مجددًا عند إنشاء الحساب أو تغيير الخطة. يبقى التعلّم مفتوحًا خلال المرحلة التجريبية.', 'Your trial lasts 48 hours from first use; signing up or changing plans does not restart it. Learning stays open during the pilot.')}</p>
       {sandbox && <p className="rounded-2xl bg-secondary p-3 text-sm" data-testid="text-sandbox-note">{t('هذا اختبار في بيئة Polar التجريبية فقط: لا رسوم حقيقية ولا استحقاق مدفوع حقيقي، ولن يتغير وصولك للدروس.', 'This is a Polar sandbox test only: no real charges and no real paid entitlement. Your learning access does not change.')}</p>}
       {checkoutError && <div role="alert"><p className="text-sm text-destructive">{checkoutError}</p><ErrorState what={retryOperation === 'portal' ? t('فتح بوابة الفوترة', 'opening the billing portal') : retryOperation === 'live' ? t('بدء الدفع', 'starting checkout') : t('بدء الدفع التجريبي', 'starting sandbox checkout')} onRetry={() => void (retryOperation === 'portal' ? portal() : retryOperation === 'live' ? liveCheckout() : checkout())} /></div>}
-      {(pending || livePurchase || hasPortal) && <div className="rounded-2xl bg-secondary p-3 text-sm" data-testid="text-live-existing">
-        <p>{pending ? t('ما زال التحقق من دفعة سابقة معلّقًا. لا تبدأ دفعًا جديدًا قبل اكتمال التحقق من الخادم.', 'Verification of an earlier payment is still pending. Do not start another checkout until the server finishes verifying.') : livePurchase ? t('لديك خطة مدفوعة سارية. أدرها من بوابة الفوترة بدل الدفع مرة أخرى.', 'You have an active paid plan. Manage it in the billing portal instead of paying again.') : t('يمكنك مراجعة مشترياتك السابقة من بوابة الفوترة.', 'You can review past purchases in the billing portal.')}</p>
+      {(pendingRaw || livePurchase || hasPortal) && <div className="rounded-2xl bg-secondary p-3 text-sm" data-testid="text-live-existing">
+        <p>{pendingRaw && !pending ? t('لديك دفعة شهرية قيد المتابعة. يمكنك استئناف الدفع نفسه بأمان.', 'You have a monthly checkout in progress. You can safely resume that same checkout.') : pending ? t('ما زال التحقق من دفعة سابقة معلّقًا. لا تبدأ دفعًا جديدًا قبل اكتمال التحقق من الخادم.', 'Verification of an earlier payment is still pending. Do not start another checkout until the server finishes verifying.') : livePurchase ? (paid === 'monthly' && live ? t('الباقة الحالية سارية. الإيصالات والسجل في بوابة الفوترة؛ التجديد اليدوي لا يحتاج إليها.', 'Your current plan is active. Receipts and history are in the billing portal; you do not need it to renew manually.') : t('لديك خطة مدفوعة سارية. لا حاجة لدفع مرة أخرى؛ الإيصالات في بوابة الفوترة.', 'You have an active paid plan. No need to pay again; receipts are in the billing portal.')) : t('يمكنك مراجعة مشترياتك السابقة من بوابة الفوترة.', 'You can review past purchases in the billing portal.')}</p>
         {hasPortal && <Btn className="mt-3" variant="outline" disabled={checkingOut} onClick={() => void portal()} data-testid="button-live-portal">{t('افتح بوابة الفوترة', 'Open billing portal')}</Btn>}
       </div>}
-      {monthlyCapPending && <p className="rounded-2xl bg-secondary p-3 text-sm" data-testid="text-monthly-cap-pending">{t('الدفع الشهري غير مفعّل حتى تأكيد إيقاف التحصيل بعد ست دفعات. يمكنك حفظ تفضيلك فقط دون رسوم.', 'Monthly checkout remains disabled until stopping after six payments is confirmed. Saving your preference does not charge you.')}</p>}
-      {live && !livePurchase && !pending && <div className="space-y-3 rounded-2xl border border-border p-3 text-sm" data-testid="text-live-terms">
+      {monthlyOff && <p className="rounded-2xl bg-secondary p-3 text-sm" data-testid="text-monthly-cap-pending">{t('الدفع الشهري غير متاح حالياً بسبب الإعداد. يمكنك حفظ تفضيلك فقط دون رسوم.', 'Monthly checkout is unavailable because of current configuration. Saving your preference does not charge you.')}</p>}
+      {paid === 'monthly' && !monthlyOff && <div className="space-y-1 rounded-2xl bg-secondary p-3 text-sm" data-testid="text-monthly-status">
+        {count !== null && limit !== null ? <p>{t(`الدفعات الشهرية: ${count} من ${limit}.`, `Monthly payments: ${count} of ${limit}.`)}</p> : <p>{t('تعذّر تحديد عدد الدفعات؛ الدفع الشهري متوقف حتى يؤكد الخادم.', 'Payment count unavailable; monthly checkout stays off until the server confirms.')}</p>}
+        {capReached && <p className="font-semibold">{t('بلغت الحد الأقصى: ست دفعات شهرية. لا مزيد من الدفعات الشهرية.', 'Cap reached: six monthly payments. No further monthly payments.')}</p>}
+        {bd?.monthlyPaidThrough && <p>{t(`مدفوع حتى ${fmtDate(bd.monthlyPaidThrough)}.`, `Paid through ${fmtDate(bd.monthlyPaidThrough)}.`)}</p>}
+        {!capReached && !monthlyAllowed && bd?.monthlyNextPurchaseAt && <p>{t(`يفتح التجديد في ${fmtDate(bd.monthlyNextPurchaseAt)}، قبل انتهاء التغطية بأربعة أيام.`, `Renewal opens ${fmtDate(bd.monthlyNextPurchaseAt)}, four days before coverage ends.`)}</p>}
+        {!capReached && !monthlyAllowed && !bd?.monthlyNextPurchaseAt && <p>{t('التجديد غير متاح الآن.', 'Renewal is not available right now.')}</p>}
+        {resumeMonthly && <p>{t('لديك دفع شهري غير مكتمل؛ سيُستأنف الطلب نفسه.', 'You have an unfinished monthly checkout; the same one will be resumed.')}</p>}
+      </div>}
+      {live && !paidBlock && !pending && <div className="space-y-3 rounded-2xl border border-border p-3 text-sm" data-testid="text-live-terms">
         <p>{planLine}{offer ? ` $${offer.priceUsd}` : ''}</p>
         <p>{t('لا توجد استردادات طوعية، مع مراعاة حقوق المستهلك الإلزامية وشروط المشتري في Polar. حفظ التفضيل ليس دفعًا.', 'No voluntary refunds, subject to mandatory consumer rights and Polar buyer terms. Saving a preference is not payment.')}</p>
         <p className="text-sm text-muted-foreground">{t('تظهر أي ضريبة واجبة والإجمالي النهائي في صفحة Polar قبل تأكيد الدفع.', 'Any applicable tax and the final total are shown by Polar before you confirm payment.')}</p>

@@ -930,6 +930,12 @@ components:
         sandboxCheckoutEnabled: { type: boolean }
         liveCheckoutEnabled: { type: boolean }
         liveMonthlyCheckoutEnabled: { type: boolean }
+        monthlyPaymentCount: { type: integer, minimum: 0 }
+        monthlyPaymentLimit: { type: integer, minimum: 1 }
+        monthlyCanPurchase: { type: boolean }
+        monthlyNextPurchaseAt: { type: [string, "null"], format: date-time }
+        monthlyPaidThrough: { type: [string, "null"], format: date-time }
+        resumablePlan: { type: [string, "null"], enum: [monthly, six_month, null] }
         hasLivePurchase: { type: boolean }
         paymentVerificationPending: { type: boolean }
         paidPlan: { type: [string, "null"], enum: [monthly, six_month, null] }
@@ -973,6 +979,7 @@ components:
         plan: { type: string, enum: [monthly, six_month] }
         status: { type: string, enum: [pending, paid, failed, expired, refunded] }
         checkoutUrl: { type: [string, "null"] }
+        accessStartsAt: { type: [string, "null"], format: date-time }
         accessUntil: { type: [string, "null"], format: date-time }
         subscriptionStatus: { type: [string, "null"] }
         cancelAtPeriodEnd: { type: boolean }

@@ -23,9 +23,11 @@ export async function verifiedReminder(userId: string): Promise<VerifiedReminder
   if (access.source === "admin_grant" && access.accessExpiresAt) return { kind: "complimentary_expiring", expiresAt: access.accessExpiresAt };
   if (access.source === "polar_live") {
     const payment = await liveAccess(userId);
-    if (payment.paidPeriodEndsAt) return {
-      kind: payment.paidPlan === "monthly" && !payment.cancelAtPeriodEnd ? "renewal_due" : "course_expiring",
-      expiresAt: payment.paidPeriodEndsAt,
+    const expiresAt = payment.paidPlan === "monthly" ? payment.monthlyPaidThrough ?? payment.paidPeriodEndsAt : payment.paidPeriodEndsAt;
+    if (expiresAt) return {
+      kind: payment.paidPlan === "monthly" && payment.monthlyPaymentCount < payment.monthlyPaymentLimit
+        ? "renewal_due" : "course_expiring",
+      expiresAt,
     };
   }
   return null;
@@ -68,7 +70,7 @@ export async function dispatchRenewalDevice(device: Device) {
         await webpush.sendNotification(live.subscription as webpush.PushSubscription, JSON.stringify({
           title: "هدهد — تذكير الوصول",
           body: reminder!.kind === "renewal_due"
-            ? "موعد تجديد اشتراكك يقترب. افتح التطبيق للتحقق من حالة الاشتراك ووسيلة الدفع."
+            ? "اقترب موعد التجديد اليدوي. افتح التطبيق إذا أردت شراء الشهر التالي؛ لا يوجد خصم تلقائي."
             : "اقترب انتهاء الوصول المتاح لك. افتح التطبيق للتحقق من التفاصيل.",
           binding: deviceBindingKey(live.userId, live.id), period: period.id, expiresAt: reminder!.expiresAt,
         }), { TTL: period.ttl, timeout: 10_000 });

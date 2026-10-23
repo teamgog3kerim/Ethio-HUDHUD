@@ -19,6 +19,12 @@ export const polarLivePurchases = pgTable("polar_live_purchases", {
   verifiedAt: timestamp("verified_at", { withTimezone: true }),
   nextCheckAt: timestamp("next_check_at", { withTimezone: true }).notNull().defaultNow(),
   attempts: integer("attempts").notNull().default(0),
+  // Immutable proof/period boundaries for manually renewed one-month purchases.
+  // Refunding a period revokes its access, never resets the six-payment counter.
+  monthlyOrderId: uuid("monthly_order_id").unique(),
+  monthlyPaidAt: timestamp("monthly_paid_at", { withTimezone: true }),
+  monthlyPeriodStart: timestamp("monthly_period_start", { withTimezone: true }),
+  monthlyOrdinal: integer("monthly_ordinal"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, table => [
   index("polar_live_purchases_user_idx").on(table.userId),

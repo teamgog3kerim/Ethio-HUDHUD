@@ -45,7 +45,7 @@ export function CoursePlans({ onChoose, selected, busy, paidOnly = false }: { on
       <p className="mt-2 text-sm text-muted-foreground">{t('برنامج الأمهرية لستة أشهر لمتحدثي العربية. الاختيار تفضيل فقط.', 'The six-month Amharic programme for Arabic speakers. Your choice is a preference only.')}</p>
       <p className="mt-2 rounded-2xl bg-secondary p-3 text-sm" data-testid="text-plans-note">
         {b?.liveCheckoutEnabled
-          ? t('المتاح للشراء: ستة أشهر مقابل 149 دولاراً مرة واحدة دون تجديد تلقائي. الشهري غير متاح حالياً. يبقى التعلّم مفتوحاً مؤقتاً، ولا تُحصّل رسوم إلا عند إتمام الدفع عبر Polar.', 'Available to purchase: six months for $149 once, without automatic renewal. Monthly is currently unavailable. Learning temporarily remains open; charges occur only when you complete Polar checkout.')
+          ? t('المتاح للشراء: ستة أشهر مقابل 149 دولاراً مرة واحدة، أو شهر مقابل 29 دولاراً لكل شراء يدوي (حتى ست دفعات) دون تجديد تلقائي عند فتح الشهري. يبقى التعلّم مفتوحاً مؤقتاً، ولا تُحصّل رسوم إلا عند إتمام الدفع عبر Polar.', 'Available to purchase: six months for $149 once, or one month for $29 per manual purchase (max six, no automatic renewal) when monthly is open. Learning temporarily remains open; charges occur only when you complete Polar checkout.')
           : b?.sandboxCheckoutEnabled
           ? t('يمكنك اختبار الدفع عبر Polar التجريبي دون أموال حقيقية. لا يفعّل الاختبار اشتراكًا حقيقيًا ولا يغيّر وصولك للدروس.', 'Polar sandbox checkout is available for testing without real money. A test does not activate a real subscription or change lesson access.')
           : b?.configured && b?.liveCheckoutEnabled
@@ -67,9 +67,9 @@ export function CoursePlans({ onChoose, selected, busy, paidOnly = false }: { on
           </Card>}
           <Card data-testid="card-plan-monthly" className={cls('monthly')}>
             <p className="text-xs font-bold uppercase tracking-widest text-primary">{t('شهري', 'Monthly')}</p>
-            <p className="font-display mt-2 text-3xl font-extrabold">${monthly.priceUsd}<span className="text-base font-medium text-muted-foreground"> {t('/ شهر', '/ month')}</span></p>
-            <p className="mt-2 text-sm text-muted-foreground">{t(`$${monthly.sixMonthTotalUsd} لستة أشهر إذا استمر الشهري.`, `$${monthly.sixMonthTotalUsd} over six months if kept monthly.`)}</p>
-            {current === 'monthly' && b.liveCheckoutEnabled !== true && !b.sandboxCheckoutEnabled && <p className="mt-2 text-xs text-muted-foreground" data-testid="text-plan-monthly-cap">{t('شراء الشهري غير متاح الآن (السعة قيد الانتظار). الاختيار تفضيل فقط ولا رسوم.', 'Monthly purchase is not available yet (cap pending). Choosing it is a preference only, with no charge.')}</p>}
+            <p className="font-display mt-2 text-3xl font-extrabold">${monthly.priceUsd}<span className="text-base font-medium text-muted-foreground"> {t('/ شهر واحد', '/ one month')}</span></p>
+            <p className="mt-2 text-sm text-muted-foreground">{t(`شهر واحد لكل دفعة يدوية، حتى 6 دفعات ($${monthly.sixMonthTotalUsd}). لا تجديد تلقائي.`, `One month per manual payment, up to 6 payments ($${monthly.sixMonthTotalUsd}). No auto-renewal.`)}</p>
+            {current === 'monthly' && b.liveCheckoutEnabled !== true && !b.sandboxCheckoutEnabled && <p className="mt-2 text-xs text-muted-foreground" data-testid="text-plan-monthly-cap">{t('شراء الشهري غير متاح بسبب الإعداد الحالي. الاختيار تفضيل فقط ولا رسوم.', 'Monthly purchase is unavailable under the current configuration. Choosing it is a preference only, with no charge.')}</p>}
             {action('monthly', t('اختر الشهري', 'Choose monthly'))}
           </Card>
           <Card data-testid="card-plan-six_month" className={cls('six_month', 'border-primary')}>

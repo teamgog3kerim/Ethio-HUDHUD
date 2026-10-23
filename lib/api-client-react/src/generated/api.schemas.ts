@@ -541,6 +541,17 @@ export const BillingStatusSelectedPlan = {
 /**
  * @nullable
  */
+export type BillingStatusResumablePlan = typeof BillingStatusResumablePlan[keyof typeof BillingStatusResumablePlan] | null;
+
+
+export const BillingStatusResumablePlan = {
+  monthly: 'monthly',
+  six_month: 'six_month',
+} as const;
+
+/**
+ * @nullable
+ */
 export type BillingStatusPaidPlan = typeof BillingStatusPaidPlan[keyof typeof BillingStatusPaidPlan] | null;
 
 
@@ -641,6 +652,17 @@ export interface BillingStatus {
   sandboxCheckoutEnabled?: boolean;
   liveCheckoutEnabled?: boolean;
   liveMonthlyCheckoutEnabled?: boolean;
+  /** @minimum 0 */
+  monthlyPaymentCount?: number;
+  /** @minimum 1 */
+  monthlyPaymentLimit?: number;
+  monthlyCanPurchase?: boolean;
+  /** @nullable */
+  monthlyNextPurchaseAt?: string | null;
+  /** @nullable */
+  monthlyPaidThrough?: string | null;
+  /** @nullable */
+  resumablePlan?: BillingStatusResumablePlan;
   hasLivePurchase?: boolean;
   paymentVerificationPending?: boolean;
   /** @nullable */
@@ -717,6 +739,8 @@ export interface PolarCheckout {
   status: PolarCheckoutStatus;
   /** @nullable */
   checkoutUrl: string | null;
+  /** @nullable */
+  accessStartsAt?: string | null;
   /** @nullable */
   accessUntil: string | null;
   /** @nullable */

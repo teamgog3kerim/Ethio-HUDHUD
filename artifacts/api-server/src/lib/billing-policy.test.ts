@@ -20,7 +20,9 @@ test("server trial start is stable across reads and timezone offset inputs", () 
 test("plans match requested USD amounts and truthful six-month savings", () => {
   const [monthly, course] = COURSE_OFFERS;
   assert.equal(monthly.priceUsd, 29);
-  assert.equal(monthly.priceUsd * monthly.durationMonths, monthly.sixMonthTotalUsd);
+  assert.equal(monthly.durationMonths, 1);
+  assert.equal(monthly.billing, "one_time");
+  assert.equal(monthly.priceUsd * 6, monthly.sixMonthTotalUsd);
   assert.equal(course.priceUsd, 149);
   assert.equal(monthly.sixMonthTotalUsd - course.priceUsd, course.savingsUsd);
   assert.equal(Math.round(course.savingsUsd / monthly.sixMonthTotalUsd * 1000) / 10, course.savingsPercent);

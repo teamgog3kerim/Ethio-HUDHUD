@@ -4,7 +4,7 @@ import { z } from "zod";
 import { HttpError } from "./http-error";
 
 export const LIVE_COURSE_PRODUCTS = {
-  monthly: "7fff523f-51ec-4d84-87b1-5ef43bc9a3ae",
+  monthly: "2ddb1c73-8e1e-404b-926c-af93db682651",
   six_month: "7894c8ae-bf15-4aec-973b-635bf0521920",
 } as const;
 

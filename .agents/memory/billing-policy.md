@@ -124,6 +124,20 @@ option in the next user-published build, not approval for the agent to purchase
 or publish. Preserve account ownership, duplicate-payment protection, progress,
 grants, and original trial dates.
 
+Manual renewals open four days before the last paid coverage ends. Early
+renewal follows existing coverage; after a gap, a new payment starts a new
+one-month period. Full refunds remove only the associated period, without
+bringing a future prepaid period forward. Completed payments still consume
+the six-payment limit even if refunded; failed/unpaid attempts do not.
+
+**Why:** Manual renewal must not shorten paid time, unlock a future period
+prematurely, or let a refund/replay reset the six-payment safeguard.
+
+**How to apply:** Preserve immutable payment proof and period boundaries.
+Use the furthest prepaid coverage end for reminders; do not invite a seventh
+renewal. The earlier three-day failed-automatic-renewal grace applies only if
+automatic billing is separately approved in future, not to manual purchases.
+
 Native renewal pushes must check current device/account consent before presentation, not rely on unregistering a push token alone.
 
 **Why:** A queued push can outlive sign-out or reach a token reused by another account. Automatic OS alert payloads bypass the app's account check.
