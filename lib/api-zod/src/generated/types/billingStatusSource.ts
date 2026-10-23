@@ -11,4 +11,5 @@ export type BillingStatusSource = typeof BillingStatusSource[keyof typeof Billin
 export const BillingStatusSource = {
   none: 'none',
   admin_grant: 'admin_grant',
+  polar_live: 'polar_live',
 } as const;

@@ -12,6 +12,7 @@ export const polarLiveEvents = pgTable("polar_live_events", {
   bodyHash: text("body_hash").notNull(),
   state: text("state").notNull().default("pending"),
   attempts: integer("attempts").notNull().default(0),
+  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
   receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow().notNull(),
   processedAt: timestamp("processed_at", { withTimezone: true }),
 }, table => [index("polar_live_events_pending_idx").on(table.state, table.receivedAt)]);

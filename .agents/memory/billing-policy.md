@@ -77,6 +77,18 @@ Use server-driven background renewal delivery, separate from device-local study 
 
 **How to apply:** Keep renewal consent separate from study preferences and re-check the verified access source at dispatch. Do not replace remote delivery with local expiry scheduling merely to avoid native push setup. Report unavailable provider/build setup honestly and retain in-app notices.
 
+Do not activate the monthly recurring product on a promise of six payments
+without a reliable finite-payment safeguard, and do not silently substitute
+manual monthly payments.
+
+**Why:** The course policy is six months, but Polar's documented cancellation
+API only schedules cancellation at the current period end. A cancellation
+triggered by the sixth webhook alone can miss a seventh charge during an outage.
+
+**How to apply:** Keep monthly checkout independently blocked until a
+provider-enforced cap or an owner-approved alternative is verified. Autoscale
+process timers and successful webhook tests are not proof of that guarantee.
+
 Native renewal pushes must check current device/account consent before presentation, not rely on unregistering a push token alone.
 
 **Why:** A queued push can outlive sign-out or reach a token reused by another account. Automatic OS alert payloads bypass the app's account check.

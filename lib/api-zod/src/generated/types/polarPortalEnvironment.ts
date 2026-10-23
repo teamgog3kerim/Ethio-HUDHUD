@@ -10,4 +10,5 @@ export type PolarPortalEnvironment = typeof PolarPortalEnvironment[keyof typeof 
 
 export const PolarPortalEnvironment = {
   sandbox: 'sandbox',
+  live: 'live',
 } as const;

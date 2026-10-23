@@ -31,6 +31,7 @@ export * from './adminUserUpdateRole';
 export * from './answerFeedback';
 export * from './appSettings';
 export * from './billingStatus';
+export * from './billingStatusPaidPlan';
 export * from './billingStatusSelectedPlan';
 export * from './billingStatusSource';
 export * from './chatInput';

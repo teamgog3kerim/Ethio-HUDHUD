@@ -10,4 +10,5 @@ export type PolarCheckoutEnvironment = typeof PolarCheckoutEnvironment[keyof typ
 
 export const PolarCheckoutEnvironment = {
   sandbox: 'sandbox',
+  live: 'live',
 } as const;

@@ -427,6 +427,55 @@ export const ClearChatResponse = zod.object({
 
 
 /**
+ * @summary Start an account-bound live checkout only after explicit launch approval
+ */
+export const CreateLiveCheckoutBody = zod.object({
+  "plan": zod.enum(['monthly', 'six_month'])
+})
+
+export const CreateLiveCheckoutResponse = zod.object({
+  "id": zod.string().uuid(),
+  "environment": zod.enum(['sandbox', 'live']),
+  "plan": zod.enum(['monthly', 'six_month']),
+  "status": zod.enum(['pending', 'paid', 'failed', 'expired', 'refunded']),
+  "checkoutUrl": zod.string().nullable(),
+  "accessUntil": zod.coerce.date().nullable(),
+  "subscriptionStatus": zod.string().nullable(),
+  "cancelAtPeriodEnd": zod.boolean(),
+  "verifiedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Verify the signed-in account's purchase against current Polar state
+ */
+export const GetLiveCheckoutParams = zod.object({
+  "id": zod.coerce.string().uuid()
+})
+
+export const GetLiveCheckoutResponse = zod.object({
+  "id": zod.string().uuid(),
+  "environment": zod.enum(['sandbox', 'live']),
+  "plan": zod.enum(['monthly', 'six_month']),
+  "status": zod.enum(['pending', 'paid', 'failed', 'expired', 'refunded']),
+  "checkoutUrl": zod.string().nullable(),
+  "accessUntil": zod.coerce.date().nullable(),
+  "subscriptionStatus": zod.string().nullable(),
+  "cancelAtPeriodEnd": zod.boolean(),
+  "verifiedAt": zod.coerce.date().nullable()
+})
+
+
+/**
+ * @summary Open the signed-in purchaser's billing portal
+ */
+export const CreateLivePortalResponse = zod.object({
+  "url": zod.string().url(),
+  "environment": zod.enum(['sandbox', 'live'])
+})
+
+
+/**
  * @summary Verify raw signed live Polar bytes and durably queue a receipt; never grants access by itself
  */
 export const receiveLivePolarWebhookHeaderWebhookIdMax = 255;
@@ -473,7 +522,7 @@ export const CreateSandboxCheckoutBody = zod.object({
 
 export const CreateSandboxCheckoutResponse = zod.object({
   "id": zod.string().uuid(),
-  "environment": zod.enum(['sandbox']),
+  "environment": zod.enum(['sandbox', 'live']),
   "plan": zod.enum(['monthly', 'six_month']),
   "status": zod.enum(['pending', 'paid', 'failed', 'expired', 'refunded']),
   "checkoutUrl": zod.string().nullable(),
@@ -493,7 +542,7 @@ export const GetSandboxCheckoutParams = zod.object({
 
 export const GetSandboxCheckoutResponse = zod.object({
   "id": zod.string().uuid(),
-  "environment": zod.enum(['sandbox']),
+  "environment": zod.enum(['sandbox', 'live']),
   "plan": zod.enum(['monthly', 'six_month']),
   "status": zod.enum(['pending', 'paid', 'failed', 'expired', 'refunded']),
   "checkoutUrl": zod.string().nullable(),
@@ -509,7 +558,7 @@ export const GetSandboxCheckoutResponse = zod.object({
  */
 export const CreateSandboxPortalResponse = zod.object({
   "url": zod.string().url(),
-  "environment": zod.enum(['sandbox'])
+  "environment": zod.enum(['sandbox', 'live'])
 })
 
 
@@ -533,10 +582,18 @@ export const SelectCoursePlanResponse = zod.object({
   "selectedPlan": zod.union([zod.literal('trial'),zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish().describe('Learner preference only, never proof of a paid subscription'),
   "configured": zod.boolean(),
   "sandboxCheckoutEnabled": zod.boolean().optional(),
+  "liveCheckoutEnabled": zod.boolean().optional(),
+  "liveMonthlyCheckoutEnabled": zod.boolean().optional(),
+  "hasLivePurchase": zod.boolean().optional(),
+  "paymentVerificationPending": zod.boolean().optional(),
+  "paidPlan": zod.union([zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish(),
+  "paidPeriodEndsAt": zod.coerce.date().nullish(),
+  "cancelAtPeriodEnd": zod.boolean().optional(),
+  "subscriptionStatus": zod.string().nullish(),
   "message": zod.string(),
   "dailyAiLimit": zod.number().int().optional(),
   "accessExpiresAt": zod.string().nullish(),
-  "source": zod.enum(['none', 'admin_grant']).optional(),
+  "source": zod.enum(['none', 'admin_grant', 'polar_live']).optional(),
   "isGuest": zod.boolean(),
   "enforcementEnabled": zod.boolean(),
   "fullCourseAccess": zod.boolean(),
@@ -653,10 +710,18 @@ export const GetBillingStatusResponse = zod.object({
   "selectedPlan": zod.union([zod.literal('trial'),zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish().describe('Learner preference only, never proof of a paid subscription'),
   "configured": zod.boolean(),
   "sandboxCheckoutEnabled": zod.boolean().optional(),
+  "liveCheckoutEnabled": zod.boolean().optional(),
+  "liveMonthlyCheckoutEnabled": zod.boolean().optional(),
+  "hasLivePurchase": zod.boolean().optional(),
+  "paymentVerificationPending": zod.boolean().optional(),
+  "paidPlan": zod.union([zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish(),
+  "paidPeriodEndsAt": zod.coerce.date().nullish(),
+  "cancelAtPeriodEnd": zod.boolean().optional(),
+  "subscriptionStatus": zod.string().nullish(),
   "message": zod.string(),
   "dailyAiLimit": zod.number().int().optional(),
   "accessExpiresAt": zod.string().nullish(),
-  "source": zod.enum(['none', 'admin_grant']).optional(),
+  "source": zod.enum(['none', 'admin_grant', 'polar_live']).optional(),
   "isGuest": zod.boolean(),
   "enforcementEnabled": zod.boolean(),
   "fullCourseAccess": zod.boolean(),
@@ -733,7 +798,7 @@ export const GetAdminUsersResponse = zod.object({
   "lessonsCompleted": zod.number().int(),
   "xp": zod.number().int(),
   "dailyGoal": zod.number().int(),
-  "accessPlan": zod.enum(['free', 'complimentary']),
+  "accessPlan": zod.enum(['free', 'complimentary', 'monthly', 'six_month']),
   "accessExpiresAt": zod.string().nullable(),
   "accessReason": zod.string()
 })),

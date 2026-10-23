@@ -1,0 +1,175 @@
+import { createPolar, type models } from "@polar-sh/sdk/2026-10";
+import { db, appAccounts, polarLivePurchases, type LivePurchase } from "@workspace/db";
+import { and, eq, isNotNull, sql } from "drizzle-orm";
+import { HttpError } from "./http-error";
+import { logger } from "./logger";
+import { LIVE_COURSE_PRODUCTS } from "./polar-live-webhook-policy";
+import { assertSandboxProduct } from "./polar-sandbox-policy";
+import {
+  LIVE_CHECKOUT_LAUNCH_APPROVED, LIVE_MONTHLY_CAP_APPROVED, LIVE_VERIFICATION_TTL,
+  liveCustomerId, livePaymentState, safeLiveUrl, type LivePlan,
+} from "./polar-live-policy";
+
+export function liveCheckoutEnabled() {
+  return LIVE_CHECKOUT_LAUNCH_APPROVED && !!process.env.POLAR_LIVE_ACCESS_TOKEN && !!process.env.POLAR_LIVE_WEBHOOK_SECRET;
+}
+export function liveMonthlyEnabled() { return liveCheckoutEnabled() && LIVE_MONTHLY_CAP_APPROVED; }
+export function liveApi() {
+  if (!process.env.POLAR_LIVE_ACCESS_TOKEN) throw new HttpError(503, "اتصال Polar المباشر غير متاح.");
+  return createPolar({ accessToken: process.env.POLAR_LIVE_ACCESS_TOKEN, timeout: 8 });
+}
+export async function liveCall<T>(operation: () => Promise<T>): Promise<T> {
+  try { return await operation(); }
+  catch (error) {
+    if (error instanceof HttpError) throw error;
+    logger.warn({ provider: "polar_live", statusCode: (error as { statusCode?: number }).statusCode }, "Live billing verification unavailable");
+    throw new HttpError(502, "تعذر التحقق من Polar. لا تبدأ عملية دفع جديدة؛ أعد التحقق لاحقاً.");
+  }
+}
+export async function assertLiveAccount(userId: string) {
+  const [account] = await db.select().from(appAccounts).where(eq(appAccounts.userId, userId));
+  if (account?.deletedAt || account?.suspended) throw new HttpError(403, "هذا الحساب غير متاح للفوترة.");
+}
+export function liveCheckoutResponse(row: LivePurchase) {
+  return {
+    id: row.checkoutId ?? row.id, environment: "live" as const, plan: row.plan as LivePlan,
+    status: row.status === "creating" ? "pending" : row.status,
+    checkoutUrl: row.status === "pending" && row.expiresAt && row.expiresAt > new Date() && row.checkoutUrl ? safeLiveUrl(row.checkoutUrl) : null,
+    accessUntil: row.accessUntil?.toISOString() ?? null,
+    subscriptionStatus: row.subscriptionStatus, cancelAtPeriodEnd: row.cancelAtPeriodEnd,
+    verifiedAt: row.verifiedAt?.toISOString() ?? null,
+  };
+}
+const accountLock = (userId: string) => sql`select pg_advisory_xact_lock(hashtext(${`polar-live:${userId}`}))`;
+
+// Pure ownership matching is repeated for the checkout, subscription and orders.
+// Metadata alone is not ownership proof. It recovers a durable pre-call intent
+// if a provider response or database update was lost.
+export async function attachLiveCheckout(checkout: Pick<models.Checkout, "id" | "metadata" | "external_customer_id" | "product_id" | "url" | "expires_at">) {
+  const intentId = checkout.metadata?.hudhud_intent;
+  if (typeof intentId !== "string" || !/^[0-9a-f-]{36}$/i.test(intentId)) return null;
+  return db.transaction(async tx => {
+    const [initial] = await tx.select().from(polarLivePurchases).where(eq(polarLivePurchases.id, intentId));
+    if (!initial) return null;
+    await tx.execute(accountLock(initial.userId));
+    const [intent] = await tx.select().from(polarLivePurchases).where(eq(polarLivePurchases.id, intentId));
+    if (!intent || (intent.checkoutId && intent.checkoutId !== checkout.id)
+      || checkout.external_customer_id !== liveCustomerId(intent.userId)
+      || checkout.product_id !== LIVE_COURSE_PRODUCTS[intent.plan as LivePlan]) return null;
+    await assertLiveAccount(intent.userId);
+    const [saved] = await tx.update(polarLivePurchases).set({
+      checkoutId: checkout.id, checkoutUrl: safeLiveUrl(checkout.url),
+      expiresAt: new Date(checkout.expires_at), status: intent.status === "creating" ? "pending" : intent.status,
+    }).where(eq(polarLivePurchases.id, intent.id)).returning();
+    return saved!;
+  });
+}
+
+export async function createLiveCheckout(userId: string, email: string, plan: LivePlan) {
+  // These guards run before any SDK request or durable purchase is created.
+  if (!liveCheckoutEnabled() || (plan === "monthly" && !liveMonthlyEnabled())) {
+    throw new HttpError(503, plan === "monthly"
+      ? "الدفع الشهري غير مفعّل حتى تأكيد إيقاف التحصيل بعد ست دفعات."
+      : "الدفع المباشر غير مفعّل بعد. لم يتم تحصيل أي رسوم.");
+  }
+  await assertLiveAccount(userId);
+  const api = liveApi();
+  const product = await liveCall(() => api.products.get(LIVE_COURSE_PRODUCTS[plan]));
+  try { assertSandboxProduct(plan, product); }
+  catch { throw new HttpError(503, "سعر المنتج أو مدته لا يطابق الخطة المعروضة."); }
+  // Refresh prior purchases first. A provider outage must not cause a second
+  // checkout to be offered while the first payment is unresolved.
+  const previous = await db.select().from(polarLivePurchases).where(eq(polarLivePurchases.userId, userId));
+  for (const row of previous) if (row.checkoutId) await refreshLiveCheckout(userId, row.checkoutId);
+  const intent = await db.transaction(async tx => {
+    await tx.execute(accountLock(userId));
+    const rows = await tx.select().from(polarLivePurchases).where(eq(polarLivePurchases.userId, userId));
+    const active = rows.find(r => (r.accessUntil && r.accessUntil > new Date())
+      || (r.subscriptionId && r.subscriptionStatus !== "canceled"));
+    if (active) throw new HttpError(409, "لديك اشتراك أو وصول قائم. استخدم بوابة الفوترة.");
+    const unresolved = rows.find(r => r.status === "creating" || r.status === "pending");
+    if (unresolved) {
+      if (unresolved.status === "pending" && unresolved.plan === plan && unresolved.expiresAt && unresolved.expiresAt > new Date()) return unresolved;
+      throw new HttpError(409, "توجد عملية دفع معلّقة. تحقّق منها قبل بدء عملية أخرى.");
+    }
+    const [row] = await tx.insert(polarLivePurchases).values({ userId, plan }).returning();
+    return row!;
+  });
+  if (intent.checkoutId) return liveCheckoutResponse(intent);
+  // Fixed public return origin, never a browser-supplied Host/redirect.
+  // The domain was verified through the deployment service before setup.
+  const origin = "https://ethiohudhud.com";
+  let checkout: models.Checkout;
+  try {
+    checkout = await api.checkouts.create({
+      products: [LIVE_COURSE_PRODUCTS[plan]], external_customer_id: liveCustomerId(userId),
+      customer_email: email, allow_trial: false, allow_discount_codes: false, currency: "usd",
+      metadata: { application: "hudhud", environment: "live", plan, hudhud_intent: intent.id },
+      success_url: `${origin}/billing/return?environment=live&checkout_id={CHECKOUT_ID}`,
+      return_url: `${origin}/billing/cancel?environment=live`,
+    });
+  } catch (error) {
+    const status = (error as { statusCode?: number }).statusCode;
+    // A timeout/5xx may have created a checkout. Keep its intent unresolved and
+    // recover it from the provider list or a signed event, never blind-retry.
+    if (status && [400, 401, 403, 404, 422].includes(status)) {
+      await db.update(polarLivePurchases).set({ status: "failed" }).where(eq(polarLivePurchases.id, intent.id));
+    }
+    throw new HttpError(502, "تعذر تأكيد إنشاء صفحة الدفع. تحقّق من حالة العملية قبل إعادة المحاولة.");
+  }
+  const saved = await attachLiveCheckout(checkout);
+  if (!saved) throw new HttpError(502, "تعذر تأكيد ربط الدفع بالحساب.");
+  return liveCheckoutResponse(saved);
+}
+
+export async function refreshLiveCheckout(userId: string, checkoutId: string, api = liveApi()) {
+  await assertLiveAccount(userId);
+  return db.transaction(async tx => {
+    await tx.execute(accountLock(userId));
+    const [row] = await tx.select().from(polarLivePurchases)
+      .where(and(eq(polarLivePurchases.checkoutId, checkoutId), eq(polarLivePurchases.userId, userId)));
+    if (!row) throw new HttpError(404, "لم يتم العثور على عملية دفع لهذا الحساب.");
+    const checkout = await liveCall(() => api.checkouts.get(checkoutId));
+    const plan = row.plan as LivePlan;
+    if (checkout.external_customer_id !== liveCustomerId(userId) || checkout.product_id !== LIVE_COURSE_PRODUCTS[plan]) {
+      throw new HttpError(403, "عملية الدفع غير مرتبطة بهذا الحساب أو الخطة.");
+    }
+    const initial = await liveCall(() => api.orders.list({ checkout_id: checkoutId, limit: 100 }));
+    if (initial.items.length >= 100) throw new HttpError(502, "تحتاج عملية الدفع إلى مراجعة الفوترة.");
+    const subscriptionId = initial.items.find(o => o.subscription_id)?.subscription_id ?? row.subscriptionId;
+    let orders = initial.items;
+    let subscription: models.Subscription | null = null;
+    if (subscriptionId) {
+      subscription = await liveCall(() => api.subscriptions.get(subscriptionId));
+      const page = await liveCall(() => api.orders.list({ subscription_id: subscriptionId, limit: 100 }));
+      if (page.items.length >= 100) throw new HttpError(502, "تحتاج فترات الاشتراك إلى مراجعة الفوترة.");
+      orders = page.items;
+    }
+    let payment;
+    try { payment = livePaymentState({ userId, plan, checkoutStatus: checkout.status, orders, subscription }); }
+    catch { throw new HttpError(403, "تعذر إثبات ملكية الاشتراك."); }
+    // Defense in depth only, not the launch prerequisite for a finite plan.
+    if (subscription && payment.paidCycles >= 6 && !subscription.cancel_at_period_end && subscription.status === "active") {
+      subscription = await liveCall(() => api.subscriptions.update(subscriptionId!, { cancel_at_period_end: true }));
+    }
+    const [saved] = await tx.update(polarLivePurchases).set({
+      status: payment.status, paidUntil: payment.paidUntil, accessUntil: payment.accessUntil,
+      subscriptionId, subscriptionStatus: subscription?.status ?? null,
+      cancelAtPeriodEnd: subscription?.cancel_at_period_end ?? false,
+      verifiedAt: new Date(), nextCheckAt: new Date(Date.now() + LIVE_VERIFICATION_TTL), attempts: 0,
+    }).where(eq(polarLivePurchases.id, row.id)).returning();
+    return liveCheckoutResponse(saved!);
+  });
+}
+
+export async function livePortal(userId: string) {
+  await assertLiveAccount(userId);
+  const [purchase] = await db.select().from(polarLivePurchases).where(and(
+    eq(polarLivePurchases.userId, userId), isNotNull(polarLivePurchases.checkoutId),
+  )).limit(1);
+  if (!purchase?.checkoutId) throw new HttpError(404, "لا توجد عملية دفع مباشرة لهذا الحساب.");
+  const session = await liveCall(() => liveApi().customerSessions.create({
+    external_customer_id: liveCustomerId(userId), return_url: "https://ethiohudhud.com/choose-plan",
+  }));
+  return { environment: "live" as const, url: safeLiveUrl(session.customer_portal_url) };
+}

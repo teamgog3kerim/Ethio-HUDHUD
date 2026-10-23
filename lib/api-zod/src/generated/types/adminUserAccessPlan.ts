@@ -11,4 +11,6 @@ export type AdminUserAccessPlan = typeof AdminUserAccessPlan[keyof typeof AdminU
 export const AdminUserAccessPlan = {
   free: 'free',
   complimentary: 'complimentary',
+  monthly: 'monthly',
+  six_month: 'six_month',
 } as const;

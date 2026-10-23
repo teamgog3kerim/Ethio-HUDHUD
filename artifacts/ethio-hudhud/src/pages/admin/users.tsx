@@ -52,11 +52,12 @@ function Body() {
                         <span className="rounded-full bg-secondary px-2.5 py-1">{roleLabel(u.role)}</span>
                         {u.suspended && <span className="rounded-full bg-destructive/15 px-2.5 py-1 text-destructive">{t('موقوف', 'Suspended')}</span>}
                         {u.accessPlan === 'complimentary' && <span className="rounded-full bg-gold/20 px-2.5 py-1">{t('وصول مجاني', 'Complimentary')}</span>}
+                        {(u.accessPlan === 'monthly' || u.accessPlan === 'six_month') && <span className="rounded-full bg-primary/10 px-2.5 py-1">{u.accessPlan === 'monthly' ? t('شهري مدفوع', 'Paid monthly') : t('ستة أشهر مدفوعة', 'Paid six months')}</span>}
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {t('دروس', 'Lessons')}: {u.lessonsCompleted} · XP: {u.xp} · {t('الهدف', 'Goal')}: {u.dailyGoal} · {t('انضم', 'Joined')}: {fmtDate(u.createdAt, lang)} · {t('آخر دخول', 'Last sign-in')}: {fmtDate(u.lastSignInAt, lang)}
-                      {u.accessPlan === 'complimentary' && ` · ${t('ينتهي', 'Expires')}: ${fmtDate(u.accessExpiresAt, lang)}`}
+                      {u.accessPlan !== 'free' && ` · ${t('ينتهي', 'Expires')}: ${fmtDate(u.accessExpiresAt, lang)}`}
                     </p>
                     {locked ? <p className="text-xs text-muted-foreground">{t('حساب المالك محميّ ولا يمكن إدارته هنا.', 'The owner account is protected and cannot be managed here.')}</p> : (
                       <div className="flex flex-wrap gap-2">

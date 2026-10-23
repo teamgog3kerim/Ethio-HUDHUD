@@ -4,6 +4,7 @@ import { and, eq, desc, lte, sql } from "drizzle-orm";
 import { getAccessState, getAppSettings } from "./app-settings";
 import { logger } from "./logger";
 import { deviceBindingKey, renewalPeriod, type VerifiedReminder } from "./renewal-policy";
+import { liveAccess } from "./polar-live-access";
 
 export function deliveryConfig() {
   const { RENEWAL_VAPID_PUBLIC_KEY: publicKey, RENEWAL_VAPID_PRIVATE_KEY: privateKey, RENEWAL_VAPID_SUBJECT: subject } = process.env;
@@ -19,9 +20,15 @@ export async function verifiedReminder(userId: string): Promise<VerifiedReminder
   const [account] = await db.select().from(appAccounts).where(eq(appAccounts.userId, userId));
   if (account?.suspended || account?.deletedAt) return null;
   const access = await getAccessState(userId, await getAppSettings());
-  return access.source === "admin_grant" && access.accessExpiresAt
-    ? { kind: "complimentary_expiring", expiresAt: access.accessExpiresAt }
-    : null;
+  if (access.source === "admin_grant" && access.accessExpiresAt) return { kind: "complimentary_expiring", expiresAt: access.accessExpiresAt };
+  if (access.source === "polar_live") {
+    const payment = await liveAccess(userId);
+    if (payment.paidPeriodEndsAt) return {
+      kind: payment.paidPlan === "monthly" && !payment.cancelAtPeriodEnd ? "renewal_due" : "course_expiring",
+      expiresAt: payment.paidPeriodEndsAt,
+    };
+  }
+  return null;
 }
 
 export async function reminderDeviceStatus(id: string, userId: string) {
@@ -60,7 +67,9 @@ export async function dispatchRenewalDevice(device: Device) {
       if (live.channel === "web") {
         await webpush.sendNotification(live.subscription as webpush.PushSubscription, JSON.stringify({
           title: "هدهد — تذكير الوصول",
-          body: "اقترب انتهاء الوصول المتاح لك. افتح التطبيق للتحقق من التفاصيل. لا يتم تحصيل رسوم تلقائيًا في المرحلة التجريبية.",
+          body: reminder!.kind === "renewal_due"
+            ? "موعد تجديد اشتراكك يقترب. افتح التطبيق للتحقق من حالة الاشتراك ووسيلة الدفع."
+            : "اقترب انتهاء الوصول المتاح لك. افتح التطبيق للتحقق من التفاصيل.",
           binding: deviceBindingKey(live.userId, live.id), period: period.id, expiresAt: reminder!.expiresAt,
         }), { TTL: period.ttl, timeout: 10_000 });
       } else {

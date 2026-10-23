@@ -190,6 +190,52 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/HealthStatus" }
+  /billing/polar/live/checkout:
+    post:
+      operationId: createLiveCheckout
+      summary: Start an account-bound live checkout only after explicit launch approval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PolarCheckoutInput" }
+      responses:
+        "200":
+          description: Live checkout
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PolarCheckout" }
+        "401": { description: Sign in required }
+        "403": { description: Verified email and active account required }
+        "409": { description: Existing or unresolved purchase }
+        "503": { description: Checkout not enabled or monthly cap not approved }
+  /billing/polar/live/checkout/{id}:
+    get:
+      operationId: getLiveCheckout
+      summary: Verify the signed-in account's purchase against current Polar state
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Verified live checkout
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PolarCheckout" }
+        "401": { description: Sign in required }
+        "404": { description: Checkout not owned by this account }
+        "502": { description: Provider verification unavailable }
+  /billing/polar/live/portal:
+    post:
+      operationId: createLivePortal
+      summary: Open the signed-in purchaser's billing portal
+      responses:
+        "200":
+          description: Live customer portal
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PolarPortal" }
+        "401": { description: Sign in required }
+        "404": { description: No live purchase for this account }
   /billing/polar/live/webhook:
     post:
       operationId: receiveLivePolarWebhook
@@ -542,7 +588,7 @@ components:
         lessonsCompleted: { type: integer }
         xp: { type: integer }
         dailyGoal: { type: integer }
-        accessPlan: { type: string, enum: [free, complimentary] }
+        accessPlan: { type: string, enum: [free, complimentary, monthly, six_month] }
         accessExpiresAt: { type: [string, "null"] }
         accessReason: { type: string }
     AdminUsers:
@@ -882,10 +928,18 @@ components:
           description: Learner preference only, never proof of a paid subscription
         configured: { type: boolean }
         sandboxCheckoutEnabled: { type: boolean }
+        liveCheckoutEnabled: { type: boolean }
+        liveMonthlyCheckoutEnabled: { type: boolean }
+        hasLivePurchase: { type: boolean }
+        paymentVerificationPending: { type: boolean }
+        paidPlan: { type: [string, "null"], enum: [monthly, six_month, null] }
+        paidPeriodEndsAt: { type: [string, "null"], format: date-time }
+        cancelAtPeriodEnd: { type: boolean }
+        subscriptionStatus: { type: [string, "null"] }
         message: { type: string }
         dailyAiLimit: { type: integer }
         accessExpiresAt: { type: [string, "null"] }
-        source: { type: string, enum: [none, admin_grant] }
+        source: { type: string, enum: [none, admin_grant, polar_live] }
         isGuest: { type: boolean }
         enforcementEnabled: { type: boolean }
         fullCourseAccess: { type: boolean }
@@ -915,7 +969,7 @@ components:
       required: [id, environment, plan, status, checkoutUrl, accessUntil, subscriptionStatus, cancelAtPeriodEnd, verifiedAt]
       properties:
         id: { type: string, format: uuid }
-        environment: { type: string, enum: [sandbox] }
+        environment: { type: string, enum: [sandbox, live] }
         plan: { type: string, enum: [monthly, six_month] }
         status: { type: string, enum: [pending, paid, failed, expired, refunded] }
         checkoutUrl: { type: [string, "null"] }
@@ -928,7 +982,7 @@ components:
       required: [url, environment]
       properties:
         url: { type: string, format: uri }
-        environment: { type: string, enum: [sandbox] }
+        environment: { type: string, enum: [sandbox, live] }
     CourseTrial:
       type: object
       required: [state, startedAt, endsAt, daysRemaining]

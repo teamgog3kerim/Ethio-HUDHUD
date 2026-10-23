@@ -6,7 +6,7 @@ export const deviceBindingKey = (userId: string, deviceId: string) =>
   createHash("sha256").update(`${userId}:${deviceId}`).digest("hex");
 
 // Only server-verified sources may call this. No client-provided billing dates.
-// The current source adapter supplies admin grants only; Polar remains deferred.
+// The source adapter supplies current admin grants or verified live Polar dates.
 export function renewalPeriod(deviceId: string, reminder: VerifiedReminder, now = new Date()) {
   const expiry = Date.parse(reminder.expiresAt);
   if (!Number.isFinite(expiry) || expiry <= now.getTime()) return null;

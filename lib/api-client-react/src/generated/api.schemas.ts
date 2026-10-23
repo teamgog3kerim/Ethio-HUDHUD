@@ -43,6 +43,8 @@ export type AdminUserAccessPlan = typeof AdminUserAccessPlan[keyof typeof AdminU
 export const AdminUserAccessPlan = {
   free: 'free',
   complimentary: 'complimentary',
+  monthly: 'monthly',
+  six_month: 'six_month',
 } as const;
 
 export interface AdminUser {
@@ -536,12 +538,24 @@ export const BillingStatusSelectedPlan = {
   six_month: 'six_month',
 } as const;
 
+/**
+ * @nullable
+ */
+export type BillingStatusPaidPlan = typeof BillingStatusPaidPlan[keyof typeof BillingStatusPaidPlan] | null;
+
+
+export const BillingStatusPaidPlan = {
+  monthly: 'monthly',
+  six_month: 'six_month',
+} as const;
+
 export type BillingStatusSource = typeof BillingStatusSource[keyof typeof BillingStatusSource];
 
 
 export const BillingStatusSource = {
   none: 'none',
   admin_grant: 'admin_grant',
+  polar_live: 'polar_live',
 } as const;
 
 export type CourseTrialState = typeof CourseTrialState[keyof typeof CourseTrialState];
@@ -625,6 +639,17 @@ export interface BillingStatus {
   selectedPlan?: BillingStatusSelectedPlan;
   configured: boolean;
   sandboxCheckoutEnabled?: boolean;
+  liveCheckoutEnabled?: boolean;
+  liveMonthlyCheckoutEnabled?: boolean;
+  hasLivePurchase?: boolean;
+  paymentVerificationPending?: boolean;
+  /** @nullable */
+  paidPlan?: BillingStatusPaidPlan;
+  /** @nullable */
+  paidPeriodEndsAt?: string | null;
+  cancelAtPeriodEnd?: boolean;
+  /** @nullable */
+  subscriptionStatus?: string | null;
   message: string;
   dailyAiLimit?: number;
   /** @nullable */
@@ -663,6 +688,7 @@ export type PolarCheckoutEnvironment = typeof PolarCheckoutEnvironment[keyof typ
 
 export const PolarCheckoutEnvironment = {
   sandbox: 'sandbox',
+  live: 'live',
 } as const;
 
 export type PolarCheckoutPlan = typeof PolarCheckoutPlan[keyof typeof PolarCheckoutPlan];
@@ -705,6 +731,7 @@ export type PolarPortalEnvironment = typeof PolarPortalEnvironment[keyof typeof 
 
 export const PolarPortalEnvironment = {
   sandbox: 'sandbox',
+  live: 'live',
 } as const;
 
 export interface PolarPortal {

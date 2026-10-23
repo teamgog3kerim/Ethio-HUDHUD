@@ -22,7 +22,16 @@ export function BillingNotice() {
     : rem.kind === 'renewal_due' ? t('موعد التجديد يقترب', 'Renewal is coming up') : t('وصول الدورة ينتهي قريبًا', 'Your course access ends soon'));
   return (
     <div className="mb-4 space-y-2" data-testid="billing-notice">
-      {comp ? (
+      {b.source === 'polar_live' ? (() => {
+        const end = b.accessExpiresAt ?? b.paidPeriodEndsAt;
+        const pastDue = b.subscriptionStatus === 'past_due';
+        const name = b.paidPlan === 'six_month' ? t('ستة أشهر', 'six-month') : b.paidPlan === 'monthly' ? t('شهري', 'monthly') : t('مدفوعة', 'paid');
+        return <p className={`${row} ${pastDue ? 'border-gold/50 bg-gold/10' : 'border-border bg-card'}`} data-testid="text-live-paid-plan"><Clock className="size-4 shrink-0" />
+          <span className="flex-1">{pastDue
+            ? t('تعذّر تجديد الدفع. وصولك مستمر خلال مهلة السماح؛ حدّث وسيلة الدفع من بوابة الفوترة.', 'Your payment could not be renewed. Access continues during the grace period; update your payment method in the billing portal.')
+            : t(`خطتك ${name} مفعّلة`, `Your ${name} plan is active`)}{end ? ` · ${t('حتى ', 'until ')}${fmt(end)}` : ''}{b.cancelAtPeriodEnd ? ` · ${t('ستنتهي دون تجديد', 'ends without renewal')}` : ''}</span>
+        </p>;
+      })() : comp ? (
         b.accessExpiresAt && <p className={`${row} border-gold/50 bg-gold/10`} data-testid="text-complimentary-expiry"><Clock className="size-4 shrink-0" />{t('منحة مجانية حتى ', 'Complimentary access until ')}{fmt(b.accessExpiresAt)}</p>
       ) : b.trial.state === 'active' ? (
         <p className={`${row} border-border bg-card`} data-testid="text-trial-remaining">

@@ -5,6 +5,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AccessReminder } from './accessReminder';
+import type { BillingStatusPaidPlan } from './billingStatusPaidPlan';
 import type { BillingStatusSelectedPlan } from './billingStatusSelectedPlan';
 import type { BillingStatusSource } from './billingStatusSource';
 import type { CourseOffer } from './courseOffer';
@@ -19,6 +20,17 @@ export interface BillingStatus {
   selectedPlan?: BillingStatusSelectedPlan;
   configured: boolean;
   sandboxCheckoutEnabled?: boolean;
+  liveCheckoutEnabled?: boolean;
+  liveMonthlyCheckoutEnabled?: boolean;
+  hasLivePurchase?: boolean;
+  paymentVerificationPending?: boolean;
+  /** @nullable */
+  paidPlan?: BillingStatusPaidPlan;
+  /** @nullable */
+  paidPeriodEndsAt?: Date | null;
+  cancelAtPeriodEnd?: boolean;
+  /** @nullable */
+  subscriptionStatus?: string | null;
   message: string;
   dailyAiLimit?: number;
   /** @nullable */

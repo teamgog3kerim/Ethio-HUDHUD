@@ -3,11 +3,12 @@ import { Btn, Card, ErrorState, LinkBtn, Skeleton } from '@/components/bits';
 import { useBilling } from '@/components/billing-notice';
 import { useApp } from '@/lib/app';
 
-export function safePolarUrl(raw: string | null | undefined): string | null {
+export function safePolarUrl(raw: string | null | undefined, environment: 'sandbox' | 'live' = 'sandbox'): string | null {
   if (!raw) return null;
   try {
     const u = new URL(raw);
-    const ok = u.protocol === 'https:' && !u.username && !u.password && u.hostname === 'sandbox.polar.sh';
+    const host = environment === 'live' ? 'polar.sh' : 'sandbox.polar.sh';
+    const ok = u.protocol === 'https:' && !u.username && !u.password && !u.port && u.hostname === host;
     return ok ? u.toString() : null;
   } catch { return null; }
 }
@@ -43,9 +44,11 @@ export function CoursePlans({ onChoose, selected, busy, paidOnly = false }: { on
       <h2 className="font-display text-2xl font-extrabold sm:text-3xl">{t('اختر خطتك ثم انتقل إلى الدروس', 'Choose a plan, then proceed to lessons')}</h2>
       <p className="mt-2 text-sm text-muted-foreground">{t('برنامج الأمهرية لستة أشهر لمتحدثي العربية. الاختيار تفضيل فقط.', 'The six-month Amharic programme for Arabic speakers. Your choice is a preference only.')}</p>
       <p className="mt-2 rounded-2xl bg-secondary p-3 text-sm" data-testid="text-plans-note">
-        {b?.sandboxCheckoutEnabled
+        {b?.liveCheckoutEnabled
+          ? t('يمكنك الدفع عبر Polar عند توفر الخطة؛ لا يُفتح الوصول إلا بعد تحقق الخادم من الدفع.', 'You can pay through Polar where the plan is available; access opens only after the server verifies payment.')
+          : b?.sandboxCheckoutEnabled
           ? t('يمكنك اختبار الدفع عبر Polar التجريبي دون أموال حقيقية. لا يفعّل الاختبار اشتراكًا حقيقيًا ولا يغيّر وصولك للدروس.', 'Polar sandbox checkout is available for testing without real money. A test does not activate a real subscription or change lesson access.')
-          : b?.configured
+          : b?.configured && b?.liveCheckoutEnabled
             ? t('اختيار الخطة وحده لا يفتح الدروس؛ يلزم تأكيد الدفع لإتمام الاشتراك.', 'Choosing a plan alone does not unlock lessons; payment must be confirmed to activate access.')
             : t('الدفع الحقيقي عبر Polar غير مفعّل: اختيار خطة مدفوعة تفضيل فقط، ولا رسوم ولا استحقاق مدفوع الآن. التعلّم يبقى مفتوحًا.', 'Live Polar payments are not enabled: choosing a paid plan is a preference only, with no charges or paid entitlement. Learning stays open.')}
       </p>
@@ -66,6 +69,7 @@ export function CoursePlans({ onChoose, selected, busy, paidOnly = false }: { on
             <p className="text-xs font-bold uppercase tracking-widest text-primary">{t('شهري', 'Monthly')}</p>
             <p className="font-display mt-2 text-3xl font-extrabold">${monthly.priceUsd}<span className="text-base font-medium text-muted-foreground"> {t('/ شهر', '/ month')}</span></p>
             <p className="mt-2 text-sm text-muted-foreground">{t(`$${monthly.sixMonthTotalUsd} لستة أشهر إذا استمر الشهري.`, `$${monthly.sixMonthTotalUsd} over six months if kept monthly.`)}</p>
+            {current === 'monthly' && b.liveCheckoutEnabled !== true && !b.sandboxCheckoutEnabled && <p className="mt-2 text-xs text-muted-foreground" data-testid="text-plan-monthly-cap">{t('شراء الشهري غير متاح الآن (السعة قيد الانتظار). الاختيار تفضيل فقط ولا رسوم.', 'Monthly purchase is not available yet (cap pending). Choosing it is a preference only, with no charge.')}</p>}
             {action('monthly', t('اختر الشهري', 'Choose monthly'))}
           </Card>
           <Card data-testid="card-plan-six_month" className={cls('six_month', 'border-primary')}>

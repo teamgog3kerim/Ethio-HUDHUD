@@ -23,24 +23,59 @@ product IDs are ignored. Signed malformed resources fail validation; invalid,
 stale, and future signatures are rejected. Conflicting reuse of a signed event
 ID is rejected. A database failure is not acknowledged, allowing Polar retries.
 
-There is not yet a live reconciliation worker, account-linked live checkout,
-live customer portal, or paid-entitlement resolver. Pending receipts must not be
-marked processed until provider state and account ownership are reconciled.
-This staged receiver must be published before Polar delivery tests can succeed
-against the public domain. No publication or real purchase has been performed.
+The staged receiver was published by the owner and an unsigned production probe
+returned HTTP 403. That verifies reachability/rejection, not a Polar-signed
+delivery or a real purchase.
+
+The staged live checkout adapter, customer portal, reconciliation worker and paid
+access resolver are now implemented. They use separate live purchase records,
+`hudhud-live:` customer identities and current provider reads; neither a plan
+preference, success redirect, nor sandbox purchase grants paid access.
+`LIVE_CHECKOUT_LAUNCH_APPROVED`, `LIVE_MONTHLY_CAP_APPROVED`, `BILLING_CONFIGURED`
+and `TRIAL_ENFORCEMENT_ENABLED` remain false. No real purchase is authorized by
+these changes.
+
+Checkout creates a durable intent before calling Polar. Ambiguous timeouts stay
+unresolved instead of being blindly retried; the worker can recover the
+account-bound intent from checkout metadata. An existing active subscription or
+unresolved purchase blocks another checkout. Only verified primary email is
+forwarded, never a browser-supplied customer ID, price, or return origin.
+
+The worker retries durable receipts and polls purchases independently of event
+delivery. It starts on service startup and ticks while the process runs; this is
+not an always-on scheduler on an idle autoscale deployment. Paid access older
+than five minutes is rechecked on demand and fails closed if verification is
+unavailable. No receipt is marked processed until reconciliation succeeds.
+Deleted/suspended accounts cannot gain access from callbacks.
+
+Live return URLs explicitly select `environment=live`; old sandbox return URLs
+remain sandbox-only. The learner can see pending verification, paid access,
+expiry, renewal cancellation and billing-portal access. A cancellation return
+does not prove there was no charge. Existing paid access feeds AI quota selection
+and verified renewal dates without overwriting complimentary grants or progress.
+
+The configured return origin is the verified public domain
+`https://ethiohudhud.com`. If the production domain changes, update the adapter
+and Polar endpoint settings together.
 
 The configured $29 live product is an ongoing monthly recurring product. Before
 enabling it, resolve a reliable six-payment billing cap; canceling only when a
 webhook happens to observe six orders is insufficient. Do not silently replace
 automatic subscriptions with manual renewals or allow indefinite charges.
 
-## Approved live-access rules — implementation still pending
+## Approved live-access rules — staged implementation
 
 - Monthly cancellation stops renewal; access lasts through the paid period.
 - Failed monthly renewals receive three days' grace before paid lessons lock.
 - Refund approval is manual in Polar. A full refund removes its associated paid
   access; a partial refund leaves access unchanged.
 - Learning progress and original trial dates are preserved.
+
+Automated checks use isolated local fixtures and mocked policy inputs, never a
+real live purchase. A real provider-signed delivery and payment round trip still
+need verification before an explicitly approved rollout. Do not replace the
+live webhook secret with a CLI listener secret or assume the dashboard delivery
+search field is a test button.
 
 The merchant confirms live-payment approval and completed payout setup.
 The customer refund policy supplied by the merchant is **no refunds**.
