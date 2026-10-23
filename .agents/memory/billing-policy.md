@@ -104,9 +104,25 @@ published build.
 payment consequences after choosing the six-month-first scope.
 
 **How to apply:** Enable only the one-time checkout in the prepared build.
-Keep monthly checkout and expired-trial blocking disabled. Do not ask for this
-same activation approval again. Publication stays user-controlled, and the
-agent is not authorized to make a real purchase.
+Keep the original recurring monthly product and expired-trial blocking disabled.
+The newer manual-monthly approval below supersedes the hold on adding any
+monthly payment option. Do not ask for the same $149 activation approval again.
+Publication stays user-controlled, and the agent is not authorized to make a
+real purchase.
+
+Implement and enable manual $29 monthly renewals after testing. Learners choose
+to pay again each month; no automatic charges. Limit the course to six monthly
+payments ($174 total), retain $149 once for six months, and keep trial blocking
+off.
+
+**Why:** The user explicitly selected "Implement and enable manual $29 renewals
+after testing" after the automatic six-payment cap could not be verified.
+
+**How to apply:** Use a separate $29 one-time Polar product, not the original
+recurring product. This is approval to implement and activate the tested manual
+option in the next user-published build, not approval for the agent to purchase
+or publish. Preserve account ownership, duplicate-payment protection, progress,
+grants, and original trial dates.
 
 Native renewal pushes must check current device/account consent before presentation, not rely on unregistering a push token alone.
 

@@ -89,6 +89,15 @@ enabling it, resolve a reliable six-payment billing cap; canceling only when a
 webhook happens to observe six orders is insufficient. Do not silently replace
 automatic subscriptions with manual renewals or allow indefinite charges.
 
+The owner has now explicitly approved a replacement monthly offering: $29 for
+one month, renewed manually, up to six monthly payments. Implement and enable
+that option after testing while retaining the $149 option and keeping trial
+blocking off. This requires a separate live **one-time** $29 USD product. The
+current live integration can read products, but Polar rejected product creation
+with HTTP 403; the owner needs to create this product in the dashboard and
+provide its Product ID. No manual product was created or connected by that
+failed request. Do not reuse or activate the original recurring product.
+
 The owner chose to finalize the **$149 one-time, six-month plan first** and keep
 monthly checkout disabled. A read-only live product check confirmed that its
 product is active, non-recurring and has one active fixed USD 14900-cent price.
