@@ -89,6 +89,16 @@ triggered by the sixth webhook alone can miss a seventh charge during an outage.
 provider-enforced cap or an owner-approved alternative is verified. Autoscale
 process timers and successful webhook tests are not proof of that guarantee.
 
+Finalize the $149 six-month payment option first and keep monthly checkout
+disabled.
+
+**Why:** The user selected this launch scope rather than manual monthly renewals
+or waiting for an automatic six-payment cap.
+
+**How to apply:** Continue with the one-time Polar product without reopening the
+monthly-plan decision. This scope choice is not permission to make a purchase,
+publish automatically, or activate the expired-trial restriction.
+
 Native renewal pushes must check current device/account consent before presentation, not rely on unregistering a push token alone.
 
 **Why:** A queued push can outlive sign-out or reach a token reused by another account. Automatic OS alert payloads bypass the app's account check.

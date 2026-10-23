@@ -63,6 +63,16 @@ enabling it, resolve a reliable six-payment billing cap; canceling only when a
 webhook happens to observe six orders is insufficient. Do not silently replace
 automatic subscriptions with manual renewals or allow indefinite charges.
 
+The owner chose to finalize the **$149 one-time, six-month plan first** and keep
+monthly checkout disabled. A read-only live product check confirmed that its
+product is active, non-recurring and has one active fixed USD 14900-cent price.
+Both live secrets are present in production configuration. The public checkout
+route still returned HTTP 404 when checked after this scope choice, so the
+published build does not yet expose the new checkout flow. Publish the prepared
+implementation and verify it before claiming the public payment flow is ready.
+Public checkout activation requires explicit approval; scope selection alone
+does not authorize a real purchase or the 48-hour access restriction.
+
 ## Approved live-access rules — staged implementation
 
 - Monthly cancellation stops renewal; access lasts through the paid period.
