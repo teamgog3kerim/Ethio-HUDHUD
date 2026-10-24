@@ -1,0 +1,4 @@
+@import 'tailwindcss';
+:root{--g:#104C3C;--g2:#166A56;--gold:#E6B55C;--bg:#F6F7F3;--tx:#112722;}
+body{margin:0;font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--g);}
+.kufi{font-family:'Noto Kufi Arabic',sans-serif}.eth{font-family:'Noto Sans Ethiopic',sans-serif}

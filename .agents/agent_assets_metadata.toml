@@ -15,3 +15,11 @@ uri = "file://artifacts/hudhud-promo-two/public/audio/bg_music.mp3"
 type = "audio"
 title = "bg"
 description = "Generated music: Upbeat Ethiopian-inspired modern pop instrumental for a language-learning social video. Krar lyre plucks, kebero drums, warm bass, claps, 104 BPM, bright and playful, clear drum hits…"
+logical_id = "79eeb976-c0a0-4fd3-bd74-1de979d58499"
+
+[[outputs]]
+id = "8Oy2r2KP50B4dC-ukqyXz"
+uri = "file://artifacts/hudhud-tiktok-promo/public/audio/bg_music.mp3"
+type = "audio"
+title = "bg music"
+description = "Generated music: Warm uplifting world-pop instrumental for a language learning app promo, oud and hand percussion with soft synth pad, 104 BPM, bright confident build, clear accent hits at 3, 9, 15 a…"
