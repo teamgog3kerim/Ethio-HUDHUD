@@ -135,10 +135,10 @@ export function InstallPrompt() {
       aria-label={t('تثبيت التطبيق', 'Install app')}
       title={t('تثبيت التطبيق', 'Install app')}
       aria-haspopup="dialog"
-      className="fixed end-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 inline-flex size-11 items-center justify-center rounded-full border border-primary/20 bg-primary text-primary-foreground shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="fixed end-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full border border-primary/20 bg-primary px-2.5 text-[11px] font-medium text-primary-foreground shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       data-compact="true"
       data-testid="button-open-install"
-    ><Download aria-hidden="true" className="size-4" /></button>}
+    ><Download aria-hidden="true" className="size-3.5 shrink-0" /><span className="whitespace-nowrap">{t('تثبيت التطبيق', 'Install app')}</span></button>}
     <Dialog open={open} onOpenChange={next => { if (!next) dismiss(); }}>
     <DialogContent dir={lang === 'ar' ? 'rtl' : 'ltr'} className="w-[calc(100%-2rem)] max-h-[85dvh] max-w-sm overflow-y-auto rounded-3xl border-border bg-card p-6 text-start" data-testid="install-prompt">
       <div className="flex items-center gap-3 pt-2">

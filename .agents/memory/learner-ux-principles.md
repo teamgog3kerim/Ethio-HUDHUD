@@ -40,3 +40,12 @@ much processing and explicitly requested this simpler sequence.
 after an informed paid-plan click. Keep admin records clear about trial dates,
 actual recorded purchases, unfinished attempts and verification freshness;
 a selected plan or pending attempt is not proof of paid access.
+
+Keep the floating install button compact, with both its icon and visible text;
+do not interpret “smaller” as an icon-only button.
+
+**Why:** The user explicitly corrected the icon-only version and requested its
+text back at a smaller size than the original button.
+
+**How to apply:** Reduce padding, icon and text size while preserving an easy
+tap target and the existing installation action.
