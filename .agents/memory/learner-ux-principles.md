@@ -60,10 +60,11 @@ two seconds or immediately when the learner clicks anywhere on the screen.
 **How to apply:** Do not replay it on ordinary logins or page navigation, and
 do not add another onboarding step or change trial, checkout or access rules.
 
-Keep the “Access and renewal reminders on this device” section hidden throughout
-the web app.
+Show the “Access and renewal reminders on this device” section only on the
+Account page; keep it hidden on every other page.
 
-**Why:** The user explicitly requested hiding this section from all pages.
+**Why:** The user revised the earlier hide-everywhere request to make it visible
+only on the Account page.
 
-**How to apply:** Do not reintroduce this device-reminder settings panel on
-learner pages when changing notification or billing interfaces.
+**How to apply:** Keep this device-reminder settings panel account-only when
+changing notification or billing interfaces.

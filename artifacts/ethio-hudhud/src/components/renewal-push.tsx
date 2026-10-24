@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/react";
+import { useLocation } from "wouter";
 import { useGetReminderDevice, saveReminderDevice } from "@workspace/api-client-react";
 import { disableRenewalPush, renewalBinding, saveRenewalBinding, webPushLimitation, workerBinding, withRenewalLock, retryWebRenewalRevocations, flushWebRenewalRevocations } from "@/lib/renewal-push";
 import { useApp } from "@/lib/app";
@@ -26,6 +27,7 @@ export function RenewalPushSettings() {
 }
 function SignedInRenewalSettings({ userId }: { userId: string }) {
   const { t } = useApp();
+  const [location] = useLocation();
   const [binding] = useState(renewalBinding);
   const q = useGetReminderDevice(binding.id, { query: { queryKey: ["renewal-device", userId, binding.id], refetchOnWindowFocus: true, refetchInterval: 60_000 } });
   const [message, setMessage] = useState("");
@@ -93,8 +95,8 @@ function SignedInRenewalSettings({ userId }: { userId: string }) {
       ));
     } finally { if (alive.current) setBusy(false); }
   };
-  // Keep existing device synchronization active without displaying settings on any page.
-  return <section hidden className="rounded-2xl border border-border bg-card p-4 text-sm space-y-2" aria-label={t("تذكيرات الخلفية", "Background reminders")}>
+  // Keep device synchronization active everywhere; show its settings only on Account.
+  return <section hidden={location.replace(/\/+$/, "") !== "/account"} className="rounded-2xl border border-border bg-card p-4 text-sm space-y-2" aria-label={t("تذكيرات الخلفية", "Background reminders")}>
     <p className="font-semibold">{t("تذكيرات الوصول والتجديد على هذا الجهاز", "Access and renewal reminders on this device")}</p>
     <p>{t("اختياري: قبل الموعد الموثّق بأربعة أيام، حتى والتطبيق مغلق. لا موعد لاشتراك مدفوع قبل تفعيل Polar. قد يؤخر النظام الإشعار، وتبقى التنبيهات داخل التطبيق.", "Optional: four days before a verified date, even with the app closed. No paid subscription dates until Polar is connected. Your system may delay notifications; in-app alerts remain available.")}</p>
     <p role="status" aria-live="polite">{limitation || (q.data?.enabled && "Notification" in window && Notification.permission !== "granted"
