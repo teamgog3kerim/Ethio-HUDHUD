@@ -83,3 +83,14 @@ Hide the explanatory payment-note paragraphs on the subscription cards.
 
 **How to apply:** Keep the card notes hidden without changing prices, payment
 behavior, the actual terms or the provider's checkout disclosures.
+
+Welcome learners at app opening with an animated HUDHUD image and text about
+learning Amharic through Arabic and discovering Ethiopia's people, culture and
+heritage.
+
+**Why:** The user requested an animated welcome beneath the launch image.
+
+**How to apply:** Keep this launch introduction separate from the new-Google-signup
+welcome, brief and dismissible, and out of sign-in and payment-return flows.
+The browser/OS-controlled initial PWA launch image remains static; animate the
+in-app welcome that follows it rather than promising control of the system splash.

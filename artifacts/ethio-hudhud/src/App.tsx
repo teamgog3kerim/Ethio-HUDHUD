@@ -39,6 +39,7 @@ import { CourseAccessGate } from '@/components/course-access-gate';
 import { ErrorState, Skeleton } from '@/components/bits';
 import { NewUserWelcome } from '@/components/new-user-welcome';
 import { StudyPushIdentityBoundary } from '@/components/study-push-identity';
+import { StartupWelcome } from '@/components/startup-welcome';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
 
@@ -201,6 +202,7 @@ function App() {
           <WouterRouter base={basePath}>
             <ClerkProviderWithRoutes />
           </WouterRouter>
+          <StartupWelcome />
           <Toaster />
           <InstallPrompt />
         </TooltipProvider>
