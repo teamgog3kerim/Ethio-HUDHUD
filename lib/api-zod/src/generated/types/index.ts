@@ -32,6 +32,7 @@ export * from './answerFeedback';
 export * from './appSettings';
 export * from './billingStatus';
 export * from './billingStatusPaidPlan';
+export * from './billingStatusPendingCheckoutPlan';
 export * from './billingStatusResumablePlan';
 export * from './billingStatusSelectedPlan';
 export * from './billingStatusSource';

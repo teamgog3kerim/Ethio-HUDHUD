@@ -936,6 +936,9 @@ components:
         monthlyNextPurchaseAt: { type: [string, "null"], format: date-time }
         monthlyPaidThrough: { type: [string, "null"], format: date-time }
         resumablePlan: { type: [string, "null"], enum: [monthly, six_month, null] }
+        pendingCheckoutPlan: { type: [string, "null"], enum: [monthly, six_month, null], description: Original unresolved checkout plan; not the selected preference }
+        pendingCheckoutId: { type: [string, "null"], description: Account-owned unresolved checkout ID for verification-only resume }
+        pendingCheckoutExpiresAt: { type: [string, "null"], format: date-time, description: Provider expiry; reaching this time does not authorize a second checkout without provider verification }
         hasLivePurchase: { type: boolean }
         paymentVerificationPending: { type: boolean }
         paidPlan: { type: [string, "null"], enum: [monthly, six_month, null] }

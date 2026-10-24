@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/react';
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { createLiveCheckout, createLivePortal, createSandboxCheckout, getGetBillingStatusQueryKey, selectCoursePlan } from '@workspace/api-client-react';
+import { createLiveCheckout, createLivePortal, createSandboxCheckout, getLiveCheckout, getGetBillingStatusQueryKey, selectCoursePlan } from '@workspace/api-client-react';
 import { CoursePlans, safePolarUrl } from '@/components/course-plans';
 import { PlanStatusDetails } from '@/components/plan-status-details';
 import { Shell } from '@/components/shell';
@@ -43,9 +43,41 @@ export default function ChoosePlan() {
   const selected = trialHidden && requested === 'trial' ? null : requested;
   const a = planAction(bd, selected, !!isSignedIn, billing.isError);
   const paid = a.paid;
+  const pending = !!isSignedIn && (bd?.paymentVerificationPending === true || !!bd?.pendingCheckoutPlan);
+
+  const pendingAction = async (resume: boolean) => {
+    if (!userId || busyRef.current || billing.isError || !pending) return;
+    const checkoutId = bd?.pendingCheckoutId;
+    const originalPlan = bd?.resumablePlan;
+    if (resume && (!checkoutId || !originalPlan || bd?.liveCheckoutEnabled !== true
+      || (originalPlan === 'monthly' && bd.liveMonthlyCheckoutEnabled !== true))) return;
+    const owner = userId, request = ++version.current;
+    const current = () => identity.current === owner && version.current === request;
+    busyRef.current = true; setBusy(true); setError(null); setErrorOp('main'); setNotice(null);
+    try {
+      // Verification-only, even if another plan is selected or the tab is stale.
+      // Never create a replacement checkout from the resume action.
+      const result = checkoutId ? await getLiveCheckout(checkoutId) : null;
+      if (!current()) return;
+      if (resume) {
+        const url = result?.id === checkoutId && result?.plan === originalPlan && result?.status === 'pending'
+          ? safePolarUrl(result.checkoutUrl, 'live') : null;
+        if (url) { window.location.assign(url); return; }
+        setError(t('لم يعد رابط الدفع متاحاً. تحقّق من الحالة قبل المتابعة.', 'This checkout link is no longer available. Check status before continuing.'));
+      }
+      // Explicit verification bypasses the billing status freshness cache.
+      await billing.refetch();
+    } catch (e) {
+      if (!current()) return;
+      const detail = (e as { data?: { error?: unknown } }).data?.error;
+      setError(resume && typeof detail === 'string' ? detail : t('تعذر التحقق من Polar. يبقى تغيير الخطة متوقفاً حتى تأكيد حالة الدفع.', 'Could not verify with Polar. Switching stays blocked until checkout status is confirmed.'));
+    } finally {
+      if (current()) { busyRef.current = false; setBusy(false); }
+    }
+  };
 
   const run = async (op: Op) => {
-    if (!userId || busyRef.current || a.kind !== op) return;
+    if (!userId || busyRef.current || a.kind !== op || (pending && (op === 'live' || op === 'sandbox'))) return;
     const owner = userId, request = ++version.current;
     const current = () => identity.current === owner && version.current === request;
     busyRef.current = true; setBusy(true); setError(null); setErrorOp('main'); setNotice(null);
@@ -153,12 +185,25 @@ export default function ChoosePlan() {
           : t(`ستة أشهر · $${bd?.offers.find(o => o.id === 'six_month')?.priceUsd ?? 149} · دفعة واحدة`, `Six months · $${bd?.offers.find(o => o.id === 'six_month')?.priceUsd ?? 149} · one payment`)}</p>}
       <p className="text-sm text-muted-foreground" data-testid="text-billing-message">{gist}</p>
       {billing.isLoading && <Skeleton className="h-12" />}
+      {pending && <section className="space-y-3 rounded-2xl border border-border p-3 text-sm" data-testid="pending-checkout">
+        <h2 className="font-semibold">{t('عملية الدفع الأصلية غير المكتملة', 'Original unfinished checkout')}</h2>
+        {bd?.pendingCheckoutPlan && <p data-testid="pending-checkout-plan">{bd.pendingCheckoutPlan === 'monthly'
+          ? t('شهر واحد — 29 دولاراً، دفع يدوي دون تجديد تلقائي.', 'One month — $29, manual payment with no auto-renewal.')
+          : t('ستة أشهر — 149 دولاراً، دفعة واحدة دون تجديد تلقائي.', 'Six months — $149, one payment with no auto-renewal.')}</p>}
+        {bd?.pendingCheckoutExpiresAt ? <p>{t('تنتهي صلاحية الرابط في: ', 'Link expires at: ')}<time className="break-words" data-testid="pending-checkout-expiry" dateTime={bd.pendingCheckoutExpiresAt}>{new Date(bd.pendingCheckoutExpiresAt).toLocaleString(lang === 'ar' ? 'ar' : 'en', { dateStyle: 'full', timeStyle: 'long' })}</time></p>
+          : <p>{t('لم يؤكد Polar موعد انتهاء الصلاحية بعد.', 'Polar has not confirmed the expiry time yet.')}</p>}
+        <p>{t('لا يتيح Polar إلغاء صفحة الدفع الحالية بأمان من هنا. لتغيير الخطة، انتظر انتهاء الرابط ثم تحقّق من الحالة. لن نفتح عملية دفع ثانية حتى يؤكد Polar أن الأصلية لم تعد قابلة للدفع. تغيير الاختيار أو مغادرة الصفحة لا يلغي الدفع الأصلي.', 'Polar does not provide a safe way to retire this checkout here. To change plans, wait for the link to expire, then check status. We will not open a second checkout until Polar confirms the original can no longer charge. Selecting another plan or leaving this page does not cancel the original checkout.')}</p>
+        {bd?.resumablePlan && bd.pendingCheckoutId && <Btn className="min-h-11 w-full" disabled={busy || billing.isFetching || billing.isError || bd.liveCheckoutEnabled !== true || (bd.resumablePlan === 'monthly' && bd.liveMonthlyCheckoutEnabled !== true)} onClick={() => void pendingAction(true)} data-testid="button-resume-checkout">{busy
+          ? t('جارٍ التحقق وفتح الدفع…', 'Verifying and opening checkout…')
+          : bd.resumablePlan === 'monthly' ? t('استأنف الدفع الأصلي — 29 دولاراً', 'Resume original checkout — $29') : t('استأنف الدفع الأصلي — 149 دولاراً', 'Resume original checkout — $149')}</Btn>}
+        <Btn className="min-h-11 w-full" variant="outline" disabled={busy || billing.isFetching || billing.isError} onClick={() => void pendingAction(false)} data-testid="button-check-checkout">{billing.isFetching ? t('جارٍ التحقق…', 'Checking…') : t('تحقّق من حالة الدفع قبل تغيير الخطة', 'Check checkout status before switching')}</Btn>
+      </section>}
       <PlanStatusDetails bd={bd} a={a} selected={selected} />
       {notice && <p className="rounded-2xl bg-secondary p-3 text-sm" role="status">{notice}</p>}
       {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
       {billing.isError && <p className="text-sm text-destructive" role="alert">{t('تعذّر تحميل أو تحديث بيانات الفوترة. الإجراءات متوقفة حتى إعادة التحميل.', 'Could not load or refresh billing data. Actions are paused until it reloads.')}</p>}
       {billing.isError && !bd ? <Btn className="w-full" onClick={() => void billing.refetch()} data-testid="button-retry">{t('إعادة المحاولة', 'Retry')}</Btn>
-        : hasMain ? <Btn className="min-h-11 w-full" disabled={busy || ((a.kind === 'status' || a.kind === 'refresh') && billing.isFetching)} onClick={onMain} data-testid={testId[a.kind]} data-action={a.kind}>
+        : hasMain && (!pending || a.kind === 'refresh') ? <Btn className="min-h-11 w-full" disabled={busy || ((a.kind === 'status' || a.kind === 'refresh') && billing.isFetching)} onClick={onMain} data-testid={testId[a.kind]} data-action={a.kind}>
           {retry && a.kind !== 'signup' ? `${t('إعادة المحاولة: ', 'Retry: ')}${label[a.kind]}` : label[a.kind]}
         </Btn> : null}
       {a.kind === 'unavailable' && <p className="text-sm text-muted-foreground" data-testid="text-plan-unavailable">{t('لا إجراء متاحاً لهذه الخطة الآن؛ راجع التفاصيل أعلاه.', 'No action is available for this plan right now; see the details above.')}</p>}

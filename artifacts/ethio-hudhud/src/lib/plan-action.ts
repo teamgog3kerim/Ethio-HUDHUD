@@ -29,8 +29,8 @@ export function planAction(bd: BillingStatus | undefined, selected: PlanChoice |
   const livePurchase = (!!bd?.paidPlan && bd.fullCourseAccess === true)
     || !!(bd?.monthlyPaidThrough && Date.parse(bd.monthlyPaidThrough) > now);
   const hasPortal = bd?.hasLivePurchase === true;
-  const pendingRaw = bd?.paymentVerificationPending === true;
-  const pending = pendingRaw && !(paid === 'monthly' && resumeMonthly);
+  const pendingRaw = bd?.paymentVerificationPending === true || !!bd?.pendingCheckoutPlan;
+  const pending = pendingRaw;
   const hasOffer = !!paid && bd?.offers.some(offer => offer.id === paid);
   const live = !!paid && hasOffer && bd?.liveCheckoutEnabled === true && (paid === 'six_month' || (bd?.liveMonthlyCheckoutEnabled === true && monthlyAllowed));
   const paidBlock = livePurchase && !(paid === 'monthly' && live);

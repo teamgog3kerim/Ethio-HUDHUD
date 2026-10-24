@@ -15,3 +15,4 @@
 - [Polar sandbox testing](polar-sandbox-testing.md) — sandbox validates email domains; use isolated test identities and SDK signature validation across signing changes.
 - [Polar live readiness](polar-live-readiness.md) — checkout creation and signed webhooks do not prove payments are enabled; check provider readiness and avoid real-card test purchases.
 - [Learner UX principles](learner-ux-principles.md) — simple choices, familiar mobile navigation, clear hierarchy, progressive disclosure and reassuring outcomes.
+- [Unpaid checkout switching](unpaid-checkout-switching.md) — resume the original session; switching waits for provider-confirmed retirement, never a local expiry.

@@ -30,6 +30,9 @@ async function expectReading(page: Page, lesson: typeof boundary) {
 }
 
 test('pass, reload and repeat retain exactly one completion and update resume/progress', async ({ page, learner }) => {
+  // Two complete quizzes plus vocabulary navigation retain real desktop
+  // animations; allow their actionability waits without forcing any clicks.
+  test.setTimeout(90_000);
   await page.goto(`/lesson/${boundary.id}`);
   await expectReading(page, boundary);
   expect(learner.submissions).toHaveLength(0);

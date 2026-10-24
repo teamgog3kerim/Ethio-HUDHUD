@@ -23,6 +23,7 @@ export function manualMonthlyState(rows: Row[], now = new Date()) {
     .sort((a, b) => b.paidUntil!.getTime() - a.paidUntil!.getTime())[0]?.paidUntil ?? null;
   const nextPurchase = paidThrough ? new Date(paidThrough.getTime() - MONTHLY_RENEWAL_WINDOW_MS) : null;
   const unresolved = rows.filter(r => r.status === "creating" || r.status === "pending");
+  const pending = unresolved[0];
   const resumable = unresolved.find(r => r.status === "pending" && r.checkoutId && r.expiresAt && r.expiresAt > now);
   const otherAccess = rows.some(r => (r.plan === "six_month" && r.status === "paid" && r.accessUntil && r.accessUntil > now)
     || (r.subscriptionId && r.subscriptionStatus !== "canceled"));
@@ -34,6 +35,9 @@ export function manualMonthlyState(rows: Row[], now = new Date()) {
       ? nextPurchase.toISOString() : null,
     monthlyPaidThrough: paidThrough?.toISOString() ?? null,
     resumablePlan: resumable?.plan as "monthly" | "six_month" | undefined ?? null,
+    pendingCheckoutPlan: pending?.plan as "monthly" | "six_month" | undefined ?? null,
+    pendingCheckoutId: pending?.checkoutId ?? null,
+    pendingCheckoutExpiresAt: pending?.expiresAt?.toISOString() ?? null,
   };
 }
 

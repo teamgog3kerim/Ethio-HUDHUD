@@ -550,6 +550,18 @@ export const BillingStatusResumablePlan = {
 } as const;
 
 /**
+ * Original unresolved checkout plan; not the selected preference
+ * @nullable
+ */
+export type BillingStatusPendingCheckoutPlan = typeof BillingStatusPendingCheckoutPlan[keyof typeof BillingStatusPendingCheckoutPlan] | null;
+
+
+export const BillingStatusPendingCheckoutPlan = {
+  monthly: 'monthly',
+  six_month: 'six_month',
+} as const;
+
+/**
  * @nullable
  */
 export type BillingStatusPaidPlan = typeof BillingStatusPaidPlan[keyof typeof BillingStatusPaidPlan] | null;
@@ -663,6 +675,21 @@ export interface BillingStatus {
   monthlyPaidThrough?: string | null;
   /** @nullable */
   resumablePlan?: BillingStatusResumablePlan;
+  /**
+     * Original unresolved checkout plan; not the selected preference
+     * @nullable
+     */
+  pendingCheckoutPlan?: BillingStatusPendingCheckoutPlan;
+  /**
+     * Account-owned unresolved checkout ID for verification-only resume
+     * @nullable
+     */
+  pendingCheckoutId?: string | null;
+  /**
+     * Provider expiry; reaching this time does not authorize a second checkout without provider verification
+     * @nullable
+     */
+  pendingCheckoutExpiresAt?: string | null;
   hasLivePurchase?: boolean;
   paymentVerificationPending?: boolean;
   /** @nullable */

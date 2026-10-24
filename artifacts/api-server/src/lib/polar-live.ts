@@ -91,7 +91,9 @@ export async function createLiveCheckout(userId: string, email: string, plan: Li
     const unresolved = rows.find(r => r.status === "creating" || r.status === "pending");
     if (unresolved) {
       if (unresolved.status === "pending" && unresolved.plan === plan && unresolved.expiresAt && unresolved.expiresAt > new Date()) return unresolved;
-      throw new HttpError(409, "توجد عملية دفع معلّقة. تحقّق منها قبل بدء عملية أخرى.");
+      // Polar 2026-10 exposes neither retirement nor expires_at in CheckoutUpdate.
+      // A local timestamp/status change cannot make the original URL unpayable.
+      throw new HttpError(409, "توجد عملية دفع معلّقة. استأنف الدفع الأصلي أو انتظر حتى يؤكد Polar انتهاء صلاحيته قبل تغيير الخطة.");
     }
     const manual = manualMonthlyState(rows);
     if (plan === "monthly" && !manual.monthlyCanPurchase) {
@@ -176,6 +178,8 @@ export async function refreshLiveCheckout(userId: string, checkoutId: string, ap
       payment = livePaymentState({ userId, plan, checkoutStatus: checkout.status, orders, subscription, monthlyPeriod: period });
     }
     const [saved] = await tx.update(polarLivePurchases).set({
+      // Provider-owned expiry can change; never infer terminal status from time.
+      expiresAt: new Date(checkout.expires_at),
       status: payment.status, paidUntil: plan === "monthly" ? period?.end ?? payment.paidUntil : payment.paidUntil,
       accessUntil: payment.accessUntil,
       ...(plan === "monthly" ? {

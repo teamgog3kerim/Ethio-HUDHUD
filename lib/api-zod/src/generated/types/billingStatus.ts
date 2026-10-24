@@ -6,6 +6,7 @@
  */
 import type { AccessReminder } from './accessReminder';
 import type { BillingStatusPaidPlan } from './billingStatusPaidPlan';
+import type { BillingStatusPendingCheckoutPlan } from './billingStatusPendingCheckoutPlan';
 import type { BillingStatusResumablePlan } from './billingStatusResumablePlan';
 import type { BillingStatusSelectedPlan } from './billingStatusSelectedPlan';
 import type { BillingStatusSource } from './billingStatusSource';
@@ -34,6 +35,21 @@ export interface BillingStatus {
   monthlyPaidThrough?: Date | null;
   /** @nullable */
   resumablePlan?: BillingStatusResumablePlan;
+  /**
+     * Original unresolved checkout plan; not the selected preference
+     * @nullable
+     */
+  pendingCheckoutPlan?: BillingStatusPendingCheckoutPlan;
+  /**
+     * Account-owned unresolved checkout ID for verification-only resume
+     * @nullable
+     */
+  pendingCheckoutId?: string | null;
+  /**
+     * Provider expiry; reaching this time does not authorize a second checkout without provider verification
+     * @nullable
+     */
+  pendingCheckoutExpiresAt?: Date | null;
   hasLivePurchase?: boolean;
   paymentVerificationPending?: boolean;
   /** @nullable */
