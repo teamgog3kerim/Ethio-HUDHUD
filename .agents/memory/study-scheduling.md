@@ -36,3 +36,12 @@ in a stopped process. Provider acceptance also does not prove phone receipt.
 runner before claiming timely closed-app reminders are launch-ready. Discuss
 hosting-cost consequences with the owner before changing publishing settings,
 and verify delivery on real supported installed devices.
+
+Use always-on hosting for the study reminder service.
+
+**Why:** The user explicitly selected always-on hosting for reliable background
+reminders rather than keeping the current sleeping-host behavior.
+
+**How to apply:** Prefer Reserved VM when guiding publishing configuration.
+Do not silently replace this choice with idle-time delivery or a separate
+scheduled runner. The owner still reviews hosting costs and confirms publishing.
