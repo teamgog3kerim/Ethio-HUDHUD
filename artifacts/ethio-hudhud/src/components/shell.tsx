@@ -91,8 +91,8 @@ export function Shell({ children }: { children: ReactNode }) {
   const [more, setMore] = useState(false);
   const moreTrigger = useRef<HTMLButtonElement>(null);
   useEffect(() => { setMore(false); }, [loc]);
-  const coreHrefs = ['/dashboard', '/learn', '/review', '/tutor'];
-  const core = items.filter((i) => coreHrefs.includes(i.href));
+  const coreHrefs = ['/dashboard', '/review', '/learn', '/tutor'];
+  const core = coreHrefs.flatMap((href) => items.filter((i) => i.href === href));
   const rest = [
     ...items.filter((i) => !coreHrefs.includes(i.href)),
     { href: '/premium', icon: Sparkles, label: t('الاشتراك والفوترة', 'Subscription & billing') },
