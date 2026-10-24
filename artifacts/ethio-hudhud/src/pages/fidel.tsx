@@ -79,9 +79,14 @@ export default function Fidel() {
                 <ul className="space-y-2">
                   {sel.map(({ word, lessonId }) => (
                     <li key={word.id}>
-                      <Link href={`/lesson/${lessonId}`} className="lift flex items-center justify-between gap-2 rounded-xl bg-secondary px-3 py-2">
-                        <Am className="text-xl font-semibold">{word.amharic}</Am>
-                        <span className="text-sm">{lang === 'ar' ? word.arabic : word.english}</span>
+                      <Link href={`/lesson/${lessonId}`} className="lift block min-h-11 space-y-1.5 rounded-xl bg-secondary px-3 py-3">
+                        <Am className="block break-words text-xl font-semibold">{word.amharic}</Am>
+                        <p className="text-xs text-muted-foreground">{t('النطق التقريبي بالعربية', 'Approximate Arabic-script pronunciation')}</p>
+                        <p className="break-words text-base leading-relaxed text-primary" dir="rtl" lang="ar" data-testid={`fidel-pronunciation-${word.id}`}>{word.transliteration}</p>
+                        <p className="break-words text-sm" dir={lang === 'ar' ? 'rtl' : 'ltr'} lang={lang === 'ar' ? 'ar' : 'en'}>
+                          <span className="text-muted-foreground">{t('المعنى: ', 'Meaning: ')}</span>
+                          {lang === 'ar' ? word.arabic : word.english}
+                        </p>
                       </Link>
                     </li>
                   ))}
