@@ -82,6 +82,20 @@ export function CoursePlans({ onPay, payingPlan, busy, paidOnly = false }: { onP
             <p className="text-xs font-bold uppercase tracking-widest text-primary">{t('شهري', 'Monthly')}</p>
             <p className="font-display mt-2 text-3xl font-extrabold" data-testid="text-price-monthly">${monthly.priceUsd}<span className="text-base font-medium text-muted-foreground"> {t('/ شهر واحد', '/ one month')}</span></p>
             <p className="mb-4 mt-2 text-sm text-muted-foreground" data-testid="text-total-monthly">{t(`شهر واحد لكل دفعة يدوية، حتى 6 دفعات ($${monthly.sixMonthTotalUsd}). لا تجديد تلقائي.`, `One month per manual payment, up to 6 payments ($${monthly.sixMonthTotalUsd}). No auto-renewal.`)}</p>
+            <ul className="mb-3 mt-2 space-y-3 text-sm leading-relaxed" aria-label={t('ما تتضمنه الباقة الشهرية', 'What the monthly package includes')} data-testid="list-monthly-benefits">
+              {[
+                t('تعلّم الحروف الأمهرية (الفيدل)', 'Learn Amharic letters (Fidel)'),
+                t('تعلّم الكلمات والمفردات الأمهرية', 'Learn Amharic words and vocabulary'),
+                t('تعلّم المحادثات الأمهرية لمواقف الحياة اليومية', 'Learn Amharic conversations for everyday situations'),
+                t('تعلّم الأرقام الأمهرية', 'Learn Amharic numbers'),
+                t('وصول شهري إلى الدروس والتمارين وفق الأشهر المدفوعة من خطتك', 'Monthly access to courses and practices for your paid course months'),
+              ].map((benefit, index) => (
+                <li key={index} className="flex items-start gap-2.5">
+                  <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-primary/10 text-primary"><Check className="size-3.5" aria-hidden="true" /></span>
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
             {current === 'monthly' && b.liveCheckoutEnabled !== true && !b.sandboxCheckoutEnabled && <p className="mt-2 text-xs text-muted-foreground" data-testid="text-plan-monthly-cap">{t('شراء الشهري غير متاح بسبب الإعداد الحالي. لا رسوم.', 'Monthly purchase is unavailable under the current configuration. Nothing is charged.')}</p>}
             {action('monthly', t('اختر الشهري', 'Choose monthly'))}
           </Card>
