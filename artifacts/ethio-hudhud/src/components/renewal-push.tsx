@@ -93,7 +93,8 @@ function SignedInRenewalSettings({ userId }: { userId: string }) {
       ));
     } finally { if (alive.current) setBusy(false); }
   };
-  return <section className="rounded-2xl border border-border bg-card p-4 text-sm space-y-2" aria-label={t("تذكيرات الخلفية", "Background reminders")}>
+  // Keep existing device synchronization active without displaying settings on any page.
+  return <section hidden className="rounded-2xl border border-border bg-card p-4 text-sm space-y-2" aria-label={t("تذكيرات الخلفية", "Background reminders")}>
     <p className="font-semibold">{t("تذكيرات الوصول والتجديد على هذا الجهاز", "Access and renewal reminders on this device")}</p>
     <p>{t("اختياري: قبل الموعد الموثّق بأربعة أيام، حتى والتطبيق مغلق. لا موعد لاشتراك مدفوع قبل تفعيل Polar. قد يؤخر النظام الإشعار، وتبقى التنبيهات داخل التطبيق.", "Optional: four days before a verified date, even with the app closed. No paid subscription dates until Polar is connected. Your system may delay notifications; in-app alerts remain available.")}</p>
     <p role="status" aria-live="polite">{limitation || (q.data?.enabled && "Notification" in window && Notification.permission !== "granted"
