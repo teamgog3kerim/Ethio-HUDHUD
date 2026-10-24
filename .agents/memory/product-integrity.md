@@ -40,6 +40,16 @@ read how Amharic words and letters are pronounced.
 revision cards, quiz explanations, tutor instructions and admin-authored content.
 Keep pronunciation distinct from the Arabic translation and label it approximate.
 
+Treat extra Fidel reading words and reveal-based practice as supplements, not
+as additional required course lessons or evidence of mastered vocabulary.
+
+**Why:** Expanding alphabet practice should not silently change existing
+six-month completion requirements or award progress without assessment.
+
+**How to apply:** Preserve genuine lesson links where available. Any future
+graded or saved mastery feature must explicitly use the real assessment and
+progress rules rather than infer completion from showing an answer.
+
 Do not present unreviewed material as verified, invent tutor listings or audio,
 fabricate pronunciation assessment, or claim a paid entitlement from a button.
 
