@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { SignOutAction } from '@/components/sign-out';
 import { AnalyticsPreference } from '@/components/analytics-preference';
 import { InviteFriend } from '@/components/invite-friend';
+import { StudyScheduleSettings } from '@/components/study-schedule';
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 
@@ -104,17 +105,18 @@ export default function Account() {
                   <option value="ar">العربية</option><option value="en">English</option>
                 </select></label>
               <label className="block text-sm font-semibold">{t('دقائق يوميًا', 'Daily minutes')}<input type="number" min={5} max={180} className={cn(input, 'mt-1.5')} value={f.dailyGoal} onChange={(e) => set({ dailyGoal: Math.min(180, Math.max(5, Number(e.target.value) || 5)) })} data-testid="input-minutes" /></label>
-              <label className="block text-sm font-semibold">{t('المنطقة الزمنية', 'Timezone')}<input dir="ltr" className={cn(input, 'mt-1.5')} value={f.timezone} onChange={(e) => set({ timezone: e.target.value })} data-testid="input-timezone" /></label>
             </div>
-            <label className="flex items-center justify-between rounded-2xl border border-border p-3 text-sm font-semibold">{t('تذكير حسب جدول الدراسة', 'Study schedule reminder')}
-              <span className="flex items-center gap-3">{f.reminderEnabled && <input type="time" dir="ltr" value={f.reminderTime} onChange={(e) => set({ reminderTime: e.target.value })} className="rounded-lg border border-input bg-background px-2 py-1" data-testid="input-reminder-time" />}
-                <input type="checkbox" className="size-5 accent-[hsl(var(--primary))]" checked={f.reminderEnabled} onChange={(e) => set({ reminderEnabled: e.target.checked })} data-testid="switch-reminder" /></span>
-            </label>
             <label className="flex items-center justify-between rounded-2xl border border-border p-3 text-sm font-semibold">{t('حفظ سجل المعلّم', 'Keep tutor chat history')}
               <input type="checkbox" className="size-5 accent-[hsl(var(--primary))]" checked={f.retainChat} onChange={(e) => set({ retainChat: e.target.checked })} data-testid="switch-retain" /></label>
-            <Btn disabled={save.isPending || !f.displayName.trim()} onClick={() => save.mutate({ data: f })} data-testid="button-save-profile">{save.isPending ? t('جارٍ الحفظ...', 'Saving...') : t('حفظ التغييرات', 'Save changes')}</Btn>
+            <Btn disabled={save.isPending || !f.displayName.trim()} onClick={() => save.mutate({ data: {
+              ...toInput(q.data),
+              displayName: f.displayName, level: f.level, language: f.language,
+              dailyGoal: f.dailyGoal, retainChat: f.retainChat,
+            } })} data-testid="button-save-profile">{save.isPending ? t('جارٍ الحفظ...', 'Saving...') : t('حفظ التغييرات', 'Save changes')}</Btn>
             {save.isError && <p className="text-sm text-destructive">{t('تعذّر الحفظ.', 'Could not save.')}</p>}
           </Card>
+
+          <StudyScheduleSettings />
 
           <Card>
             <h2 className="font-display mb-1 font-bold">{t('بياناتك', 'Your data')}</h2>

@@ -6,7 +6,6 @@ import { Card, Empty, ErrorState, PageHead, PilotNote, ProgressBar, Skeleton } f
 import { Shell } from '@/components/shell';
 import { useApp } from '@/lib/app';
 import { cn } from '@/lib/utils';
-import { StudyScheduleSettings } from '@/components/study-schedule';
 
 export default function Plan() {
   const { t, lang } = useApp();
@@ -33,7 +32,9 @@ export default function Plan() {
     <Shell>
       <PageHead eyebrow={t('ستة أشهر', 'Six months')} title={t('خطة 180 يومًا', '180-day plan')}
         sub={t('180 نشاطًا للدروس والمراجعة والممارسة. تعلّم بالوتيرة التي تناسبك، مع جدول اختياري.', '180 lesson, review and practice activities. Learn at your own pace, with optional scheduling.')} />
-      <StudyScheduleSettings />
+      <p className="mb-5 text-sm text-muted-foreground">
+        <Link href="/account" className="underline underline-offset-4">{t('إدارة الجدول والتذكيرات من إعدادات الحساب', 'Manage your schedule and reminders in Account settings')}</Link>
+      </p>
       {q.isLoading && <Skeleton className="h-80" />}
       {q.isError && <ErrorState onRetry={() => q.refetch()} what={t('الخطة', 'the plan')} />}
       {q.data && days.length === 0 && <Empty icon={<CalendarRange />} title={t('الخطة غير متاحة', 'No plan available')} />}
