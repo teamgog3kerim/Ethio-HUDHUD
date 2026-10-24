@@ -1,5 +1,6 @@
+import { getGetAdminAccessQueryKey, useGetAdminAccess } from '@workspace/api-client-react';
 import { useMemo, type ReactNode } from 'react';
-import { ClerkProvider, Show } from '@clerk/react';
+import { ClerkProvider, Show, useAuth } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { arSA, enUS } from '@clerk/localizations';
@@ -35,6 +36,7 @@ import AdminAudit from '@/pages/admin/audit';
 import { Privacy, Terms } from '@/pages/legal';
 import { RenewalIdentityBoundary } from '@/components/renewal-push';
 import { CourseAccessGate } from '@/components/course-access-gate';
+import { ErrorState, Skeleton } from '@/components/bits';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
 
@@ -99,10 +101,22 @@ function buildAppearance(dark: boolean) {
   };
 }
 
+function StartRedirect() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const access = useGetAdminAccess({ query: { queryKey: getGetAdminAccessQueryKey(), enabled: !!isSignedIn } });
+  const { t } = useApp();
+  if (!isLoaded || (isSignedIn && access.isLoading)) return <div className="mx-auto max-w-lg p-8" role="status"><Skeleton className="h-36" /><p className="mt-3 text-sm">{t('نجهّز مسار تعلّمك…', 'Opening your learning path…')}</p></div>;
+  if (!isSignedIn) return <Redirect to="/sign-in" replace />;
+  if (access.isError || !access.data) return <div className="mx-auto max-w-lg p-8"><ErrorState what={t('فتح حسابك', 'opening your account')} onRetry={() => void access.refetch()} /></div>;
+  if (!access.data.signedIn) return <div className="mx-auto max-w-lg p-8"><ErrorState what={t('تأكيد جلسة حسابك', 'confirming your account session')} onRetry={() => void access.refetch()} /></div>;
+  const admin = access.data.signedIn && (access.data.role === 'owner' || access.data.role === 'admin');
+  return <Redirect to={admin ? '/admin' : '/learn'} replace />;
+}
+
 function HomeRedirect() {
   return (
     <>
-      <Show when="signed-in"><Redirect to="/dashboard" /></Show>
+      <Show when="signed-in"><Redirect to="/start" /></Show>
       <Show when="signed-out"><Landing /></Show>
     </>
   );
@@ -145,6 +159,7 @@ function ClerkProviderWithRoutes() {
           <Route path="/" component={HomeRedirect} />
           <Route path="/sign-in/*?" component={SignInPage} />
           <Route path="/sign-up/*?" component={SignUpPage} />
+          <Route path="/start" component={StartRedirect} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/learn" component={Learn} />
           <Route path="/lesson/:id" component={LessonPage} />

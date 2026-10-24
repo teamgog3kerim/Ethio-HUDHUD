@@ -27,3 +27,16 @@ buttons appropriately for payment and billing rather than many scattered buttons
 action must reflect real account state: signup, trial, checkout, eligible manual
 renewal, pending-payment check or billing portal. Do not add a preference-save
 detour before payment or a disabled imitation subscription button.
+
+Use the account-first learning journey: homepage free-trial action → Google
+sign-up → lessons, with a single encouraging subscription banner during trial.
+At expiry send learners to the two paid options; a plan's payment button opens
+checkout directly, and verified effective access returns them to lessons.
+
+**Why:** The user said the existing sign-in, trial and payment flow involved too
+much processing and explicitly requested this simpler sequence.
+
+**How to apply:** Avoid another plan-review/save screen after free sign-up or
+after an informed paid-plan click. Keep admin records clear about trial dates,
+actual recorded purchases, unfinished attempts and verification freshness;
+a selected plan or pending attempt is not proof of paid access.

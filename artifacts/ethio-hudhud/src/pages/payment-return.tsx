@@ -15,6 +15,9 @@ function Verified({ id, userId, env }: { id: string; userId: string; env: Env })
   const live = env === 'live';
   const { t } = useApp();
   const cache = useQueryClient();
+  const [, go] = useLocation();
+  const [access, setAccess] = useState<'checking' | 'error' | 'later'>('checking');
+  const [recheck, setRecheck] = useState(0);
   const opts = (key: readonly unknown[]) => ({
     query: {
       queryKey: [...key, userId, env] as const,
@@ -30,7 +33,22 @@ function Verified({ id, userId, env }: { id: string; userId: string; env: Env })
     if (status !== 'paid' && status !== 'refunded' && status !== 'failed' && status !== 'expired') return;
     void cache.invalidateQueries({ queryKey: getGetBillingStatusQueryKey() });
     void cache.invalidateQueries({ queryKey: getGetProgressQueryKey() });
-  }, [status, cache]);
+    if (status === 'paid' && live) {
+      // Navigate only once refreshed billing confirms effective access.
+      let off = false;
+      setAccess('checking');
+      const key = getGetBillingStatusQueryKey();
+      void cache.refetchQueries({ queryKey: key }).then(() => {
+        if (off) return;
+        if (cache.getQueryState(key)?.status === 'error') { setAccess('error'); return; }
+        const bs = cache.getQueryData<{ fullCourseAccess?: boolean }>(key);
+        if (bs?.fullCourseAccess === true) go('/learn', { replace: true });
+        else setAccess('later');
+      }, () => { if (!off) setAccess('error'); });
+      return () => { off = true; };
+    }
+    return undefined;
+  }, [status, cache, live, go, recheck]);
   useEffect(() => {
     const f = () => {
       void cache.invalidateQueries({ queryKey: getGetBillingStatusQueryKey() });
@@ -79,6 +97,9 @@ function Verified({ id, userId, env }: { id: string; userId: string; env: Env })
       <Btn className="mt-4" variant="outline" disabled={q.isFetching} onClick={() => void q.refetch()} data-testid="button-checkout-retry">{q.isFetching ? t('جارٍ التحقق…', 'Checking…') : t('تحقق مجددًا', 'Check again')}</Btn>
     </>}
     {c.status === 'paid' && <>
+      {live && access === 'checking' && <p className="mb-1 text-sm font-semibold text-primary" data-testid="text-opening-lessons">{t('نؤكد وصولك قبل فتح الدروس…', 'Confirming your access before opening lessons…')}</p>}
+      {live && access === 'error' && <div className="mb-2 text-sm" role="alert" data-testid="state-access-refresh-error"><p className="text-destructive">{t('تم التحقق من الدفع لكن تعذّر تحديث حالة وصولك.', 'Payment is verified but your access status could not be refreshed.')}</p><Btn className="mt-2" variant="outline" onClick={() => setRecheck(n => n + 1)} data-testid="button-access-retry">{t('إعادة المحاولة', 'Retry')}</Btn></div>}
+      {live && access === 'later' && <p className="mb-2 text-sm" data-testid="text-access-not-effective">{t('الدفع موثّق لكن لا وصول فعّال الآن؛ تبدأ فترتك لاحقًا. راجع الاشتراك والفوترة.', 'Payment is verified but no access is effective yet; your period starts later. See Subscription & billing.')}</p>}
       <h2 className="font-display text-xl font-extrabold">{live ? t('تم التحقق من الدفع', 'Purchase verified') : t('تم التحقق من الدفع التجريبي', 'Sandbox purchase verified')}</h2>
       {until && live && c.plan === 'monthly' ? <p className="mt-2 text-sm" data-testid="text-monthly-period">{starts ? t(`الفترة: من ${new Date(starts).toLocaleDateString()} إلى ${until}.`, `Period: ${new Date(starts).toLocaleDateString()} to ${until}.`) : t(`حتى ${until}.`, `Until ${until}.`)} {future ? t('تبدأ هذه الفترة لاحقاً بعد التغطية الحالية؛ لا وصول جديد الآن.', 'This period starts later, after your current coverage; it does not grant new access now.') : ''} {t('شهر واحد، دون تجديد تلقائي.', 'One month, no automatic renewal.')}</p> : until && <p className="mt-2 text-sm">{live ? t(`حتى ${until}`, `Access until ${until}`) : t(`تاريخ الاختبار: ${until}`, `Test period until ${until}`)}</p>}
       {c.cancelAtPeriodEnd && <p className="mt-1 text-sm text-muted-foreground">{t('سيُلغى عند نهاية الفترة.', 'Set to cancel at period end.')}</p>}

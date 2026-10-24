@@ -100,6 +100,19 @@ export const SaveProfileResponse = zod.object({
 }))
 
 
+/**
+ * Public course outlines only; no lessons, answers, progress or trial initialization.
+ */
+export const GetCourseCatalogResponseItem = zod.object({
+  "id": zod.string(),
+  "month": zod.number().int(),
+  "titleAr": zod.string(),
+  "titleEn": zod.string(),
+  "description": zod.string()
+})
+export const GetCourseCatalogResponse = zod.array(GetCourseCatalogResponseItem)
+
+
 export const GetCoursesResponseItem = zod.object({
   "id": zod.string(),
   "titleAr": zod.string(),
@@ -828,7 +841,26 @@ export const GetAdminUsersResponse = zod.object({
   "dailyGoal": zod.number().int(),
   "accessPlan": zod.enum(['free', 'complimentary', 'monthly', 'six_month']),
   "accessExpiresAt": zod.string().nullable(),
-  "accessReason": zod.string()
+  "accessReason": zod.string(),
+  "billingState": zod.enum(['not_started', 'trial', 'trial_expired', 'paid_monthly', 'paid_six_month', 'payment_pending', 'paid_expired', 'refunded', 'complimentary', 'suspended', 'admin']).optional(),
+  "trialStartedAt": zod.coerce.date().nullish(),
+  "trialEndsAt": zod.coerce.date().nullish(),
+  "monthlyPaymentCount": zod.number().int().optional(),
+  "selectedPlan": zod.union([zod.literal('trial'),zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish(),
+  "lastPaymentVerifiedAt": zod.coerce.date().nullish(),
+  "billingVerificationStale": zod.boolean().optional().describe('Admin view is a recorded snapshot'),
+  "billingHistory": zod.array(zod.object({
+  "id": zod.string(),
+  "plan": zod.enum(['monthly', 'six_month']),
+  "status": zod.string(),
+  "priceUsd": zod.number().describe('Listed course price'),
+  "checkoutId": zod.string().nullable(),
+  "createdAt": zod.coerce.date(),
+  "verifiedAt": zod.coerce.date().nullable(),
+  "accessStartsAt": zod.coerce.date().nullable(),
+  "accessUntil": zod.coerce.date().nullable(),
+  "paidUntil": zod.coerce.date().nullable()
+})).optional()
 })),
   "total": zod.number().int(),
   "page": zod.number().int(),

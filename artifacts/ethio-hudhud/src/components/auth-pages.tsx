@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, Redirect } from 'wouter';
 import { SignIn, SignUp, useAuth } from '@clerk/react';
-import { parsePlanChoice, planChoicePath } from '@/lib/plan-choice';
-import { AlertTriangle, Info, RotateCw } from 'lucide-react';
+import { parsePlanChoice } from '@/lib/plan-choice';
+import { paidPlanFromSearch, signInDestination, signUpDestination } from '@/lib/auth-flow';
+import { AlertTriangle, RotateCw } from 'lucide-react';
 import { Logo } from '@/components/logo';
 import { Toggles } from '@/components/shell';
 import { Skeleton } from '@/components/bits';
@@ -30,6 +31,9 @@ function safeReturn(): string | null {
     return null;
   }
 }
+
+// Google first, prominent; Clerk still owns verification and terms.
+const social = { options: { socialButtonsPlacement: 'top' as const, socialButtonsVariant: 'blockButton' as const } };
 
 function ClerkSlot({ children }: { children: ReactNode }) {
   const { t } = useApp();
@@ -68,7 +72,9 @@ function AuthFrame({ children, mode }: { children: ReactNode; mode: 'in' | 'up' 
   const planSearch = plan ? `?plan=${plan}` : '';
   if (isLoaded && initial.current === null) initial.current = !!isSignedIn;
   // Only bounce users who arrived already signed in; fresh sign-ups follow Clerk's own redirect.
-  if (initial.current === true && isSignedIn) return <Redirect to={mode === 'up' || plan ? planChoicePath(window.location.search) : safeReturn() ?? '/dashboard'} replace />;
+  const paid = paidPlanFromSearch(window.location.search);
+  const dest = paid ? signUpDestination(window.location.search) : safeReturn() ?? (mode === 'up' ? '/learn' : '/start');
+  if (initial.current === true && isSignedIn) return <Redirect to={dest} replace />;
 
   const tab = (active: boolean) => cn('flex-1 rounded-xl px-4 py-2.5 text-center text-sm font-bold transition-colors', active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground');
   return (
@@ -80,7 +86,7 @@ function AuthFrame({ children, mode }: { children: ReactNode; mode: 'in' | 'up' 
           <h2 className="font-display text-4xl font-extrabold leading-snug">{mode === 'in' ? t('أهلًا بعودتك. حروفك بانتظارك.', 'Welcome back. Your letters are waiting.') : t('احفظ تقدّمك في الفيدل.', 'Keep your Fidel progress safe.')}</h2>
           <p className="mt-3 max-w-sm text-white/70">{t('الحساب يحفظ دروسك ومراجعاتك على كل أجهزتك.', 'An account keeps your lessons and reviews on every device.')}</p>
         </div>
-        <p className="relative text-sm text-white/50">{t('محتوى تجريبي بانتظار المراجعة', 'Pilot content awaiting review')}</p>
+        <p className="relative text-sm text-white/60">{t('48 ساعة مجانًا بعد التسجيل بحساب Google.', '48 free hours after you sign up with Google.')}</p>
       </aside>
       <div className="relative flex min-w-0 w-full flex-col items-center gap-4 px-4 pb-8 pt-4 lg:justify-center lg:py-10">
         <div className="flex w-full max-w-[440px] items-center justify-between lg:absolute lg:end-4 lg:top-4 lg:max-w-none lg:w-auto">
@@ -92,11 +98,6 @@ function AuthFrame({ children, mode }: { children: ReactNode; mode: 'in' | 'up' 
           <Link href={`/sign-up${planSearch}`} aria-current={mode === 'up' ? 'page' : undefined} className={tab(mode === 'up')} data-testid="tab-signup">{t('إنشاء حساب', 'Create account')}</Link>
         </nav>
         <ClerkSlot>{children}</ClerkSlot>
-        <div className="flex w-[440px] max-w-full items-start gap-2.5 rounded-2xl border border-gold/50 bg-gold/10 px-4 py-3 text-sm leading-relaxed" data-testid="note-guest-transfer">
-          <Info className="mt-0.5 size-4 shrink-0" />
-          <p>{t('تقدّم الضيف ومفضّلاته يبقيان في هذا المتصفح ولا يُنقلان تلقائيًا إلى حسابك.', 'Guest progress and favourites stay in this browser and are not automatically moved into your account.')}</p>
-        </div>
-        <Link href="/dashboard" className="press rounded-xl border border-input bg-card px-5 py-2.5 text-sm font-semibold" data-testid="link-continue-guest">{t('أو تابع كضيف', 'Or continue as a guest')}</Link>
         <p className="max-w-[440px] text-center text-xs text-muted-foreground">
           {t('بالمتابعة فأنت توافق على ', 'By continuing you agree to the ')}
           <Link href="/terms" className="underline" data-testid="link-terms-auth">{t('الشروط', 'Terms')}</Link>
@@ -109,20 +110,22 @@ function AuthFrame({ children, mode }: { children: ReactNode; mode: 'in' | 'up' 
 }
 
 export function SignInPage() {
+  const forced = useRef(`${basePath}${paidPlanFromSearch(window.location.search) ? signInDestination(window.location.search) : safeReturn() ?? '/start'}`);
   const plan = useRef(parsePlanChoice(new URLSearchParams(window.location.search).get('plan')));
   const suffix = plan.current ? `?plan=${plan.current}` : '';
   return (
     <AuthFrame mode="in">
-      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up${suffix}`} fallbackRedirectUrl={`${basePath}/dashboard`} forceRedirectUrl={plan.current ? `${basePath}/choose-plan${suffix}` : undefined} />
+      <SignIn routing="path" path={`${basePath}/sign-in`} appearance={social} signUpUrl={`${basePath}/sign-up${suffix}`} fallbackRedirectUrl={`${basePath}/start`} forceRedirectUrl={forced.current} />
     </AuthFrame>
   );
 }
 
 export function SignUpPage() {
-  const destination = useRef(planChoicePath(window.location.search));
+  const destination = useRef(signUpDestination(window.location.search));
+  const plan = parsePlanChoice(new URLSearchParams(window.location.search).get('plan'));
   return (
     <AuthFrame mode="up">
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in${destination.current.includes('?') ? destination.current.slice(destination.current.indexOf('?')) : ''}`} forceRedirectUrl={`${basePath}${destination.current}`} />
+      <SignUp routing="path" path={`${basePath}/sign-up`} appearance={social} signInUrl={`${basePath}/sign-in${plan ? `?plan=${plan}` : ''}`} forceRedirectUrl={`${basePath}${destination.current}`} />
     </AuthFrame>
   );
 }

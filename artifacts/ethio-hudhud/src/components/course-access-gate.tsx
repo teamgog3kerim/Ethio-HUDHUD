@@ -1,14 +1,15 @@
 import { useEffect, type ReactNode } from 'react';
-import { useLocation } from 'wouter';
+import { Redirect, useLocation } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
 import { useBilling } from './billing-notice';
 import { Shell } from './shell';
-import { ErrorState, LinkBtn, PageHead, Skeleton } from './bits';
-import { CoursePlans } from './course-plans';
+import { ErrorState, Skeleton } from './bits';
+import { useAuth } from '@clerk/react';
 import { useApp } from '@/lib/app';
 
 export function CourseAccessGate({ children }: { children: ReactNode }) {
   const [location] = useLocation();
+  const { isLoaded, isSignedIn } = useAuth();
   const billing = useBilling();
   const cache = useQueryClient();
   const { t } = useApp();
@@ -35,15 +36,13 @@ export function CourseAccessGate({ children }: { children: ReactNode }) {
   }, [b?.enforcementEnabled, b?.fullCourseAccess, cache]);
 
   if (!protectedPage) return children;
+  if (!isLoaded) return <Shell><Skeleton className="h-64" /></Shell>;
+  if (!isSignedIn) return <Redirect to="/sign-up?plan=trial" replace />;
   if (billing.isLoading) return <Shell><Skeleton className="h-64" /></Shell>;
   if (billing.isError || !b) return <Shell><ErrorState what={t('التحقق من صلاحية التعلّم', 'checking learning access')} onRetry={() => void billing.refetch()} /></Shell>;
+  // Clerk may have activated before its session cookie reaches the API. Never
+  // bounce a signed-in learner through signup repeatedly or show guest content.
+  if (b.isGuest) return <Shell><ErrorState what={t('تأكيد جلسة حسابك، أعد المحاولة للمتابعة', 'confirming your account session; retry to continue')} onRetry={() => void billing.refetch()} /></Shell>;
   if (!b.enforcementEnabled || b.fullCourseAccess) return children;
-  return <Shell>
-    <div data-testid="course-subscription-required">
-      <PageHead title={t('انتهت تجربتك المجانية', 'Your free trial has ended')} sub={t('أكملت 48 ساعة من التجربة. اختر اشتراكاً شهرياً أو اشتراك ستة أشهر لمتابعة الدروس والمحادثات. تقدمك محفوظ.', 'Your 48-hour trial is complete. Choose monthly or six-month access to continue lessons and conversations. Your progress is saved.')} />
-      {b.isGuest && <LinkBtn href="/sign-up" className="mb-6">{t('إنشاء حساب للاشتراك', 'Create an account to subscribe')}</LinkBtn>}
-      <CoursePlans paidOnly />
-      <LinkBtn href="/account" variant="outline" className="mt-6">{t('حسابي', 'My account')}</LinkBtn>
-    </div>
-  </Shell>;
+  return <Redirect to="/choose-plan" replace />;
 }

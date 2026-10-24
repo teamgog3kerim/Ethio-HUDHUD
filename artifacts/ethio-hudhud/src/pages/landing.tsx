@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
 import { ArrowLeft, ArrowRight, BookOpenCheck, Repeat, Sprout } from 'lucide-react';
-import { useGetCourses, useGetProgress } from '@workspace/api-client-react';
-import { Am, ErrorState, LinkBtn, PilotNote, ProgressBar, Skeleton } from '@/components/bits';
+import { useGetCourseCatalog } from '@workspace/api-client-react';
+import { Am, ErrorState, LinkBtn, Skeleton } from '@/components/bits';
 import { Brand, Footer, Toggles } from '@/components/shell';
 import { useApp } from '@/lib/app';
 import { FIDEL_FAMILIES, fidelForms } from '@/lib/options';
@@ -11,8 +11,7 @@ import { PronunciationNote } from '@/components/pronunciation-note';
 
 export default function Landing() {
   const { t, lang } = useApp();
-  const courses = useGetCourses();
-  const progress = useGetProgress();
+  const courses = useGetCourseCatalog();
   const [fam, setFam] = useState(7);
   const Arrow = lang === 'ar' ? ArrowLeft : ArrowRight;
 
@@ -40,14 +39,11 @@ export default function Landing() {
           </p>
           <div className="rise mt-8 flex flex-wrap gap-3" style={{ animationDelay: '.24s' }}>
             <a href="#course-plans" className="press inline-flex items-center rounded-2xl border border-white/30 px-5 py-3 font-semibold text-white hover:bg-white/10" data-testid="link-home-plans">{t('عرض الخطط', 'View plans')}</a>
-            <LinkBtn href="/dashboard" variant="gold" size="lg" testId="button-guest">
-              {t('جرّب كضيف', 'Try as a guest')} <Arrow className="size-5" />
-            </LinkBtn>
-            <LinkBtn href="/sign-up" variant="outline" size="lg" testId="button-signup" className="border-white/30 bg-white/10 text-white hover:bg-white/20">
-              {t('إنشاء حساب', 'Create account')}
+            <LinkBtn href="/sign-up?plan=trial" variant="gold" size="lg" testId="button-signup">
+              {t('ابدأ 48 ساعة مجانًا', 'Start 48 free hours')} <Arrow className="size-5" />
             </LinkBtn>
           </div>
-          <p className="mt-3 text-sm text-white/60">{t('لا حاجة لحساب للبدء. تقدّمك يُحفظ في جلسة الضيف.', 'No account needed to begin. Your progress is kept in your guest session.')}</p>
+          <p className="mt-3 text-sm text-white/60">{t('سجّل بحساب Google وابدأ فورًا. دون بطاقة.', 'Sign up with Google and start right away. No card.')}</p>
         </div>
       </section>
 
@@ -102,26 +98,18 @@ export default function Landing() {
         <div className="mx-auto max-w-6xl px-4 sm:px-8">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
             <h2 className="font-display text-2xl font-extrabold sm:text-3xl">{t('المقررات الحالية', 'Current courses')}</h2>
-            {progress.data && (
-              <p className="text-sm text-muted-foreground" data-testid="text-guest-progress">
-                {t(`جلسة الضيف: ${progress.data.lessonsCompleted} من ${progress.data.totalLessons} دروس`, `Guest session: ${progress.data.lessonsCompleted} of ${progress.data.totalLessons} lessons`)}
-              </p>
-            )}
           </div>
           {courses.isLoading && <div className="grid gap-3 sm:grid-cols-2">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-28" />)}</div>}
           {courses.isError && <ErrorState what={t('المقررات', 'courses')} onRetry={() => courses.refetch()} />}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {courses.data?.map((c, i) => (
-              <Link key={c.id} href="/learn" data-testid={`card-course-${c.id}`} className="lift rise block rounded-3xl border border-border bg-card p-5" style={{ animationDelay: `${i * 60}ms` }}>
+              <Link key={c.id} href="/sign-up?plan=trial" data-testid={`card-course-${c.id}`} className="lift rise block rounded-3xl border border-border bg-card p-5" style={{ animationDelay: `${i * 60}ms` }}>
                 <p className="text-xs font-bold text-primary">{t('الشهر', 'Month')} {c.month}</p>
                 <p className="font-display mt-1 font-bold">{lang === 'ar' ? c.titleAr : c.titleEn}</p>
                 <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{c.description}</p>
-                <ProgressBar className="mt-3" value={c.lessons.length ? (c.completedCount / c.lessons.length) * 100 : 0} />
               </Link>
             ))}
           </div>
-          <PilotNote className="mt-6" />
-          <PilotNote kind="audio" className="mt-3" />
         </div>
       </section>
 
@@ -130,8 +118,7 @@ export default function Landing() {
       <section className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-8">
         <h2 className="font-display text-3xl font-extrabold">{t('ابدأ بحرف واحد اليوم', 'Begin with one letter today')}</h2>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <LinkBtn href="/dashboard" size="lg" testId="button-guest-2">{t('متابعة كضيف', 'Continue as guest')}</LinkBtn>
-          <LinkBtn href="/sign-up" variant="outline" size="lg" testId="button-signup-2">{t('إنشاء حساب', 'Sign up')}</LinkBtn>
+          <LinkBtn href="/sign-up?plan=trial" size="lg" testId="button-signup-2">{t('ابدأ 48 ساعة مجانًا', 'Start 48 free hours')}</LinkBtn>
           <LinkBtn href="/sign-in" variant="ghost" size="lg" testId="button-signin-2">{t('تسجيل الدخول', 'Log in')}</LinkBtn>
         </div>
       </section>

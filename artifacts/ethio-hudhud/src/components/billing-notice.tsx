@@ -1,6 +1,6 @@
 import { Link } from 'wouter';
-import { BellRing, Clock, UserPlus } from 'lucide-react';
-import { getGetBillingStatusQueryKey, useGetBillingStatus } from '@workspace/api-client-react';
+import { BellRing, Clock } from 'lucide-react';
+import { getGetBillingStatusQueryKey, useGetAdminAccess, useGetBillingStatus } from '@workspace/api-client-react';
 import { useApp } from '@/lib/app';
 import { RenewalPushSettings } from './renewal-push';
 
@@ -11,6 +11,8 @@ export function useBilling() {
 export function BillingNotice() {
   const { t, lang } = useApp();
   const { data: b } = useBilling();
+  const { data: access } = useGetAdminAccess();
+  const admin = access?.signedIn === true && (access.role === 'owner' || access.role === 'admin');
   if (!b) return null; // loading/error never blocks the app
   const comp = b.plan === 'complimentary';
   const fmt = (s: string) => new Date(s).toLocaleDateString(lang === 'ar' ? 'ar' : 'en', { dateStyle: 'medium' });
@@ -34,22 +36,17 @@ export function BillingNotice() {
         </p>;
       })() : comp ? (
         b.accessExpiresAt && <p className={`${row} border-gold/50 bg-gold/10`} data-testid="text-complimentary-expiry"><Clock className="size-4 shrink-0" />{t('منحة مجانية حتى ', 'Complimentary access until ')}{fmt(b.accessExpiresAt)}</p>
-      ) : b.trial.state === 'active' ? (
-        <p className={`${row} border-border bg-card`} data-testid="text-trial-remaining">
-          <Clock className="size-4 shrink-0" />
-          <span className="flex-1">{t(`تجربة 48 ساعة: ${b.trial.daysRemaining} يوم متبقٍ. كل الدروس مفتوحة.`, `48-hour trial: ${b.trial.daysRemaining} day(s) left. All lessons are open.`)}</span>
-        </p>
-      ) : (
-        <div className={`${row} border-primary/40 bg-primary/10`} data-testid="banner-trial-expired">
-          <span className="min-w-0 flex-1 font-medium">{b.enforcementEnabled && !b.fullCourseAccess
-            ? t('انتهت تجربة 48 ساعة. اشترك شهرياً أو لستة أشهر لمتابعة الدروس والمحادثات. تقدمك محفوظ.', 'Your 48-hour trial has ended. Subscribe monthly or for six months to continue lessons and conversations. Your progress is saved.')
-            : b.isGuest
-            ? t('انتهت التجربة. أنشئ حسابًا لبدء تقدم مستقل واطّلع على الخطط. لا ينتقل تقدم الضيف تلقائيًا. التعلم ما زال مفتوحًا.', 'Your trial has ended. Create an account for separate account progress and see the plans. Guest progress does not transfer automatically. Learning stays open.')
-            : t('انتهت التجربة. اطّلع على الخطط. التعلم ما زال مفتوحًا.', 'Your trial has ended. See the plans. Learning stays open.')}</span>
-          {b.isGuest && <Link href="/sign-up" className={link} data-testid="link-trial-signup"><UserPlus className="me-1 inline size-4" />{t('إنشاء حساب', 'Create account')}</Link>}
-          <Link href="/premium" className={b.isGuest ? 'press font-semibold text-primary underline' : link} data-testid="link-trial-plans">{t('عرض الخطط', 'View plans')}</Link>
-        </div>
-      )}
+      ) : b.isGuest || admin ? null : b.trial.state === 'active' ? (() => {
+        const ms = Math.max(0, new Date(b.trial.endsAt).getTime() - Date.now());
+        const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+        const left = h >= 1 ? t(`${h} ساعة`, `${h}h`) : t(`${m} دقيقة`, `${m}m`);
+        return <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gold/50 bg-gradient-to-l from-gold/15 to-secondary px-4 py-3 text-sm" data-testid="text-trial-remaining">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-gold text-gold-foreground"><Clock className="size-4" /></span>
+          <span className="min-w-0 flex-1"><span className="font-bold">{t(`تجربتك المجانية: متبقٍ ${left}`, `Free trial: ${left} left`)}</span>
+            <span className="block text-xs text-muted-foreground">{t(`تنتهي ${fmt(b.trial.endsAt)}. تقدّمك محفوظ.`, `Ends ${fmt(b.trial.endsAt)}. Your progress is kept.`)}</span></span>
+          <Link href="/choose-plan" className={link} data-testid="link-trial-subscribe">{t('اشترك', 'Subscribe')}</Link>
+        </div>;
+      })() : null}
       {rem && (
         <p className={`${row} border-gold/50 bg-gold/10`} data-testid="text-billing-reminder">
           <BellRing className="size-4 shrink-0" />{remText} · {fmt(rem.expiresAt)} · {t(`${rem.daysRemaining} يوم`, `${rem.daysRemaining} day(s)`)}

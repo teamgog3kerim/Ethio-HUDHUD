@@ -10,10 +10,20 @@ import { enforceAccountStatus } from "../lib/admin-auth";
 import { getAppSettings } from "../lib/app-settings";
 import { HttpError } from "../lib/http-error";
 import { enforceCourseAccess } from "../lib/course-access";
+import { db, courses } from "@workspace/db";
+import { asc } from "drizzle-orm";
+import { GetCourseCatalogResponse } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.get("/course-catalog", async (_req, res) => {
+  const outlines = await db.select({
+    id: courses.id, month: courses.month, titleAr: courses.titleAr,
+    titleEn: courses.titleEn, description: courses.description,
+  }).from(courses).orderBy(asc(courses.month));
+  res.json(GetCourseCatalogResponse.parse(outlines));
+});
 router.get("/app-settings", async (_req, res) => {
   const { defaultDailyGoal: _privateDefault, ...settings } = await getAppSettings();
   res.json(settings);

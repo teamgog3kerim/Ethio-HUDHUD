@@ -47,6 +47,62 @@ export const AdminUserAccessPlan = {
   six_month: 'six_month',
 } as const;
 
+export type AdminUserBillingState = typeof AdminUserBillingState[keyof typeof AdminUserBillingState];
+
+
+export const AdminUserBillingState = {
+  not_started: 'not_started',
+  trial: 'trial',
+  trial_expired: 'trial_expired',
+  paid_monthly: 'paid_monthly',
+  paid_six_month: 'paid_six_month',
+  payment_pending: 'payment_pending',
+  paid_expired: 'paid_expired',
+  refunded: 'refunded',
+  complimentary: 'complimentary',
+  suspended: 'suspended',
+  admin: 'admin',
+} as const;
+
+/**
+ * @nullable
+ */
+export type AdminUserSelectedPlan = typeof AdminUserSelectedPlan[keyof typeof AdminUserSelectedPlan] | null;
+
+
+export const AdminUserSelectedPlan = {
+  trial: 'trial',
+  monthly: 'monthly',
+  six_month: 'six_month',
+} as const;
+
+export type AdminBillingRecordPlan = typeof AdminBillingRecordPlan[keyof typeof AdminBillingRecordPlan];
+
+
+export const AdminBillingRecordPlan = {
+  monthly: 'monthly',
+  six_month: 'six_month',
+} as const;
+
+export interface AdminBillingRecord {
+  id: string;
+  plan: AdminBillingRecordPlan;
+  status: string;
+  /** Listed course price */
+  priceUsd: number;
+  /** @nullable */
+  checkoutId: string | null;
+  createdAt: string;
+  /** @nullable */
+  verifiedAt: string | null;
+  /** @nullable */
+  accessStartsAt: string | null;
+  /** @nullable */
+  accessUntil: string | null;
+  /** @nullable */
+  paidUntil: string | null;
+}
+
 export interface AdminUser {
   id: string;
   email: string;
@@ -64,6 +120,19 @@ export interface AdminUser {
   /** @nullable */
   accessExpiresAt: string | null;
   accessReason: string;
+  billingState?: AdminUserBillingState;
+  /** @nullable */
+  trialStartedAt?: string | null;
+  /** @nullable */
+  trialEndsAt?: string | null;
+  monthlyPaymentCount?: number;
+  /** @nullable */
+  selectedPlan?: AdminUserSelectedPlan;
+  /** @nullable */
+  lastPaymentVerifiedAt?: string | null;
+  /** Admin view is a recorded snapshot */
+  billingVerificationStale?: boolean;
+  billingHistory?: AdminBillingRecord[];
 }
 
 export interface AdminUsers {
@@ -331,6 +400,14 @@ export interface Lesson {
   exercises: Exercise[];
   reviewStatus: string;
   completed: boolean;
+}
+
+export interface PublicCourseSummary {
+  id: string;
+  month: number;
+  titleAr: string;
+  titleEn: string;
+  description: string;
 }
 
 export interface Course {

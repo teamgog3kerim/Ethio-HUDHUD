@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { clerkClient } from "@clerk/express";
-import { db, learners, appAccounts, accessGrants, adminAudit, completions } from "@workspace/db";
+import { db, learners, appAccounts, accessGrants, adminAudit, completions, courseTrials, polarLivePurchases } from "@workspace/db";
 import { eq, inArray, count } from "drizzle-orm";
 import { GetAdminUsersResponse, UpdateAdminUserBody, DeleteAdminUserBody, SetAdminUserAccessBody } from "@workspace/api-zod";
 import { z } from "zod/v4";
@@ -8,6 +8,7 @@ import { HttpError } from "../lib/http-error";
 import { defaultPreferences } from "../lib/learner";
 import { getAppSettings } from "../lib/app-settings";
 import { normalizeRole, canManageTarget, isComplimentary, type AppRole } from "../lib/admin-policy";
+import { adminBillingSummary } from "../lib/admin-billing-summary";
 const router: IRouter = Router();
 const listQuery = z.object({ search: z.string().trim().max(100).optional(), page: z.coerce.number().int().min(1).max(100000).default(1) });
 async function targetFor(actorId: string, actorRole: AppRole, id: string, destructive = false) {
@@ -25,12 +26,14 @@ router.get("/users", async (req, res) => {
   const { search, page } = query.data;
   const directory = await clerkClient.users.getUserList({ query: search || undefined, limit: 25, offset: (page - 1) * 25, orderBy: "-created_at" });
   const ids = directory.data.map(u => u.id);
-  const [controls, grants, profiles] = ids.length ? await Promise.all([
+  const [controls, grants, profiles, purchases] = ids.length ? await Promise.all([
     db.select().from(appAccounts).where(inArray(appAccounts.userId, ids)),
     db.select().from(accessGrants).where(inArray(accessGrants.userId, ids)),
     db.select().from(learners).where(inArray(learners.identity, ids.map(id => `clerk:${id}`))),
-  ]) : [[], [], []];
+    db.select().from(polarLivePurchases).where(inArray(polarLivePurchases.userId, ids)),
+  ]) : [[], [], [], []];
   const counts = profiles.length ? await db.select({ learnerId: completions.learnerId, total: count() }).from(completions).where(inArray(completions.learnerId, profiles.map(p => p.id))).groupBy(completions.learnerId) : [];
+  const trials = profiles.length ? await db.select().from(courseTrials).where(inArray(courseTrials.learnerId, profiles.map(p => p.id))) : [];
   const settings = await getAppSettings();
   const users = directory.data.map(user => {
     const control = controls.find(c => c.userId === user.id);
@@ -45,8 +48,14 @@ router.get("/users", async (req, res) => {
       role: normalizeRole(control?.role), suspended: !!control?.suspended || user.banned,
       createdAt: new Date(user.createdAt).toISOString(), lastSignInAt: user.lastSignInAt ? new Date(user.lastSignInAt).toISOString() : null,
       lessonsCompleted: total, xp: total * 30, dailyGoal: prefs?.dailyGoal ?? settings.defaultDailyGoal,
-      accessPlan: isComplimentary(grant) ? "complimentary" : "free",
-      accessExpiresAt: grant?.expiresAt?.toISOString() ?? null, accessReason: grant?.reason ?? "",
+      ...adminBillingSummary({
+        rows: purchases.filter(p => p.userId === user.id),
+        trialStartedAt: trials.find(t => t.learnerId === profile?.id)?.startedAt ?? null,
+        preferences: profile?.preferences, complimentary: isComplimentary(grant),
+        complimentaryExpiresAt: grant?.expiresAt ?? null,
+        role: normalizeRole(control?.role), suspended: !!control?.suspended || user.banned,
+      }),
+      accessReason: grant?.reason ?? "",
     };
   });
   res.json(GetAdminUsersResponse.parse({ users, total: directory.totalCount, page, pageSize: 25 }));

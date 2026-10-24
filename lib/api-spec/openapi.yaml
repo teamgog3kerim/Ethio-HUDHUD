@@ -36,6 +36,16 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Profile" }
+  /course-catalog:
+    get:
+      operationId: getCourseCatalog
+      description: Public course outlines only; no lessons, answers, progress or trial initialization.
+      responses:
+        "200":
+          description: Public programme overview
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/PublicCourseSummary" } }
   /courses:
     get:
       operationId: getCourses
@@ -591,6 +601,30 @@ components:
         accessPlan: { type: string, enum: [free, complimentary, monthly, six_month] }
         accessExpiresAt: { type: [string, "null"] }
         accessReason: { type: string }
+        billingState: { type: string, enum: [not_started, trial, trial_expired, paid_monthly, paid_six_month, payment_pending, paid_expired, refunded, complimentary, suspended, admin] }
+        trialStartedAt: { type: [string, "null"], format: date-time }
+        trialEndsAt: { type: [string, "null"], format: date-time }
+        monthlyPaymentCount: { type: integer }
+        selectedPlan: { type: [string, "null"], enum: [trial, monthly, six_month, null] }
+        lastPaymentVerifiedAt: { type: [string, "null"], format: date-time }
+        billingVerificationStale: { type: boolean, description: Admin view is a recorded snapshot, not a fresh provider entitlement check }
+        billingHistory:
+          type: array
+          items: { $ref: "#/components/schemas/AdminBillingRecord" }
+    AdminBillingRecord:
+      type: object
+      required: [id, plan, status, priceUsd, checkoutId, createdAt, verifiedAt, accessStartsAt, accessUntil, paidUntil]
+      properties:
+        id: { type: string }
+        plan: { type: string, enum: [monthly, six_month] }
+        status: { type: string }
+        priceUsd: { type: number, description: Listed course price, not a tax-inclusive receipt or proof of money received }
+        checkoutId: { type: [string, "null"] }
+        createdAt: { type: string, format: date-time }
+        verifiedAt: { type: [string, "null"], format: date-time }
+        accessStartsAt: { type: [string, "null"], format: date-time }
+        accessUntil: { type: [string, "null"], format: date-time }
+        paidUntil: { type: [string, "null"], format: date-time }
     AdminUsers:
       type: object
       required: [users, total, page, pageSize]
@@ -796,6 +830,15 @@ components:
         exercises: { type: array, items: { $ref: "#/components/schemas/Exercise" } }
         reviewStatus: { type: string }
         completed: { type: boolean }
+    PublicCourseSummary:
+      type: object
+      required: [id, month, titleAr, titleEn, description]
+      properties:
+        id: { type: string }
+        month: { type: integer }
+        titleAr: { type: string }
+        titleEn: { type: string }
+        description: { type: string }
     Course:
       type: object
       required: [id, titleAr, titleEn, description, level, category, month, lessons, completedCount]

@@ -1,5 +1,5 @@
 import { db, courseTrials, learners } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getAppSettings, getAccessState } from "./app-settings";
 import { BILLING_CONFIGURED, TRIAL_ENFORCEMENT_ENABLED, COURSE_OFFERS, courseTrial, accessReminder, courseAccessPolicy } from "./billing-policy";
 import { getAppRole } from "./admin-auth";
@@ -8,20 +8,14 @@ import { sandboxEnabled } from "./polar-sandbox";
 import { liveAccess } from "./polar-live-access";
 import { liveCheckoutEnabled, liveMonthlyEnabled } from "./polar-live";
 
-export async function billingStatus(learnerId: string, userId: string | null, guestId?: unknown) {
-  // Carry only the trial clock across guest -> account sign-in. This does not
-  // merge guest lessons, favourites, conversations, or other personal data.
-  const [guestTrial] = userId && typeof guestId === "string" && /^[0-9a-f-]{36}$/.test(guestId)
-    ? await db.select({ startedAt: courseTrials.startedAt }).from(courseTrials)
-      .innerJoin(learners, eq(learners.id, courseTrials.learnerId))
-      .where(eq(learners.identity, `guest:${guestId}`))
+export async function billingStatus(learnerId: string, userId: string | null, _guestId?: unknown) {
+  // The trial starts on account activation, not on a marketing-page visit.
+  // Existing accounts keep their original clock; signup/login never extends it.
+  if (userId) await db.insert(courseTrials).values({ learnerId }).onConflictDoNothing();
+  const [storedTrial] = userId
+    ? await db.select().from(courseTrials).where(eq(courseTrials.learnerId, learnerId))
     : [];
-  await db.insert(courseTrials).values({ learnerId, ...(guestTrial ? { startedAt: guestTrial.startedAt } : {}) })
-    .onConflictDoUpdate({
-      target: courseTrials.learnerId,
-      set: { startedAt: sql`least(${courseTrials.startedAt}, excluded.started_at)` },
-    });
-  const [trial] = await db.select().from(courseTrials).where(eq(courseTrials.learnerId, learnerId));
+  const trial = userId ? storedTrial : { startedAt: new Date() };
   if (!trial) throw new Error("Unable to initialize course trial");
   const payment = await liveAccess(userId);
   const access = await getAccessState(userId, await getAppSettings(), payment);
@@ -50,6 +44,7 @@ export async function billingStatus(learnerId: string, userId: string | null, gu
     liveCheckoutEnabled: liveCheckoutEnabled(),
     liveMonthlyCheckoutEnabled: liveMonthlyEnabled(),
     ...policy,
+    fullCourseAccess: !!userId && policy.fullCourseAccess,
     isGuest: !userId,
     trial: trialState,
     offers: COURSE_OFFERS,

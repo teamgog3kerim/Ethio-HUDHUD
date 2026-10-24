@@ -1,7 +1,9 @@
 import { Check } from 'lucide-react';
-import { Card, ErrorState, LinkBtn, Skeleton } from '@/components/bits';
+import { useAuth } from '@clerk/react';
+import { Btn, Card, ErrorState, LinkBtn, Skeleton } from '@/components/bits';
 import { useBilling } from '@/components/billing-notice';
 import { useApp } from '@/lib/app';
+import { planAction } from '@/lib/plan-action';
 
 export function safePolarUrl(raw: string | null | undefined, environment: 'sandbox' | 'live' = 'sandbox'): string | null {
   if (!raw) return null;
@@ -15,28 +17,39 @@ export function safePolarUrl(raw: string | null | undefined, environment: 'sandb
 
 type PlanId = 'trial' | 'monthly' | 'six_month';
 
-export function CoursePlans({ onChoose, selected, busy, paidOnly = false }: { onChoose?: (plan: PlanId) => void; selected?: string | null; busy?: boolean; paidOnly?: boolean }) {
+export function CoursePlans({ onPay, payingPlan, busy, paidOnly = false }: { onPay?: (plan: 'monthly' | 'six_month') => void; payingPlan?: string | null; busy?: boolean; paidOnly?: boolean }) {
   const { t } = useApp();
+  const { isSignedIn } = useAuth();
   const q = useBilling();
   const b = q.data;
   const monthly = b?.offers.find((o) => o.id === 'monthly');
   const six = b?.offers.find((o) => o.id === 'six_month');
-  const current = onChoose ? selected : selected ?? b?.selectedPlan;
+  const current: string | null | undefined = b?.paidPlan;
   const expired = b?.enforcementEnabled && b.trial.state === 'expired';
-  const hideTrial = paidOnly || expired;
+  const hideTrial = paidOnly || expired || !!onPay || !!isSignedIn;
 
   const action = (id: PlanId, label: string) => {
-    const isSel = current === id;
-    const text = isSel ? t('مختارة', 'Selected') : label;
-    if (onChoose) {
-      return (
-        <label className={`mt-auto flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border p-3 text-sm font-semibold ${isSel ? 'border-primary bg-secondary' : 'border-input'} ${busy ? 'pointer-events-none opacity-60' : ''}`}>
-          <input type="radio" name="course-plan" value={id} checked={isSel} disabled={busy} onChange={() => onChoose(id)} className="size-5 shrink-0 accent-[hsl(var(--primary))]" aria-label={label} data-testid={`button-choose-${id}`} />
-          {text}
-        </label>
-      );
-    }
-    return <LinkBtn href={`/choose-plan?plan=${id}`} variant={isSel ? 'primary' : 'outline'} className="mt-4 w-full" testId={`button-choose-${id}`}>{text}</LinkBtn>;
+    if (id === 'trial') return <LinkBtn href="/sign-up?plan=trial" className="mt-4 w-full" testId="button-choose-trial">{t('ابدأ 48 ساعة مجانًا', 'Start 48 free hours')}</LinkBtn>;
+    const price = id === 'monthly' ? monthly?.priceUsd : six?.priceUsd;
+    const note = (id === 'monthly'
+      ? t('دفعة يدوية واحدة، بلا تجديد تلقائي. ', 'One manual payment, no auto-renewal. ')
+      : t('دفعة واحدة، بلا تجديد تلقائي. ', 'One payment, no auto-renewal. '))
+      + t('لا استردادات طوعية، مع مراعاة القانون الإلزامي وشروط Polar. تظهر الضرائب المطبّقة والإجمالي النهائي في Polar قبل الدفع.', 'No voluntary refunds, subject to mandatory law and Polar terms. Applicable taxes and the final total are shown in Polar before you pay.');
+    const noteEl = <p className="mt-3 text-xs text-muted-foreground" data-testid={`text-pay-note-${id}`}>{note}</p>;
+    if (!isSignedIn) return <>{noteEl}<LinkBtn href={`/sign-up?plan=${id}`} variant={id === 'six_month' ? 'primary' : 'outline'} className="mt-3 w-full" testId={`button-choose-${id}`}>{t(`سجّل ثم ادفع $${price}`, `Sign up, then pay $${price}`)}</LinkBtn></>;
+    if (!onPay) return <>{noteEl}<LinkBtn href={`/choose-plan?plan=${id}&checkout=1`} className="mt-3 w-full" testId={`button-choose-${id}`}>{t(`ادفع $${price}`, `Pay $${price}`)}</LinkBtn></>;
+    const a = planAction(b, id, true, q.isError);
+    const ready = a.kind === 'live' || a.kind === 'sandbox';
+    const why = a.pendingRaw ? t('أنهِ التحقق من الدفع المعلّق أدناه أولًا.', 'Resolve the pending checkout below first.')
+      : a.livePurchase ? t('وصولك المدفوع فعّال. استخدم بوابة الفوترة أو التجديد اليدوي عند الاستحقاق.', 'Your paid access is active. Use the billing portal or manual renewal when due.')
+      : t('غير متاح الآن.', 'Not available right now.');
+    return <>
+      {noteEl}
+      <Btn className="mt-3 min-h-12 w-full" disabled={!ready || busy} onClick={() => onPay(id)} data-testid={`button-pay-${id}`}>
+        {payingPlan === id ? t('جارٍ فتح الدفع…', 'Opening checkout…') : t(`ادفع $${price}`, `Pay $${price}`)}{a.kind === 'sandbox' ? t(' (تجريبي)', ' (sandbox)') : ''}
+      </Btn>
+      {!ready && <p className="mt-2 text-xs font-semibold" data-testid={`text-pay-why-${id}`}>{why}</p>}
+    </>;
   };
   const cls = (id: string, extra = '') => `flex flex-col ${extra} ${current === id ? 'border-primary ring-2 ring-primary/40' : ''} ${busy ? 'opacity-70' : ''}`;
 
@@ -56,16 +69,13 @@ export function CoursePlans({ onChoose, selected, busy, paidOnly = false }: { on
             : t('الدفع غير متاح حاليًا. اختيار خطة لا يُحصّل رسومًا ولا يمنح وصولًا مدفوعًا.', 'Payment is currently unavailable. Selecting a plan does not charge you or grant paid access.')}
       </p>
       {q.isLoading && <div className="mt-4 grid gap-4 md:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-56" />)}</div>}
-      {(q.isError || (b && (!monthly || !six))) && <div className="mt-4">{onChoose ? <p role="alert" className="text-sm text-destructive">{t('تعذّر عرض الخطط المتاحة. أعد تحميلها أدناه.', 'Could not display available plans. Reload them below.')}</p> : <ErrorState what={t('الخطط', 'plans')} onRetry={() => q.refetch()} />}</div>}
+      {(q.isError || (b && (!monthly || !six))) && <div className="mt-4"><ErrorState what={t('الخطط', 'plans')} onRetry={() => q.refetch()} /></div>}
       {b && monthly && six && (
-        <div role={onChoose ? 'radiogroup' : undefined} aria-label={onChoose ? t('خطة التعلّم', 'Learning plan') : undefined} className={`mt-4 grid gap-4 ${hideTrial ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
+        <div className={`mt-4 grid gap-4 ${hideTrial ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
           {!hideTrial && <Card data-testid="card-plan-trial" className={cls('trial')}>
             <p className="text-xs font-bold uppercase tracking-widest text-primary">{t('تجربة مجانية', 'Free trial')}</p>
             <p className="font-display mt-2 text-3xl font-extrabold">{t('يومان', '48 hours')}</p>
-            <p className="mt-2 text-sm text-muted-foreground">{t('تجربة مجانية لمدة يومين (48 ساعة). اختيارها لا يعيد تشغيل ساعة التجربة.', 'A free two-day (48-hour) trial. Choosing it does not reset the trial clock.')}</p>
-            <p className="mt-2 text-sm" data-testid="text-plan-trial-state">{b.trial.state === 'expired'
-              ? t('انتهت تجربتك، لكن التعلّم ما زال مفتوحًا خلال المرحلة التجريبية.', 'Your trial has ended, but learning remains open during the pilot.')
-              : t(`متبقٍ ${b.trial.daysRemaining} يوم من تجربتك الحالية.`, `${b.trial.daysRemaining} day(s) remain in your current trial.`)}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{t('سجّل بحساب Google وابدأ 48 ساعة مجانًا. دون بطاقة.', 'Sign up with Google and get 48 free hours. No card needed.')}</p>
             {action('trial', t('ابدأ التجربة', 'Choose trial'))}
           </Card>}
           <Card data-testid="card-plan-monthly" className={cls('monthly')}>

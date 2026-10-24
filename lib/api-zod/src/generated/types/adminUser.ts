@@ -4,8 +4,11 @@
  * Api
  * OpenAPI spec version: 1.0.0
  */
+import type { AdminBillingRecord } from './adminBillingRecord';
 import type { AdminUserAccessPlan } from './adminUserAccessPlan';
+import type { AdminUserBillingState } from './adminUserBillingState';
 import type { AdminUserRole } from './adminUserRole';
+import type { AdminUserSelectedPlan } from './adminUserSelectedPlan';
 
 export interface AdminUser {
   id: string;
@@ -24,4 +27,17 @@ export interface AdminUser {
   /** @nullable */
   accessExpiresAt: string | null;
   accessReason: string;
+  billingState?: AdminUserBillingState;
+  /** @nullable */
+  trialStartedAt?: Date | null;
+  /** @nullable */
+  trialEndsAt?: Date | null;
+  monthlyPaymentCount?: number;
+  /** @nullable */
+  selectedPlan?: AdminUserSelectedPlan;
+  /** @nullable */
+  lastPaymentVerifiedAt?: Date | null;
+  /** Admin view is a recorded snapshot */
+  billingVerificationStale?: boolean;
+  billingHistory?: AdminBillingRecord[];
 }

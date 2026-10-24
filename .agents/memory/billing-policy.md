@@ -5,6 +5,22 @@ description: Course trial, pricing, approved live-access rules, and renewal noti
 
 Let users try lessons or practical conversations free for two days. On the third day, prompt them to sign up and subscribe for full lessons and conversation courses.
 
+The account-first journey supersedes anonymous learning: homepage → “48 hours
+free” → Google sign-up → lessons. A new account's 48-hour trial begins with
+account activation, not with a homepage visit or an earlier guest clock.
+Returning accounts retain their original trial dates; signing in, selecting a
+plan or opening checkout must never restart an existing trial.
+
+**Why:** The user explicitly requested a shorter account-first journey with a
+full 48-hour trial after sign-up, followed by monthly/six-month paid choices.
+
+**How to apply:** Require sign-in for learning content, keep marketing and plans
+public, and route expired unpaid learners to subscription selection. Paid-plan
+buttons are the explicit checkout action, not a separate preference-save step.
+After verified payment and confirmed effective access, open lessons directly.
+Preserve unfinished-checkout duplicate-charge safeguards even when they require
+resuming or waiting before a plan switch.
+
 Offer $29 USD per month during the six-month course, or a single $149 USD payment for six months of full course access.
 
 Remind subscribers four days before their subscription needs renewal so they can continue the following month's courses.

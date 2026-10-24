@@ -48,6 +48,7 @@ import type {
   Profile,
   ProfileInput,
   Progress,
+  PublicCourseSummary,
   PublicSettings,
   ReminderDeviceInput,
   ReminderDeviceStatus,
@@ -307,6 +308,80 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getSaveProfileMutationOptions(options));
     }
+
+export const getGetCourseCatalogUrl = () => {
+
+
+
+
+  return `/api/course-catalog`
+}
+
+/**
+ * Public course outlines only; no lessons, answers, progress or trial initialization.
+ */
+export const getCourseCatalog = async ( options?: Parameters<typeof customFetch>[1]): Promise<PublicCourseSummary[]> => {
+
+  return customFetch<PublicCourseSummary[]>(getGetCourseCatalogUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCourseCatalogQueryKey = () => {
+    return [
+    `/api/course-catalog`
+    ] as const;
+    }
+
+
+export const getGetCourseCatalogQueryOptions = <TData = Awaited<ReturnType<typeof getCourseCatalog>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCourseCatalog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCourseCatalogQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCourseCatalog>>> = ({ signal }) => getCourseCatalog({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCourseCatalog>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCourseCatalogQueryResult = NonNullable<Awaited<ReturnType<typeof getCourseCatalog>>>
+export type GetCourseCatalogQueryError = ErrorType<unknown>
+
+
+
+export function useGetCourseCatalog<TData = Awaited<ReturnType<typeof getCourseCatalog>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCourseCatalog>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCourseCatalogQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetCoursesUrl = () => {
 
