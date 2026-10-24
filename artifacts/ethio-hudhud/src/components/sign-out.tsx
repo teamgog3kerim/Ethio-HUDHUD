@@ -10,6 +10,7 @@ import {
 import { useApp } from '@/lib/app';
 import { cn } from '@/lib/utils';
 import { disableRenewalPush } from '@/lib/renewal-push';
+import { disableStudyPush, setStudyPushIdentity } from '@/lib/study-push';
 
 export function SignOutAction({ className, children, testId = 'button-signout' }: { className?: string; children?: ReactNode; testId?: string }) {
   const { t } = useApp();
@@ -28,6 +29,8 @@ export function SignOutAction({ className, children, testId = 'button-signout' }
     setFailed(false);
     try {
       await qc.cancelQueries();
+      setStudyPushIdentity(null);
+      await disableStudyPush(false, true);
       await disableRenewalPush(false, true);
       await signOut();
       qc.clear();

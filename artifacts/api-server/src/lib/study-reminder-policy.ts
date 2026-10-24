@@ -9,7 +9,7 @@ export type StudyPreferences = {
 };
 export const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 
-export function studyReminderPolicy(prefs: StudyPreferences, now = new Date()): StudyReminderStatus {
+export function studyReminderPolicy(prefs: StudyPreferences, now = new Date(), identity = ""): StudyReminderStatus {
   let timezone = prefs.timezone || "Africa/Addis_Ababa";
   try { new Intl.DateTimeFormat("en", { timeZone: timezone }).format(now); }
   catch { timezone = "Africa/Addis_Ababa"; }
@@ -34,7 +34,7 @@ export function studyReminderPolicy(prefs: StudyPreferences, now = new Date()): 
     timeZone: timezone, hour: "2-digit", minute: "2-digit", hourCycle: "h23",
   }).format(now);
   if (eligible(today)) {
-    status.occurrenceKey = hash(JSON.stringify([today, start, [...schedule.studyDays].sort(), timezone, time]));
+    status.occurrenceKey = hash(JSON.stringify([identity, today, start, [...schedule.studyDays].sort(), timezone, time]));
     const action = prefs.studyReminderAction?.key === status.occurrenceKey ? prefs.studyReminderAction : undefined;
     const snooze = action?.snoozedUntil && Number.isFinite(Date.parse(action.snoozedUntil)) ? action.snoozedUntil : null;
     status.snoozedUntil = snooze;

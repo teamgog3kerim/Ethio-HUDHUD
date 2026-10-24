@@ -7,7 +7,7 @@ import { z } from "zod";
 import { ActOnStudyReminderBody, SaveStudyReminderSettingsBody, SaveStudyReminderDeviceBody, RevokeStudyReminderDeviceBody } from "@workspace/api-zod";
 import { getLearner } from "../lib/learner";
 import { HttpError } from "../lib/http-error";
-import { deliveryConfig } from "../lib/renewal-delivery";
+import { studyWebConfig } from "../lib/study-push-config";
 import { allowedPushAddress } from "../lib/renewal-policy";
 import { revokeDeviceConsent } from "../lib/renewal-consent";
 import { isStudyDevice, studyDeviceStatus, studyStatus } from "../lib/study-reminder-delivery";
@@ -69,7 +69,7 @@ router.route("/study-reminders/devices/:deviceId")
     const data = parsed.data;
     const userId = getAuth(req).userId!;
     if (data.expectedUserId !== userId) throw new HttpError(409, "Account changed; opt in again");
-    if (!deliveryConfig().webConfigured) throw new HttpError(503, "Web Push is not configured");
+    if (!studyWebConfig().webConfigured) throw new HttpError(503, "Web Push requires a stable, strong SESSION_SECRET");
     if (!allowedPushAddress(data.address) || !data.p256dh || !data.auth
       || !/^[\w-]+={0,2}$/.test(data.p256dh) || !/^[\w-]+={0,2}$/.test(data.auth)
       || Buffer.from(data.p256dh, "base64url").length !== 65 || Buffer.from(data.auth, "base64url").length !== 16)

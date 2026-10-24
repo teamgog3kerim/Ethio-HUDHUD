@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  getGetProfileQueryKey, getGetStudyPlanQueryKey, getGetProgressQueryKey,
+  getGetProfileQueryKey, getGetStudyPlanQueryKey, getGetProgressQueryKey, getGetStudyReminderStatusQueryKey,
   useGetProfile, useSaveStudySchedule, type Profile, type StudyScheduleInput,
 } from '@workspace/api-client-react';
 import { Btn, Card, ErrorState, Skeleton } from '@/components/bits';
@@ -35,6 +35,7 @@ function ScheduleForm({ profile }: { profile: Profile }) {
     mutation: {
       onSuccess: (updated) => {
         qc.setQueryData(getGetProfileQueryKey(), updated);
+        qc.invalidateQueries({ queryKey: getGetStudyReminderStatusQueryKey() });
         qc.invalidateQueries({ queryKey: getGetStudyPlanQueryKey() });
         qc.invalidateQueries({ queryKey: getGetProgressQueryKey() });
         setSaved(true);

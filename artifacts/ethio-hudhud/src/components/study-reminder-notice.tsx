@@ -30,7 +30,7 @@ export function StudyReminderNotice() {
     <div className="mb-4 rounded-2xl border border-gold/50 bg-gold/10 px-4 py-3 text-sm" data-testid="study-reminder-notice" role="status">
       <p className="flex items-center gap-2 font-semibold"><BellRing className="size-4 shrink-0" />{t('حان وقت دراستك. خطوة صغيرة اليوم تكفي.', 'Time to study. One small step today is enough.')}</p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Link href={s.actionHref} className={`${b} bg-primary text-primary-foreground`} data-testid="link-study-reminder-start">{t('ابدأ أو تابع', 'Start or continue')}</Link>
+        <Link href={s.actionHref} onClick={() => { if (!act.isPending) run('dismiss'); }} className={`${b} bg-primary text-primary-foreground`} data-testid="link-study-reminder-start">{t('ابدأ أو تابع', 'Start or continue')}</Link>
         <button type="button" disabled={act.isPending} onClick={() => run('snooze')} className={`${b} border border-input bg-card disabled:opacity-50`} data-testid="button-study-reminder-snooze">{t('أجّل 10 دقائق', 'Snooze 10 minutes')}</button>
         <button type="button" disabled={act.isPending} onClick={() => run('dismiss')} className={`${b} hover:bg-muted disabled:opacity-50`} data-testid="button-study-reminder-dismiss">{t('تجاهل لليوم', 'Dismiss for today')}</button>
       </div>

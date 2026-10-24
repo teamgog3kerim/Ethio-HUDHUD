@@ -43,8 +43,8 @@ router.use(async (req, _res, next) => {
   }
   next();
 });
-router.use(enforceCourseAccess);
 router.use(studyReminderRouter);
+router.use(enforceCourseAccess);
 router.use(learningRouter);
 router.use(renewalRouter);
 router.use(tutorRouter);

@@ -11,13 +11,9 @@ import { studyPushBinding, enableStudyPush, disableStudyPush, studyPushLimitatio
 
 export function StudyReminderSettings({ isGuest }: { isGuest?: boolean }) {
   const { userId } = useAuth();
-  if (isGuest || !userId) return <p className="border-t border-border pt-4 text-sm text-muted-foreground" data-testid="text-reminder-guest">{useGuestText()}</p>;
-  return <Inner userId={userId} />;
-}
-
-function useGuestText() {
   const { t } = useApp();
-  return t('سجّل الدخول لتفعيل تذكيرات الدراسة المرتبطة بجدولك.', 'Sign in to turn on study reminders tied to your schedule.');
+  if (isGuest || !userId) return <p className="border-t border-border pt-4 text-sm text-muted-foreground" data-testid="text-reminder-guest">{t('سجّل الدخول لتفعيل تذكيرات الدراسة المرتبطة بجدولك.', 'Sign in to turn on study reminders tied to your schedule.')}</p>;
+  return <Inner key={userId} userId={userId} />;
 }
 
 function Inner({ userId }: { userId: string }) {
@@ -46,7 +42,7 @@ function Inner({ userId }: { userId: string }) {
   const limit = studyPushLimitation();
   const d = device.data;
   const permission = typeof Notification !== 'undefined' ? Notification.permission : 'default';
-  const deviceOn = !!d && d.enabled && d.state === 'enabled' && permission === 'granted';
+  const deviceOn = !!d && d.enabled && d.state === 'enabled' && binding.consent && binding.owner === userId && permission === 'granted';
   const run = async (fn: () => Promise<void>) => {
     setBusy(true); setPushErr(false);
     try { await fn(); await device.refetch(); } catch { setPushErr(true); } finally { setBusy(false); }
@@ -69,7 +65,7 @@ function Inner({ userId }: { userId: string }) {
   return (
     <section className="space-y-4 border-t border-border pt-4" data-testid="study-reminder-settings">
       <h3 className="font-bold">{t('تذكيرات الدراسة', 'Study reminders')}</h3>
-      <p className="text-sm text-muted-foreground">{t('تظهر داخل التطبيق في الوقت المحفوظ حسب منطقتك الزمنية المحفوظة. هي دعوة لطيفة وليست ضمانًا للتسليم.', 'Shown in the app at your saved time, using your saved timezone. A gentle nudge, not a delivery guarantee.')}</p>
+      <p className="text-sm text-muted-foreground">{t('تذكير في أيام دراستك ووقتك المختار، حسب المنطقة الزمنية للجدول. يظهر داخل التطبيق عند فتحه، ويمكنك تفعيل إشعارات الخلفية لهذا الجهاز أدناه.', 'A reminder on your study days at your chosen time, using your schedule timezone. See it when you open the app, or enable background notifications for this device below.')}</p>
       <label className="flex min-h-11 items-center gap-3 text-sm font-semibold">
         <input type="checkbox" className="size-5" disabled={blocked && !cur.enabled} checked={cur.enabled} onChange={e => { setSaved(false); setDraft({ ...cur, enabled: e.target.checked }); }} data-testid="checkbox-study-reminder" />
         {t('ذكّرني حسب جدولي', 'Remind me on my schedule')}
@@ -88,6 +84,7 @@ function Inner({ userId }: { userId: string }) {
 
       <div className="space-y-3 rounded-2xl border border-border p-4" data-testid="study-push-device">
         <h4 className="text-sm font-bold">{t('إشعارات الخلفية على هذا الجهاز', 'Background notifications on this device')}</h4>
+        <p className="text-xs text-muted-foreground">{t('قد تتأخر الإشعارات أو لا تصل بسبب الاتصال أو إعدادات الهاتف. يمكنك دائمًا متابعة جدولك داخل التطبيق.', 'Notifications may be delayed or missed because of connectivity or phone settings. Your schedule is always available in the app.')}</p>
         {limit ? <p className="text-sm">{limit}</p>
           : device.isError ? <p role="alert" className="text-sm">{t('تعذّر قراءة حالة الجهاز.', 'Could not read device status.')} <button type="button" className="underline" onClick={() => device.refetch()}>{t('إعادة المحاولة', 'Retry')}</button></p>
           : d && !d.webConfigured ? <p className="text-sm">{t('إعداد الإشعارات الخلفية لم يكتمل بعد. التذكيرات داخل التطبيق تعمل.', 'Background setup is not complete yet. In-app reminders work.')}</p>

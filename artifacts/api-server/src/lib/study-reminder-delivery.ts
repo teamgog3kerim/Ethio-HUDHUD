@@ -1,8 +1,8 @@
 import webpush from "web-push";
-import { db, learners, renewalDevices, renewalDeliveries } from "@workspace/db";
+import { db, learners, renewalDevices, renewalDeliveries, appAccounts } from "@workspace/db";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { billingStatus } from "./billing-status";
-import { deliveryConfig } from "./renewal-delivery";
+import { studyVapidDetails, studyWebConfig } from "./study-push-config";
 import { deviceBindingKey } from "./renewal-policy";
 import { hash, studyReminderPolicy, type StudyPreferences } from "./study-reminder-policy";
 import { localDate } from "./study-schedule";
@@ -14,8 +14,10 @@ export function isStudyDevice(subscription: unknown): boolean {
 
 export async function studyStatus(userId: string, now = new Date()) {
   const [learner] = await db.select().from(learners).where(eq(learners.identity, `clerk:${userId}`));
-  const status = studyReminderPolicy((learner?.preferences ?? {}) as StudyPreferences, now);
+  const status = studyReminderPolicy((learner?.preferences ?? {}) as StudyPreferences, now, userId);
   if (status.due && learner) {
+    const [account] = await db.select().from(appAccounts).where(eq(appAccounts.userId, userId));
+    if (account?.suspended || account?.deletedAt) return { ...status, due: false };
     const access = await billingStatus(learner.id, userId);
     status.due = access.fullCourseAccess;
   }
@@ -29,7 +31,7 @@ export async function studyDeviceStatus(id: string, userId: string) {
     eq(renewalDeliveries.deviceId, id), eq(renewalDeliveries.userId, userId),
   )).orderBy(desc(renewalDeliveries.createdAt)).limit(1) : [];
   return {
-    ...deliveryConfig(), enabled: own?.state === "enabled",
+    ...studyWebConfig(), enabled: own?.state === "enabled",
     bindingKey: own?.state === "enabled" ? deviceBindingKey(userId, id) : null,
     state: own?.state ?? "disabled", nextAt: null,
     lastResult: last?.state === "sending" && Date.now() - last.createdAt.getTime() > 300000 ? "unknown" : last?.state ?? null,
@@ -37,11 +39,17 @@ export async function studyDeviceStatus(id: string, userId: string) {
 }
 
 export async function dispatchStudyDevice(id: string, now = new Date()) {
+  const [initial] = await db.select().from(renewalDevices).where(eq(renewalDevices.id, id));
+  if (!initial || !isStudyDevice(initial.subscription)) return;
   await db.transaction(async tx => {
+    // Lock in deletion order: learner, then installation. Schedule pause,
+    // preference edits and deletion cannot race a new provider dispatch.
+    await tx.execute(sql`select id from learners where id = ${initial.learnerId} for no key update`);
     await tx.execute(sql`select id from renewal_devices where id = ${id} for no key update`);
     const [device] = await tx.select().from(renewalDevices).where(eq(renewalDevices.id, id));
-    if (!device || device.state !== "enabled" || device.channel !== "web" || !isStudyDevice(device.subscription)) return;
-    if (!deliveryConfig().webConfigured) return;
+    if (!device || device.learnerId !== initial.learnerId || device.state !== "enabled" || device.channel !== "web" || !isStudyDevice(device.subscription)) return;
+    const vapidDetails = studyVapidDetails();
+    if (!vapidDetails) return;
     const status = await studyStatus(device.userId, now);
     if (!status.due || !status.occurrenceKey) return;
     // Snoozing explicitly permits one later reminder; timeouts never auto-resend.
@@ -57,7 +65,7 @@ export async function dispatchStudyDevice(id: string, now = new Date()) {
         binding: deviceBindingKey(device.userId, id), period,
         date: localDate(now, status.timezone), timezone: status.timezone,
         expiresAt: new Date(now.getTime() + 15 * 60000).toISOString(),
-      }), { TTL: 900, timeout: 10000 });
+      }), { TTL: 900, timeout: 10000, vapidDetails });
       await db.update(renewalDeliveries).set({ state: "accepted" }).where(eq(renewalDeliveries.id, period));
     } catch (error) {
       const code = (error as { statusCode?: number }).statusCode;
@@ -68,7 +76,7 @@ export async function dispatchStudyDevice(id: string, now = new Date()) {
 }
 
 export async function runStudyDelivery(now = new Date()) {
-  if (!deliveryConfig().webConfigured) return;
+  if (!studyWebConfig().webConfigured) return;
   const devices = await db.select({ id: renewalDevices.id }).from(renewalDevices).where(and(
     eq(renewalDevices.state, "enabled"), eq(renewalDevices.channel, "web"),
     sql`${renewalDevices.subscription}->>'kind' = 'study'`,
