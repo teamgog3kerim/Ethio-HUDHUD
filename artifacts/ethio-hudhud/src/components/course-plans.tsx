@@ -35,7 +35,7 @@ export function CoursePlans({ onPay, payingPlan, busy, paidOnly = false }: { onP
       ? t('دفعة يدوية واحدة، بلا تجديد تلقائي. ', 'One manual payment, no auto-renewal. ')
       : t('دفعة واحدة، بلا تجديد تلقائي. ', 'One payment, no auto-renewal. '))
       + t('لا استردادات طوعية، مع مراعاة القانون الإلزامي وشروط Polar. تظهر الضرائب المطبّقة والإجمالي النهائي في Polar قبل الدفع.', 'No voluntary refunds, subject to mandatory law and Polar terms. Applicable taxes and the final total are shown in Polar before you pay.');
-    const noteEl = <p className="mt-3 text-xs text-muted-foreground" data-testid={`text-pay-note-${id}`}>{note}</p>;
+    const noteEl = <p hidden className="mt-3 text-xs text-muted-foreground" data-testid={`text-pay-note-${id}`}>{note}</p>;
     if (!isSignedIn) return <>{noteEl}<LinkBtn href={`/sign-up?plan=${id}`} variant={id === 'six_month' ? 'primary' : 'outline'} className="mt-3 w-full" testId={`button-choose-${id}`}>{t(`سجّل ثم ادفع $${price}`, `Sign up, then pay $${price}`)}</LinkBtn></>;
     if (!onPay) return <>{noteEl}<LinkBtn href={`/choose-plan?plan=${id}&checkout=1`} className="mt-3 w-full" testId={`button-choose-${id}`}>{t(`ادفع $${price}`, `Pay $${price}`)}</LinkBtn></>;
     const a = planAction(b, id, true, q.isError);

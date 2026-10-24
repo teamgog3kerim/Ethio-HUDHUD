@@ -76,3 +76,10 @@ visual emphasis while keeping monthly payments easy to choose.
 
 **How to apply:** Keep pricing, real savings, payment terms and both plan choices
 clear; do not imply that the recommendation is a popularity statistic.
+
+Hide the explanatory payment-note paragraphs on the subscription cards.
+
+**Why:** The user explicitly requested hiding these paragraphs from users.
+
+**How to apply:** Keep the card notes hidden without changing prices, payment
+behavior, the actual terms or the provider's checkout disclosures.
