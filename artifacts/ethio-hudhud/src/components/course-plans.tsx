@@ -94,6 +94,21 @@ export function CoursePlans({ onPay, payingPlan, busy, paidOnly = false }: { onP
             <p className="font-display mt-2 text-3xl font-extrabold" data-testid="text-price-six_month">${six.priceUsd}<span className="text-base font-medium text-muted-foreground"> {t('مرة واحدة', 'one time')}</span></p>
             <p className="mt-2 text-sm text-muted-foreground" data-testid="text-total-six_month">{t(`وصول ${six.durationMonths} أشهر.`, `${six.durationMonths} months of access.`)}</p>
             {six.savingsUsd > 0 && <p className="mb-4 mt-3 flex w-fit items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-sm font-bold text-primary" data-testid="text-savings"><Check className="size-4 shrink-0" aria-hidden="true" />{t(`توفير $${six.savingsUsd} (${six.savingsPercent}%)`, `Save $${six.savingsUsd} (${six.savingsPercent}%)`)}</p>}
+            <ul className="mb-3 mt-2 space-y-3 text-sm leading-relaxed" aria-label={t('ما تتضمنه الباقة', 'What this package includes')} data-testid="list-six-month-benefits">
+              {[
+                t('تعلّم الحروف الأمهرية (الفيدل)', 'Learn Amharic letters (Fidel)'),
+                t('تعلّم الكلمات والمفردات الأمهرية', 'Learn Amharic words and vocabulary'),
+                t('تعلّم المحادثات الأمهرية لمواقف الحياة اليومية', 'Learn Amharic conversations for everyday situations'),
+                t('تعلّم الأرقام الأمهرية من 0 إلى 100', 'Learn Amharic numbers from 0 to 100'),
+                t(`وصول كامل إلى جميع الدورات والتمارين لمدة ${six.durationMonths} أشهر`, `Full access to all courses and practices for ${six.durationMonths} months`),
+                t('تمارين تفاعلية ومراجعة الكلمات وتتبع تقدّمك', 'Interactive exercises, vocabulary review, and progress tracking'),
+              ].map((benefit, index) => (
+                <li key={index} className="flex items-start gap-2.5">
+                  <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-primary/10 text-primary"><Check className="size-3.5" aria-hidden="true" /></span>
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
             {action('six_month', t('اختر ستة أشهر', 'Choose six months'))}
           </Card>
         </div>
