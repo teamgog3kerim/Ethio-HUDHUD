@@ -91,7 +91,7 @@ heritage.
 **Why:** The user requested an animated welcome beneath the launch image.
 
 **How to apply:** Keep this launch introduction separate from the new-Google-signup
-welcome, automatically dismissed after 10 seconds or immediately with Continue,
+welcome, automatically dismissed after 16 seconds or immediately with Continue,
 and out of sign-in and payment-return flows.
 The browser/OS-controlled initial PWA launch image remains static; animate the
 in-app welcome that follows it rather than promising control of the system splash.

@@ -9,7 +9,7 @@
 .dark .sw-enjoy { color: hsl(var(--gold-foreground)); }
 .sw-skip { margin-top: .75rem; min-height: 2.75rem; padding: 0 1.75rem; border-radius: 1rem; border: 1px solid hsl(var(--border)); background: hsl(var(--card)); color: hsl(var(--foreground)); font: inherit; font-weight: 600; cursor: pointer; }
 .sw-line { opacity: 0; animation: sw-rise .7s cubic-bezier(.2,.8,.2,1) both; }
-.sw-bar { position: fixed; inset-inline: 0; bottom: 0; height: 3px; background: hsl(var(--gold)); transform-origin: left; animation: sw-bar 10s linear both; }
+.sw-bar { position: fixed; inset-inline: 0; bottom: 0; height: 3px; background: hsl(var(--gold)); transform-origin: left; animation: sw-bar 16s linear both; }
 [dir='rtl'] .sw-bar { transform-origin: right; }
 @keyframes sw-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes sw-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
