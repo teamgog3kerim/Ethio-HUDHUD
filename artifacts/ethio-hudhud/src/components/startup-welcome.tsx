@@ -15,7 +15,7 @@ function shouldSkip(): boolean {
 
 // Evaluated once per document launch; route transitions never re-trigger it.
 let pending = typeof window !== 'undefined' && !shouldSkip();
-const DURATION = 4000;
+const DURATION = 10000;
 
 export function StartupWelcome() {
   const { t, lang } = useApp();
