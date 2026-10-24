@@ -1,6 +1,6 @@
 // Public primary URL verified through deployment metadata. Never use a preview
 // origin or a learner-specific URL in invitations.
-export const INVITE_APP_URL = "https://ethio-hudhud.replit.app";
+export const INVITE_APP_URL = "https://ethiohudhud.com";
 
 export const INVITE_MESSAGES = [
   {

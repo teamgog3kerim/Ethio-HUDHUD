@@ -4,13 +4,14 @@ import { INVITE_APP_URL, INVITE_MESSAGES, getInviteLinks, getInviteText } from "
 
 test("all invitation templates preserve the Arabic samples and include the public domain exactly once", () => {
   assert.equal(INVITE_MESSAGES.length, 4);
-  assert.equal(INVITE_APP_URL, "https://ethio-hudhud.replit.app");
+  assert.equal(INVITE_APP_URL, "https://ethiohudhud.com");
   for (const lang of ["ar", "en"] as const) {
     for (let i = 0; i < INVITE_MESSAGES.length; i++) {
       const text = getInviteText(i, lang);
       assert.ok(text.startsWith(INVITE_MESSAGES[i]![lang]));
       assert.equal(text.split(INVITE_APP_URL).length - 1, 1);
       assert.ok(!text.includes("replit.dev"));
+      assert.ok(!text.includes("ethio-hudhud.replit.app"));
       assert.ok(!text.includes("localhost"));
     }
   }
