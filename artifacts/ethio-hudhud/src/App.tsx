@@ -37,6 +37,7 @@ import { Privacy, Terms } from '@/pages/legal';
 import { RenewalIdentityBoundary } from '@/components/renewal-push';
 import { CourseAccessGate } from '@/components/course-access-gate';
 import { ErrorState, Skeleton } from '@/components/bits';
+import { NewUserWelcome } from '@/components/new-user-welcome';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
 
@@ -153,6 +154,7 @@ function ClerkProviderWithRoutes() {
     >
       <ClerkQueryClientCacheInvalidator />
       <RenewalIdentityBoundary />
+      <NewUserWelcome />
       <RoutedErrorBoundary>
         <CourseAccessGate>
         <Switch>

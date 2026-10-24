@@ -51,3 +51,11 @@ text back at a smaller size than the original button.
 **How to apply:** Reduce padding, icon and text size while preserving an easy
 tap target and the existing installation action. Keep automatic scroll shrinking
 alongside the smaller resting button; the user explicitly requested both.
+
+Give new Google sign-ups an attractive, brief welcome that disappears after
+two seconds or immediately when the learner clicks anywhere on the screen.
+
+**Why:** The user explicitly requested this welcome for new Gmail sign-ups.
+
+**How to apply:** Do not replay it on ordinary logins or page navigation, and
+do not add another onboarding step or change trial, checkout or access rules.
