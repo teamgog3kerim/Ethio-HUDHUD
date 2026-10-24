@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth, useClerk, useUser } from '@clerk/react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Download, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import {
-  getExportAccountQueryKey, getGetProfileQueryKey, useDeleteAccount, useExportAccount,
+  getGetProfileQueryKey, useDeleteAccount,
   useGetProfile, useSaveProfile, type ProfileInput,
 } from '@workspace/api-client-react';
 import { Btn, Card, ErrorState, PageHead, Skeleton } from '@/components/bits';
@@ -43,7 +43,6 @@ export default function Account() {
       },
     },
   });
-  const exp = useExportAccount({ query: { enabled: false, queryKey: getExportAccountQueryKey() } });
   const del = useDeleteAccount({
     mutation: {
       onSuccess: () => {
@@ -54,16 +53,6 @@ export default function Account() {
     },
   });
 
-  const doExport = async () => {
-    const r = await exp.refetch();
-    if (r.data) {
-      const url = URL.createObjectURL(new Blob([JSON.stringify(r.data, null, 2)], { type: 'application/json' }));
-      const a = document.createElement('a');
-      a.href = url; a.download = 'hudhud-learning-data.json'; a.click();
-      URL.revokeObjectURL(url);
-      toast({ title: t('تم تنزيل بياناتك', 'Your data was downloaded') });
-    }
-  };
   const input = 'h-11 w-full rounded-2xl border border-input bg-background px-4 outline-none focus:border-primary';
   const word = t('احذف', 'DELETE');
 
@@ -117,13 +106,6 @@ export default function Account() {
           </Card>
 
           <StudyScheduleSettings />
-
-          <Card>
-            <h2 className="font-display mb-1 font-bold">{t('بياناتك', 'Your data')}</h2>
-            <p className="mb-3 text-sm text-muted-foreground">{t('نزّل نسخة JSON من بيانات تعلّمك.', 'Download a JSON copy of your learning data.')}</p>
-            <Btn variant="outline" onClick={doExport} disabled={exp.isFetching} data-testid="button-export"><Download className="size-4" />{exp.isFetching ? t('جارٍ التجهيز...', 'Preparing...') : t('تصدير البيانات', 'Export data')}</Btn>
-            {exp.isError && <p className="mt-2 text-sm text-destructive">{t('تعذّر التصدير.', 'Export failed.')}</p>}
-          </Card>
 
           <Card className="border-destructive/40">
             <h2 className="font-display mb-1 font-bold text-destructive">{t('حذف بيانات التعلّم', 'Delete learning data')}</h2>
