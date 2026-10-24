@@ -5,6 +5,7 @@ import { HttpError } from "./http-error";
 import { logger } from "./logger";
 import { LIVE_COURSE_PRODUCTS } from "./polar-live-webhook-policy";
 import { assertLiveProduct, manualMonthlyState, monthlyPeriod, MONTHLY_PAYMENT_LIMIT } from "./manual-monthly";
+import { hasLiveBillingHistory, openLiveBillingPortal } from "./polar-live-portal";
 import {
   LIVE_CHECKOUT_LAUNCH_APPROVED, LIVE_MANUAL_MONTHLY_APPROVED, LIVE_VERIFICATION_TTL,
   liveCustomerId, livePaymentState, safeLiveUrl, type LivePlan,
@@ -18,12 +19,14 @@ export function liveApi() {
   if (!process.env.POLAR_LIVE_ACCESS_TOKEN) throw new HttpError(503, "اتصال Polar المباشر غير متاح.");
   return createPolar({ accessToken: process.env.POLAR_LIVE_ACCESS_TOKEN, timeout: 8 });
 }
-export async function liveCall<T>(operation: () => Promise<T>): Promise<T> {
+export async function liveCall<T>(operation: () => Promise<T>, context: "verification" | "portal" = "verification"): Promise<T> {
   try { return await operation(); }
   catch (error) {
     if (error instanceof HttpError) throw error;
-    logger.warn({ provider: "polar_live", statusCode: (error as { statusCode?: number }).statusCode }, "Live billing verification unavailable");
-    throw new HttpError(502, "تعذر التحقق من Polar. لا تبدأ عملية دفع جديدة؛ أعد التحقق لاحقاً.");
+    logger.warn({ provider: "polar_live", operation: context, statusCode: (error as { statusCode?: number }).statusCode }, "Live billing verification unavailable");
+    throw new HttpError(502, context === "portal"
+      ? "تعذّر فتح بوابة الفوترة لدى Polar حالياً. أعد المحاولة لاحقاً؛ لن تبدأ عملية دفع جديدة ولن يتغير وصولك."
+      : "تعذر التحقق من Polar. لا تبدأ عملية دفع جديدة؛ أعد التحقق لاحقاً.");
   }
 }
 export async function assertLiveAccount(userId: string) {
@@ -197,12 +200,13 @@ export async function refreshLiveCheckout(userId: string, checkoutId: string, ap
 
 export async function livePortal(userId: string) {
   await assertLiveAccount(userId);
-  const [purchase] = await db.select().from(polarLivePurchases).where(and(
+  const purchases = await db.select().from(polarLivePurchases).where(and(
     eq(polarLivePurchases.userId, userId), isNotNull(polarLivePurchases.checkoutId),
-  )).limit(1);
-  if (!purchase?.checkoutId) throw new HttpError(404, "لا توجد عملية دفع مباشرة لهذا الحساب.");
-  const session = await liveCall(() => liveApi().customerSessions.create({
-    external_customer_id: liveCustomerId(userId), return_url: "https://ethiohudhud.com/choose-plan",
-  }));
-  return { environment: "live" as const, url: safeLiveUrl(session.customer_portal_url) };
+  ));
+  const purchase = purchases.filter(hasLiveBillingHistory)
+    .sort((a, b) => b.verifiedAt!.getTime() - a.verifiedAt!.getTime())[0];
+  return liveCall(() => openLiveBillingPortal(userId, purchase, {
+    getCheckout: id => liveApi().checkouts.get(id),
+    createSession: input => liveApi().customerSessions.create(input),
+  }), "portal");
 }

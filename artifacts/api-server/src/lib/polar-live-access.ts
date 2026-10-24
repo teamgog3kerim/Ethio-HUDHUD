@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { LIVE_VERIFICATION_TTL } from "./polar-live-policy";
 import { assertLiveAccount, refreshLiveCheckout } from "./polar-live";
 import { manualMonthlyState } from "./manual-monthly";
+import { hasLiveBillingHistory } from "./polar-live-portal";
 
 export async function liveAccess(userId: string | null, verify = refreshLiveCheckout) {
   const none = { hasLivePurchase: false, paymentVerificationPending: false, paidPlan: null, paidPeriodEndsAt: null, cancelAtPeriodEnd: false, subscriptionStatus: null, accessUntil: null } as const;
@@ -24,7 +25,7 @@ export async function liveAccess(userId: string | null, verify = refreshLiveChec
   return {
     ...manualMonthlyState(rows),
     ...(verificationFailed ? { monthlyCanPurchase: false } : {}),
-    hasLivePurchase: rows.some(r => !!r.checkoutId),
+    hasLivePurchase: rows.some(hasLiveBillingHistory),
     paymentVerificationPending: !paid && (verificationFailed || rows.some(r => r.status === "creating" || r.status === "pending")),
     paidPlan: paid?.plan as "monthly" | "six_month" | undefined ?? null,
     paidPeriodEndsAt: paid?.paidUntil?.toISOString() ?? null,

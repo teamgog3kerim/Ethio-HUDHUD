@@ -29,3 +29,16 @@ also documents free products or 100% discounts for production checks, but do
 not weaken the app's full-price entitlement verification or grant six-month
 paid access to such fixtures. Distinguish a genuine buyer's intended purchase
 from a merchant's test transaction.
+
+A checkout ID is not proof that a Polar customer exists or that the billing
+portal is available. Offer receipts/portal access from verified purchase history,
+including expired or refunded purchases, not from an abandoned checkout.
+
+**Why:** Production portal calls returned Polar validation errors for an unpaid
+checkout; its provider response had no customer ID. The old eligibility check
+treated any checkout as a purchase.
+
+**How to apply:** Preserve resume/status actions for unfinished checkouts. For
+portal sessions, re-check the original checkout's account and product ownership
+and use its actual Polar customer ID. Never create another checkout or grant
+learning access just to make a portal link work.

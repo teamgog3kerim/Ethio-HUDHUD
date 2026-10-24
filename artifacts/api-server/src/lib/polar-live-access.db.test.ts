@@ -22,9 +22,17 @@ test("live entitlement isolation, freshness, grants and original trial are prese
     });
     assert.equal((await liveAccess(userId)).accessUntil, null, "sandbox does not grant live access");
     await db.insert(polarLivePurchases).values({
-      userId, plan: "six_month", status: "paid", checkoutId, verifiedAt: new Date(),
-      accessUntil: until, paidUntil: until, nextCheckAt: until,
+      userId, plan: "six_month", status: "pending", checkoutId, verifiedAt: new Date(),
+      nextCheckAt: until,
     });
+    const pending = await billingStatus(learner!.id, userId);
+    assert.equal(pending.hasLivePurchase, false, "an unpaid checkout is not portal-ready billing history");
+    assert.equal(pending.paymentVerificationPending, true);
+    assert.equal(pending.pendingCheckoutId, checkoutId);
+    await db.update(polarLivePurchases).set({
+      status: "paid", verifiedAt: new Date(),
+      accessUntil: until, paidUntil: until, nextCheckAt: until,
+    }).where(eq(polarLivePurchases.userId, userId));
     const paid = await billingStatus(learner!.id, userId);
     assert.equal(paid.source, "polar_live");
     assert.equal(paid.plan, "six_month");
@@ -33,6 +41,7 @@ test("live entitlement isolation, freshness, grants and original trial are prese
     assert.equal(paid.enforcementEnabled, true);
     assert.equal(paid.liveCheckoutEnabled, liveCheckoutEnabled());
     assert.equal(paid.liveMonthlyCheckoutEnabled, liveMonthlyEnabled());
+    assert.equal(paid.hasLivePurchase, true, "verified purchases can open billing receipts");
     assert.equal((await liveAccess(other)).accessUntil, null);
     const access = await getAccessState(userId, defaultAppSettings);
     assert.equal(access.dailyAiLimit, defaultAppSettings.complimentaryAiDailyLimit);

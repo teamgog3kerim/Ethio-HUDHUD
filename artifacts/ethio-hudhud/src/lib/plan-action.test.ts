@@ -40,9 +40,9 @@ test('pending verification offers status or portal, never a new purchase', () =>
   assert.equal(planAction(b, 'six_month', true).kind, 'status');
   assert.equal(planAction({ ...b, hasLivePurchase: true }, 'monthly', true).kind, 'portal');
 });
-test('pending monthly can only resume the same monthly checkout', () => {
+test('pending monthly uses the explicit original-checkout resume flow, not a new purchase', () => {
   const b = { ...live(), paymentVerificationPending: true, resumablePlan: 'monthly' as const };
-  assert.equal(planAction(b, 'monthly', true).kind, 'live');
+  assert.equal(planAction(b, 'monthly', true).kind, 'status');
   assert.equal(planAction(b, 'six_month', true).kind, 'status');
 });
 test('monthly cap and missing count/limit fail closed despite contradictory eligibility', () => {
