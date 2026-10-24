@@ -326,6 +326,42 @@ export interface ProfileInput {
   retainChat: boolean;
 }
 
+export interface StudyReminderSettings {
+  enabled: boolean;
+  /** @pattern ^([01][0-9]|2[0-3]):[0-5][0-9]$ */
+  time: string;
+}
+
+export type StudyReminderActionAction = typeof StudyReminderActionAction[keyof typeof StudyReminderActionAction];
+
+
+export const StudyReminderActionAction = {
+  dismiss: 'dismiss',
+  snooze: 'snooze',
+} as const;
+
+export interface StudyReminderAction {
+  /** @pattern ^[0-9a-f]{64}$ */
+  occurrenceKey: string;
+  action: StudyReminderActionAction;
+}
+
+export interface StudyReminderStatus {
+  enabled: boolean;
+  time: string;
+  timezone: string;
+  scheduled: boolean;
+  paused: boolean;
+  due: boolean;
+  /** @nullable */
+  occurrenceKey: string | null;
+  /** @nullable */
+  nextDate: string | null;
+  /** @nullable */
+  snoozedUntil: string | null;
+  actionHref: string;
+}
+
 export interface StudyScheduleInput {
   /**
      * Local calendar date, or null for undated self-paced learning

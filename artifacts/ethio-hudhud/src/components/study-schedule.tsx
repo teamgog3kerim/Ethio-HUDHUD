@@ -5,6 +5,7 @@ import {
   useGetProfile, useSaveStudySchedule, type Profile, type StudyScheduleInput,
 } from '@workspace/api-client-react';
 import { Btn, Card, ErrorState, Skeleton } from '@/components/bits';
+import { StudyReminderSettings } from '@/components/study-reminder-settings';
 import { useApp } from '@/lib/app';
 
 export function StudyScheduleSettings() {
@@ -95,6 +96,7 @@ function ScheduleForm({ profile }: { profile: Profile }) {
           : schedule ? t('الجدول محفوظ وفعّال.', 'Schedule saved and active.') : t('مسار ذاتي دون تواريخ.', 'Undated, self-paced path.')}
         {saved && ` ${t('تم الحفظ.', 'Saved.')}`}
       </p>
+      <StudyReminderSettings isGuest={profile.isGuest} />
       {save.isError && <p role="alert" className="text-sm text-destructive">{t('لم يُحفظ الجدول. تحقّق من التاريخ والمنطقة الزمنية واتصالك ثم أعد المحاولة.', 'Schedule was not saved. Check the date, timezone and connection, then try again.')}</p>}
     </Card>
   );

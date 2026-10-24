@@ -120,6 +120,82 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Progress" }
+  /study-reminders:
+    get:
+      operationId: getStudyReminderStatus
+      responses:
+        "200":
+          description: Account study reminder preferences and current scheduled occurrence
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudyReminderStatus" }
+    put:
+      operationId: saveStudyReminderSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudyReminderSettings" }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudyReminderStatus" }
+  /study-reminders/action:
+    post:
+      operationId: actOnStudyReminder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StudyReminderAction" }
+      responses:
+        "200":
+          description: Reminder snoozed for ten minutes or dismissed for this occurrence; no learning progress changes
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudyReminderStatus" }
+  /study-reminders/devices/{deviceId}/revoke:
+    parameters:
+      - { name: deviceId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: revokeStudyReminderDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReminderRevocationInput" }
+      responses:
+        "204": { description: Study device consent revoked using a disable-only capability }
+  /study-reminders/devices/{deviceId}:
+    parameters:
+      - { name: deviceId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getStudyReminderDevice
+      responses:
+        "200":
+          description: This account's study notification registration on this device
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReminderDeviceStatus" }
+    put:
+      operationId: saveStudyReminderDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReminderDeviceInput" }
+      responses:
+        "200":
+          description: Study-only Web Push registration; never enables subscription reminders
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReminderDeviceStatus" }
+    delete:
+      operationId: removeStudyReminderDevice
+      responses:
+        "204": { description: Study notifications disabled on this device }
   /study-schedule:
     put:
       operationId: saveStudySchedule
@@ -743,6 +819,32 @@ components:
         language: { type: string, enum: [ar, en] }
         onboardingComplete: { type: boolean }
         retainChat: { type: boolean }
+    StudyReminderSettings:
+      type: object
+      required: [enabled, time]
+      properties:
+        enabled: { type: boolean }
+        time: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+    StudyReminderAction:
+      type: object
+      required: [occurrenceKey, action]
+      properties:
+        occurrenceKey: { type: string, pattern: "^[0-9a-f]{64}$" }
+        action: { type: string, enum: [dismiss, snooze] }
+    StudyReminderStatus:
+      type: object
+      required: [enabled, time, timezone, scheduled, paused, due, occurrenceKey, nextDate, snoozedUntil, actionHref]
+      properties:
+        enabled: { type: boolean }
+        time: { type: string }
+        timezone: { type: string }
+        scheduled: { type: boolean }
+        paused: { type: boolean }
+        due: { type: boolean }
+        occurrenceKey: { type: ["string", "null"] }
+        nextDate: { type: ["string", "null"] }
+        snoozedUntil: { type: ["string", "null"] }
+        actionHref: { type: string }
     StudyScheduleInput:
       type: object
       required: [startDate, studyDays, paused, timezone]

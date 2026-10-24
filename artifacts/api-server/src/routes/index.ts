@@ -10,6 +10,7 @@ import { enforceAccountStatus } from "../lib/admin-auth";
 import { getAppSettings } from "../lib/app-settings";
 import { HttpError } from "../lib/http-error";
 import { enforceCourseAccess } from "../lib/course-access";
+import studyReminderRouter from "./study-reminders";
 import { db, courses } from "@workspace/db";
 import { asc } from "drizzle-orm";
 import { GetCourseCatalogResponse } from "@workspace/api-zod";
@@ -43,6 +44,7 @@ router.use(async (req, _res, next) => {
   next();
 });
 router.use(enforceCourseAccess);
+router.use(studyReminderRouter);
 router.use(learningRouter);
 router.use(renewalRouter);
 router.use(tutorRouter);

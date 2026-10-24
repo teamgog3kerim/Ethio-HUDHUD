@@ -56,6 +56,8 @@ export async function dispatchRenewalDevice(device: Device) {
     await tx.execute(sql`select id from renewal_devices where id = ${device.id} for no key update`);
     const [live] = await tx.select().from(renewalDevices).where(eq(renewalDevices.id, device.id));
     if (!live || live.state !== "enabled" || live.userId !== device.userId) return;
+    // Study consent is intentionally separate from subscription reminders.
+    if (live.subscription && typeof live.subscription === "object" && "kind" in live.subscription && live.subscription.kind === "study") return;
     const reminder = await verifiedReminder(live.userId);
     const period = reminder ? renewalPeriod(`${live.userId}:${live.id}`, reminder) : null;
     if (!period?.due) return;

@@ -10,6 +10,7 @@ import {
   getGetProfileQueryKey, useGetAdminAccess, useGetProfile, useSaveProfile, useGetPublicSettings,
 } from '@workspace/api-client-react';
 import { BillingNotice } from '@/components/billing-notice';
+import { StudyReminderNotice } from '@/components/study-reminder-notice';
 import { PlatformNotices } from '@/components/admin/notices';
 import { SignOutAction } from '@/components/sign-out';
 import { Logo } from '@/components/logo';
@@ -165,7 +166,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </header>
 
       <main id="main-content" tabIndex={-1} className="app-content outline-none mx-auto min-w-0 w-full max-w-5xl pt-6 shell-desktop:ms-64 shell-desktop:w-[calc(100%_-_16rem)] shell-desktop:max-w-none shell-desktop:px-12 shell-desktop:pb-12 shell-desktop:pt-10">
-        <div className="mx-auto min-w-0 max-w-5xl"><PlatformNotices /><BillingNotice />{children}</div>
+        <div className="mx-auto min-w-0 max-w-5xl"><PlatformNotices /><BillingNotice /><StudyReminderNotice />{children}</div>
       </main>
 
       <nav data-testid="mobile-tabs" aria-label={t('التنقل الرئيسي', 'Main navigation')} className="app-mobile-tabs fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-border bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur shell-desktop:hidden">

@@ -54,6 +54,9 @@ import type {
   ReminderDeviceStatus,
   ReminderRevocationInput,
   ReviewInput,
+  StudyReminderAction,
+  StudyReminderSettings,
+  StudyReminderStatus,
   StudyScheduleInput,
   Word
 } from './api.schemas';
@@ -894,6 +897,546 @@ export function useGetProgress<TData = Awaited<ReturnType<typeof getProgress>>, 
 
 
 
+
+export const getGetStudyReminderStatusUrl = () => {
+
+
+
+
+  return `/api/study-reminders`
+}
+
+export const getStudyReminderStatus = async ( options?: Parameters<typeof customFetch>[1]): Promise<StudyReminderStatus> => {
+
+  return customFetch<StudyReminderStatus>(getGetStudyReminderStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetStudyReminderStatusQueryKey = () => {
+    return [
+    `/api/study-reminders`
+    ] as const;
+    }
+
+
+export const getGetStudyReminderStatusQueryOptions = <TData = Awaited<ReturnType<typeof getStudyReminderStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudyReminderStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStudyReminderStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStudyReminderStatus>>> = ({ signal }) => getStudyReminderStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStudyReminderStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetStudyReminderStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getStudyReminderStatus>>>
+export type GetStudyReminderStatusQueryError = ErrorType<unknown>
+
+
+
+export function useGetStudyReminderStatus<TData = Awaited<ReturnType<typeof getStudyReminderStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudyReminderStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetStudyReminderStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveStudyReminderSettingsUrl = () => {
+
+
+
+
+  return `/api/study-reminders`
+}
+
+export const saveStudyReminderSettings = async (studyReminderSettings: StudyReminderSettings, options?: Parameters<typeof customFetch>[1]): Promise<StudyReminderStatus> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<StudyReminderStatus>(getSaveStudyReminderSettingsUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(studyReminderSettings)
+  }
+);}
+
+
+
+
+
+export const getSaveStudyReminderSettingsMutationKey = () => ['saveStudyReminderSettings'] as const;
+
+export const getSaveStudyReminderSettingsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveStudyReminderSettings>>, TError,SaveStudyReminderSettingsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveStudyReminderSettings>>, TError,SaveStudyReminderSettingsMutationVariables, TContext> => {
+
+const mutationKey = getSaveStudyReminderSettingsMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveStudyReminderSettings>>, SaveStudyReminderSettingsMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  saveStudyReminderSettings(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveStudyReminderSettingsMutationResult = NonNullable<Awaited<ReturnType<typeof saveStudyReminderSettings>>>
+    export type SaveStudyReminderSettingsMutationBody = BodyType<StudyReminderSettings>
+    export type SaveStudyReminderSettingsMutationError = ErrorType<unknown>
+    export type SaveStudyReminderSettingsMutationVariables = {data: BodyType<StudyReminderSettings>}
+
+    export const useSaveStudyReminderSettings = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveStudyReminderSettings>>, TError,SaveStudyReminderSettingsMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveStudyReminderSettings>>,
+        TError,
+        SaveStudyReminderSettingsMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSaveStudyReminderSettingsMutationOptions(options));
+    }
+
+export const getActOnStudyReminderUrl = () => {
+
+
+
+
+  return `/api/study-reminders/action`
+}
+
+export const actOnStudyReminder = async (studyReminderAction: StudyReminderAction, options?: Parameters<typeof customFetch>[1]): Promise<StudyReminderStatus> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<StudyReminderStatus>(getActOnStudyReminderUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(studyReminderAction)
+  }
+);}
+
+
+
+
+
+export const getActOnStudyReminderMutationKey = () => ['actOnStudyReminder'] as const;
+
+export const getActOnStudyReminderMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof actOnStudyReminder>>, TError,ActOnStudyReminderMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof actOnStudyReminder>>, TError,ActOnStudyReminderMutationVariables, TContext> => {
+
+const mutationKey = getActOnStudyReminderMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof actOnStudyReminder>>, ActOnStudyReminderMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  actOnStudyReminder(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ActOnStudyReminderMutationResult = NonNullable<Awaited<ReturnType<typeof actOnStudyReminder>>>
+    export type ActOnStudyReminderMutationBody = BodyType<StudyReminderAction>
+    export type ActOnStudyReminderMutationError = ErrorType<unknown>
+    export type ActOnStudyReminderMutationVariables = {data: BodyType<StudyReminderAction>}
+
+    export const useActOnStudyReminder = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof actOnStudyReminder>>, TError,ActOnStudyReminderMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof actOnStudyReminder>>,
+        TError,
+        ActOnStudyReminderMutationVariables,
+        TContext
+      > => {
+      return useMutation(getActOnStudyReminderMutationOptions(options));
+    }
+
+export const getRevokeStudyReminderDeviceUrl = (deviceId: string,) => {
+
+
+
+
+  return `/api/study-reminders/devices/${deviceId}/revoke`
+}
+
+export const revokeStudyReminderDevice = async (deviceId: string,
+    reminderRevocationInput: ReminderRevocationInput, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<void>(getRevokeStudyReminderDeviceUrl(deviceId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(reminderRevocationInput)
+  }
+);}
+
+
+
+
+
+export const getRevokeStudyReminderDeviceMutationKey = () => ['revokeStudyReminderDevice'] as const;
+
+export const getRevokeStudyReminderDeviceMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeStudyReminderDevice>>, TError,RevokeStudyReminderDeviceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof revokeStudyReminderDevice>>, TError,RevokeStudyReminderDeviceMutationVariables, TContext> => {
+
+const mutationKey = getRevokeStudyReminderDeviceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revokeStudyReminderDevice>>, RevokeStudyReminderDeviceMutationVariables> = (props) => {
+          const {deviceId,data} = props ?? {};
+
+          return  revokeStudyReminderDevice(deviceId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevokeStudyReminderDeviceMutationResult = NonNullable<Awaited<ReturnType<typeof revokeStudyReminderDevice>>>
+    export type RevokeStudyReminderDeviceMutationBody = BodyType<ReminderRevocationInput>
+    export type RevokeStudyReminderDeviceMutationError = ErrorType<unknown>
+    export type RevokeStudyReminderDeviceMutationVariables = {deviceId: string;data: BodyType<ReminderRevocationInput>}
+
+    export const useRevokeStudyReminderDevice = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revokeStudyReminderDevice>>, TError,RevokeStudyReminderDeviceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof revokeStudyReminderDevice>>,
+        TError,
+        RevokeStudyReminderDeviceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRevokeStudyReminderDeviceMutationOptions(options));
+    }
+
+export const getGetStudyReminderDeviceUrl = (deviceId: string,) => {
+
+
+
+
+  return `/api/study-reminders/devices/${deviceId}`
+}
+
+export const getStudyReminderDevice = async (deviceId: string, options?: Parameters<typeof customFetch>[1]): Promise<ReminderDeviceStatus> => {
+
+  return customFetch<ReminderDeviceStatus>(getGetStudyReminderDeviceUrl(deviceId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetStudyReminderDeviceQueryKey = (deviceId: string,) => {
+    return [
+    `/api/study-reminders/devices/${deviceId}`
+    ] as const;
+    }
+
+
+export const getGetStudyReminderDeviceQueryOptions = <TData = Awaited<ReturnType<typeof getStudyReminderDevice>>, TError = ErrorType<unknown>>(deviceId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudyReminderDevice>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStudyReminderDeviceQueryKey(deviceId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStudyReminderDevice>>> = ({ signal }) => getStudyReminderDevice(deviceId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: deviceId !== null && deviceId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStudyReminderDevice>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetStudyReminderDeviceQueryResult = NonNullable<Awaited<ReturnType<typeof getStudyReminderDevice>>>
+export type GetStudyReminderDeviceQueryError = ErrorType<unknown>
+
+
+
+export function useGetStudyReminderDevice<TData = Awaited<ReturnType<typeof getStudyReminderDevice>>, TError = ErrorType<unknown>>(
+ deviceId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudyReminderDevice>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetStudyReminderDeviceQueryOptions(deviceId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveStudyReminderDeviceUrl = (deviceId: string,) => {
+
+
+
+
+  return `/api/study-reminders/devices/${deviceId}`
+}
+
+export const saveStudyReminderDevice = async (deviceId: string,
+    reminderDeviceInput: ReminderDeviceInput, options?: Parameters<typeof customFetch>[1]): Promise<ReminderDeviceStatus> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<ReminderDeviceStatus>(getSaveStudyReminderDeviceUrl(deviceId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(reminderDeviceInput)
+  }
+);}
+
+
+
+
+
+export const getSaveStudyReminderDeviceMutationKey = () => ['saveStudyReminderDevice'] as const;
+
+export const getSaveStudyReminderDeviceMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveStudyReminderDevice>>, TError,SaveStudyReminderDeviceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveStudyReminderDevice>>, TError,SaveStudyReminderDeviceMutationVariables, TContext> => {
+
+const mutationKey = getSaveStudyReminderDeviceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveStudyReminderDevice>>, SaveStudyReminderDeviceMutationVariables> = (props) => {
+          const {deviceId,data} = props ?? {};
+
+          return  saveStudyReminderDevice(deviceId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveStudyReminderDeviceMutationResult = NonNullable<Awaited<ReturnType<typeof saveStudyReminderDevice>>>
+    export type SaveStudyReminderDeviceMutationBody = BodyType<ReminderDeviceInput>
+    export type SaveStudyReminderDeviceMutationError = ErrorType<unknown>
+    export type SaveStudyReminderDeviceMutationVariables = {deviceId: string;data: BodyType<ReminderDeviceInput>}
+
+    export const useSaveStudyReminderDevice = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveStudyReminderDevice>>, TError,SaveStudyReminderDeviceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveStudyReminderDevice>>,
+        TError,
+        SaveStudyReminderDeviceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSaveStudyReminderDeviceMutationOptions(options));
+    }
+
+export const getRemoveStudyReminderDeviceUrl = (deviceId: string,) => {
+
+
+
+
+  return `/api/study-reminders/devices/${deviceId}`
+}
+
+export const removeStudyReminderDevice = async (deviceId: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getRemoveStudyReminderDeviceUrl(deviceId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getRemoveStudyReminderDeviceMutationKey = () => ['removeStudyReminderDevice'] as const;
+
+export const getRemoveStudyReminderDeviceMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeStudyReminderDevice>>, TError,RemoveStudyReminderDeviceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeStudyReminderDevice>>, TError,RemoveStudyReminderDeviceMutationVariables, TContext> => {
+
+const mutationKey = getRemoveStudyReminderDeviceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeStudyReminderDevice>>, RemoveStudyReminderDeviceMutationVariables> = (props) => {
+          const {deviceId} = props ?? {};
+
+          return  removeStudyReminderDevice(deviceId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveStudyReminderDeviceMutationResult = NonNullable<Awaited<ReturnType<typeof removeStudyReminderDevice>>>
+
+    export type RemoveStudyReminderDeviceMutationError = ErrorType<unknown>
+    export type RemoveStudyReminderDeviceMutationVariables = {deviceId: string}
+
+    export const useRemoveStudyReminderDevice = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeStudyReminderDevice>>, TError,RemoveStudyReminderDeviceMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof removeStudyReminderDevice>>,
+        TError,
+        RemoveStudyReminderDeviceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRemoveStudyReminderDeviceMutationOptions(options));
+    }
 
 export const getSaveStudyScheduleUrl = () => {
 

@@ -312,6 +312,140 @@ export const GetProgressResponse = zod.object({
 })
 
 
+export const GetStudyReminderStatusResponse = zod.object({
+  "enabled": zod.boolean(),
+  "time": zod.string(),
+  "timezone": zod.string(),
+  "scheduled": zod.boolean(),
+  "paused": zod.boolean(),
+  "due": zod.boolean(),
+  "occurrenceKey": zod.string().nullable(),
+  "nextDate": zod.string().nullable(),
+  "snoozedUntil": zod.string().nullable(),
+  "actionHref": zod.string()
+})
+
+
+export const saveStudyReminderSettingsBodyTimeRegExp = new RegExp('^([01][0-9]|2[0-3]):[0-5][0-9]$');
+
+
+export const SaveStudyReminderSettingsBody = zod.object({
+  "enabled": zod.boolean(),
+  "time": zod.string().regex(saveStudyReminderSettingsBodyTimeRegExp)
+})
+
+export const SaveStudyReminderSettingsResponse = zod.object({
+  "enabled": zod.boolean(),
+  "time": zod.string(),
+  "timezone": zod.string(),
+  "scheduled": zod.boolean(),
+  "paused": zod.boolean(),
+  "due": zod.boolean(),
+  "occurrenceKey": zod.string().nullable(),
+  "nextDate": zod.string().nullable(),
+  "snoozedUntil": zod.string().nullable(),
+  "actionHref": zod.string()
+})
+
+
+export const actOnStudyReminderBodyOccurrenceKeyRegExp = new RegExp('^[0-9a-f]{64}$');
+
+
+export const ActOnStudyReminderBody = zod.object({
+  "occurrenceKey": zod.string().regex(actOnStudyReminderBodyOccurrenceKeyRegExp),
+  "action": zod.enum(['dismiss', 'snooze'])
+})
+
+export const ActOnStudyReminderResponse = zod.object({
+  "enabled": zod.boolean(),
+  "time": zod.string(),
+  "timezone": zod.string(),
+  "scheduled": zod.boolean(),
+  "paused": zod.boolean(),
+  "due": zod.boolean(),
+  "occurrenceKey": zod.string().nullable(),
+  "nextDate": zod.string().nullable(),
+  "snoozedUntil": zod.string().nullable(),
+  "actionHref": zod.string()
+})
+
+
+export const RevokeStudyReminderDeviceParams = zod.object({
+  "deviceId": zod.coerce.string().uuid()
+})
+
+export const revokeStudyReminderDeviceBodyBindingKeyRegExp = new RegExp('^[0-9a-f]{64}$');
+
+
+export const RevokeStudyReminderDeviceBody = zod.object({
+  "revocationToken": zod.string().uuid(),
+  "bindingKey": zod.string().regex(revokeStudyReminderDeviceBodyBindingKeyRegExp)
+})
+
+export const RevokeStudyReminderDeviceResponse = zod.void()
+
+
+export const GetStudyReminderDeviceParams = zod.object({
+  "deviceId": zod.coerce.string().uuid()
+})
+
+export const GetStudyReminderDeviceResponse = zod.object({
+  "bindingKey": zod.string().nullable(),
+  "webConfigured": zod.boolean(),
+  "nativeConfigured": zod.boolean(),
+  "publicKey": zod.string().nullish(),
+  "enabled": zod.boolean(),
+  "state": zod.enum(['disabled', 'enabled', 'expired']),
+  "nextAt": zod.coerce.date().nullable(),
+  "lastResult": zod.union([zod.literal('sending'),zod.literal('accepted'),zod.literal('confirmed'),zod.literal('failed'),zod.literal('unknown'),zod.literal(null)]).nullable()
+})
+
+
+export const SaveStudyReminderDeviceParams = zod.object({
+  "deviceId": zod.coerce.string().uuid()
+})
+
+export const saveStudyReminderDeviceBodyExpectedUserIdMax = 200;
+
+export const saveStudyReminderDeviceBodyAddressMax = 2048;
+
+export const saveStudyReminderDeviceBodyP256dhMax = 200;
+
+export const saveStudyReminderDeviceBodyAuthMax = 100;
+
+export const saveStudyReminderDeviceBodyTimezoneMax = 100;
+
+
+
+export const SaveStudyReminderDeviceBody = zod.object({
+  "revocationToken": zod.string().uuid(),
+  "expectedUserId": zod.string().min(1).max(saveStudyReminderDeviceBodyExpectedUserIdMax).describe('Reject enrollment if the signed-in identity changed while permission was being requested.'),
+  "channel": zod.enum(['web', 'expo']),
+  "address": zod.string().min(1).max(saveStudyReminderDeviceBodyAddressMax),
+  "p256dh": zod.string().max(saveStudyReminderDeviceBodyP256dhMax).optional(),
+  "auth": zod.string().max(saveStudyReminderDeviceBodyAuthMax).optional(),
+  "timezone": zod.string().min(1).max(saveStudyReminderDeviceBodyTimezoneMax)
+})
+
+export const SaveStudyReminderDeviceResponse = zod.object({
+  "bindingKey": zod.string().nullable(),
+  "webConfigured": zod.boolean(),
+  "nativeConfigured": zod.boolean(),
+  "publicKey": zod.string().nullish(),
+  "enabled": zod.boolean(),
+  "state": zod.enum(['disabled', 'enabled', 'expired']),
+  "nextAt": zod.coerce.date().nullable(),
+  "lastResult": zod.union([zod.literal('sending'),zod.literal('accepted'),zod.literal('confirmed'),zod.literal('failed'),zod.literal('unknown'),zod.literal(null)]).nullable()
+})
+
+
+export const RemoveStudyReminderDeviceParams = zod.object({
+  "deviceId": zod.coerce.string().uuid()
+})
+
+export const RemoveStudyReminderDeviceResponse = zod.void()
+
+
 export const saveStudyScheduleBodyStartDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
 export const saveStudyScheduleBodyStudyDaysItemMin = 0;
 export const saveStudyScheduleBodyStudyDaysItemMax = 6;
