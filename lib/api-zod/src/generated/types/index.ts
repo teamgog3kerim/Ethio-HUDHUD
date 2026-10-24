@@ -44,6 +44,7 @@ export * from './chatInput';
 export * from './chatMessage';
 export * from './chatMessageRole';
 export * from './course';
+export * from './courseMonthOpening';
 export * from './courseOffer';
 export * from './courseOfferBilling';
 export * from './courseOfferId';

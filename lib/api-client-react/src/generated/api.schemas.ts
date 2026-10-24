@@ -425,6 +425,13 @@ export interface DialogueTurn {
 export interface Lesson {
   id: string;
   courseId: string;
+  /**
+     * @minimum 1
+     * @maximum 6
+     */
+  month?: number;
+  /** Month not currently accessible; only preview metadata is returned when true. */
+  locked?: boolean;
   titleAr: string;
   titleEn: string;
   titleAm: string;
@@ -454,6 +461,7 @@ export interface Course {
   level: string;
   category: string;
   month: number;
+  accessible?: boolean;
   lessons: Lesson[];
   completedCount: number;
 }
@@ -503,6 +511,7 @@ export interface Progress {
 }
 
 export interface PlanDay {
+  locked?: boolean;
   /** @nullable */
   suggestedDate?: string | null;
   /** @nullable */
@@ -638,6 +647,15 @@ export interface ReminderDeviceStatus {
   lastResult: ReminderDeviceStatusLastResult;
 }
 
+export interface CourseMonthOpening {
+  /**
+     * @minimum 1
+     * @maximum 6
+     */
+  month: number;
+  startsAt: string;
+}
+
 /**
  * Learner preference only, never proof of a paid subscription
  * @nullable
@@ -767,6 +785,14 @@ export interface AccessReminder {
 }
 
 export interface BillingStatus {
+  /** Verified early monthly renewals waiting for their original paid-period start; do not ask the learner to pay for these again. */
+  scheduledCourseMonths?: CourseMonthOpening[];
+  /**
+     * Server-verified course months this account may learn now; plan selection and pending checkout never unlock content.
+     * @items.minimum 1
+     * @items.maximum 6
+     */
+  accessibleMonths?: number[];
   plan: string;
   /**
      * Learner preference only, never proof of a paid subscription

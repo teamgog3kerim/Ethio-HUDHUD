@@ -14,6 +14,7 @@ export interface Course {
   level: string;
   category: string;
   month: number;
+  accessible?: boolean;
   lessons: Lesson[];
   completedCount: number;
 }

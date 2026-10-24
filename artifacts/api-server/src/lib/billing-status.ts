@@ -7,6 +7,7 @@ import { selectedCoursePlan } from "./billing-selection";
 import { sandboxEnabled } from "./polar-sandbox";
 import { liveAccess } from "./polar-live-access";
 import { liveCheckoutEnabled, liveMonthlyEnabled } from "./polar-live";
+import { courseMonthAccess } from "./course-month-policy";
 
 export async function billingStatus(learnerId: string, userId: string | null, _guestId?: unknown) {
   // The trial starts on account activation, not on a marketing-page visit.
@@ -25,10 +26,11 @@ export async function billingStatus(learnerId: string, userId: string | null, _g
     : access;
   const trialState = courseTrial(trial.startedAt);
   const enforcementEnabled = BILLING_CONFIGURED && TRIAL_ENFORCEMENT_ENABLED;
+  const admin = !!userId && (await getAppRole(userId)) !== "learner";
   const policy = courseAccessPolicy({
     enforcementEnabled,
     trialState: trialState.state,
-    isAdmin: enforcementEnabled && !!userId && (await getAppRole(userId)) !== "learner",
+    isAdmin: admin,
     hasComplimentaryAccess: access.plan === "complimentary",
     hasVerifiedPaidAccess: paidAccess,
   });
@@ -36,6 +38,11 @@ export async function billingStatus(learnerId: string, userId: string | null, _g
   const paidReminderExpiry = payment.paidPlan === "monthly"
     ? payment.monthlyPaidThrough ?? payment.paidPeriodEndsAt : payment.paidPeriodEndsAt;
   return {
+    accessibleMonths: courseMonthAccess({
+      signedIn: !!userId, fullCourseAccess: policy.fullCourseAccess, admin,
+      complimentary: access.plan === "complimentary",
+      paidAccess, paidMonths: payment.paidCourseMonths,
+    }),
     ...effective,
     ...payment,
     selectedPlan: selectedCoursePlan(learner?.preferences),

@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'wouter';
-import { CalendarRange, Check } from 'lucide-react';
+import { CalendarRange, Check, Lock } from 'lucide-react';
 import { getGetStudyPlanQueryKey, useGetStudyPlan, useGetProfile, useGetProgress } from '@workspace/api-client-react';
 import { Card, Empty, ErrorState, PageHead, PilotNote, ProgressBar, Skeleton } from '@/components/bits';
 import { Shell } from '@/components/shell';
 import { useApp } from '@/lib/app';
+import { useBilling } from '@/components/billing-notice';
+import { useMonthLock } from '@/components/course-month-dialog';
+import { isMonthLocked } from '@/lib/month-access';
 import { cn } from '@/lib/utils';
 
 export default function Plan() {
@@ -12,6 +15,10 @@ export default function Plan() {
   const q = useGetStudyPlan({ query: { queryKey: getGetStudyPlanQueryKey(), staleTime: 0, refetchInterval: 60_000 } });
   const profile = useGetProfile();
   const progress = useGetProgress();
+  const { data: bill } = useBilling();
+  const lock = useMonthLock();
+  const am = bill?.accessibleMonths;
+  const isLocked = (d: { month: number; locked?: boolean }) => isMonthLocked(d.month, am, d.locked);
   const [month, setMonth] = useState<number | null>(null);
   const days = q.data ?? [];
   const current = useMemo(() => days.find((d) => !d.completed), [days]);
@@ -59,7 +66,8 @@ export default function Plan() {
                 <ul className="space-y-2">
                   {upcoming.map(day => <li key={day.day} className="text-sm">
                     <span>{formatDate(day.suggestedDate!)} · {typeLabel(day.type)} · </span>
-                    <Link href={day.lessonId ? `/lesson/${day.lessonId}` : '/review'} className="underline">{day.title}</Link>
+                    {isLocked(day) ? <button type="button" onClick={() => lock.open(day.month)} className="inline-flex items-center gap-1 underline"><Lock className="size-3" />{day.title}</button>
+                    : <Link href={day.lessonId ? `/lesson/${day.lessonId}` : '/review'} className="underline">{day.title}</Link>}
                   </li>)}
                 </ul>
               </>}
@@ -78,7 +86,7 @@ export default function Plan() {
               const body = (
                 <>
                   <span className={cn('grid size-10 shrink-0 place-items-center rounded-xl text-sm font-bold', d.completed ? 'bg-gold text-gold-foreground' : current?.day === d.day ? 'bg-primary text-primary-foreground' : 'bg-secondary')}>
-                    {d.completed ? <Check className="size-4" /> : d.day}
+                    {d.completed ? <Check className="size-4" /> : isLocked(d) ? <Lock className="size-4" /> : d.day}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-semibold">{d.title}</span>
@@ -89,6 +97,9 @@ export default function Plan() {
               );
               const cls = cn('rise flex items-center gap-3 rounded-2xl border bg-card p-3', current?.day === d.day ? 'border-primary' : 'border-border');
               const style = { animationDelay: `${Math.min(i, 12) * 25}ms` };
+              if (isLocked(d)) return (
+                <button key={d.day} type="button" onClick={() => lock.open(d.month)} data-testid={`day-${d.day}`} className={cn(cls, 'lift w-full text-start opacity-80')} style={style}>{body}</button>
+              );
               return d.lessonId ? (
                 <Link key={d.day} href={`/lesson/${d.lessonId}`} data-testid={`day-${d.day}`} className={cn(cls, 'lift')} style={style}>{body}</Link>
               ) : (
@@ -98,6 +109,7 @@ export default function Plan() {
           </div>
         </>
       )}
+      {lock.dialog}
       <PilotNote className="mt-6" />
     </Shell>
   );

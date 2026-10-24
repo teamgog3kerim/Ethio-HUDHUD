@@ -6,6 +6,7 @@
  */
 
 export interface PlanDay {
+  locked?: boolean;
   /** @nullable */
   suggestedDate?: string | null;
   /** @nullable */

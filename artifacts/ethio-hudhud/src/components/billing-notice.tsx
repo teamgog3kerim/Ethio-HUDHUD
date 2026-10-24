@@ -1,6 +1,8 @@
+import { useEffect, useRef } from 'react';
 import { Link } from 'wouter';
+import { useQueryClient } from '@tanstack/react-query';
 import { BellRing, Clock } from 'lucide-react';
-import { getGetBillingStatusQueryKey, useGetAdminAccess, useGetBillingStatus } from '@workspace/api-client-react';
+import { getGetBillingStatusQueryKey, getGetCoursesQueryKey, getGetFavouritesQueryKey, getGetStudyPlanQueryKey, getGetVocabularyQueryKey, useGetAdminAccess, useGetBillingStatus } from '@workspace/api-client-react';
 import { useApp } from '@/lib/app';
 import { RenewalPushSettings } from './renewal-push';
 
@@ -8,9 +10,25 @@ export function useBilling() {
   return useGetBillingStatus({ query: { queryKey: getGetBillingStatusQueryKey(), refetchInterval: 60_000, refetchOnWindowFocus: true } });
 }
 
+// Refetch gated content whenever the server's accessible-month set changes.
+function useEntitlementSync(months: number[] | undefined) {
+  const qc = useQueryClient();
+  const prev = useRef<string | undefined>(undefined);
+  const key = Array.isArray(months) ? [...months].sort((a, b) => a - b).join(',') : undefined;
+  useEffect(() => {
+    if (key === undefined) return;
+    if (prev.current !== undefined && prev.current !== key) {
+      for (const queryKey of [getGetCoursesQueryKey(), getGetStudyPlanQueryKey(), getGetVocabularyQueryKey(), getGetFavouritesQueryKey()]) void qc.invalidateQueries({ queryKey });
+      void qc.invalidateQueries({ predicate: (q) => typeof q.queryKey[0] === 'string' && (q.queryKey[0] as string).startsWith('/api/lessons/') });
+    }
+    prev.current = key;
+  }, [key, qc]);
+}
+
 export function BillingNotice() {
   const { t, lang } = useApp();
   const { data: b } = useBilling();
+  useEntitlementSync(b?.accessibleMonths);
   const { data: access } = useGetAdminAccess();
   const admin = access?.signedIn === true && (access.role === 'owner' || access.role === 'admin');
   if (!b) return null; // loading/error never blocks the app

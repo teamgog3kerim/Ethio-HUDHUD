@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'wouter';
-import { BookOpen, CheckCircle2, ChevronLeft, ChevronRight, Circle, Clock, MessageCircle, Play } from 'lucide-react';
+import { BookOpen, CheckCircle2, ChevronLeft, ChevronRight, Circle, Clock, Lock, MessageCircle, Play } from 'lucide-react';
 import { buildLearningPath, learningStages, useGetCourses } from '@workspace/api-client-react';
 import { Am, Card, Empty, ErrorState, PageHead, PilotNote, ProgressBar, Skeleton, btnClass } from '@/components/bits';
 import { Shell } from '@/components/shell';
 import { useApp } from '@/lib/app';
+import { useBilling } from '@/components/billing-notice';
+import { useMonthLock } from '@/components/course-month-dialog';
+import { isMonthLocked } from '@/lib/month-access';
 import { cn } from '@/lib/utils';
 import { FavouriteButton, SavedItems } from '@/components/favourites';
 
@@ -14,6 +17,11 @@ export default function Learn() {
   const { t, lang } = useApp();
   const ar = lang === 'ar';
   const q = useGetCourses();
+  const { data: bill } = useBilling();
+  const lock = useMonthLock();
+  const am = bill?.accessibleMonths;
+  const courseLocked = (c: { month: number; accessible?: boolean }) => isMonthLocked(c.month, am, c.accessible === undefined ? undefined : !c.accessible);
+  const lessonLocked = (c: { month: number; accessible?: boolean }, l: { locked?: boolean }) => isMonthLocked(c.month, am, l.locked ?? (courseLocked(c) ? true : undefined));
   const [savedView, setSavedView] = useState(() => new URLSearchParams(window.location.search).get('view') === 'saved');
   const [sel, setSel] = useState<number | null>(() => {
     const month = Number(new URLSearchParams(window.location.search).get('month'));
@@ -24,6 +32,17 @@ export default function Learn() {
   const path = useMemo(() => (q.data ? buildLearningPath(q.data) : null), [q.data]);
   const months = path?.months ?? [];
   const nextMonth = path?.nextLesson ? months.find(x => x.course.lessons.some(l => l.id === path.nextLesson!.id))?.course.month : undefined;
+  const nextOpen = useMemo(() => {
+    const n = path?.nextLesson;
+    if (!n) return null;
+    for (const m of months) {
+      const open = m.course.lessons.filter(l => !lessonLocked(m.course, l));
+      if (open.some(l => l.id === n.id)) return n;
+    }
+    for (const m of months) { const f = m.course.lessons.find(l => !l.completed && !lessonLocked(m.course, l)); if (f) return f; }
+    return null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path, months, am]);
   const idx = Math.max(0, months.findIndex(m => m.course.month === (sel ?? nextMonth)));
   const cur = months[idx];
   const Prev = ar ? ChevronRight : ChevronLeft;
@@ -58,8 +77,8 @@ export default function Learn() {
                 <p>{t('يُحسب الدرس عند اجتياز اختباره بنسبة ٧٥٪، وليس عند فتحه.', 'A lesson counts after passing its quiz at 75%, not just opening it.')}</p>
               </details>
             </div>
-            {path.nextLesson
-              ? <Link href={`/lesson/${path.nextLesson.id}`} data-testid="link-continue-learning" className={btnClass('gold', 'lg')}><Play className="size-5 rtl:-scale-x-100" />{t('تابع التعلّم', 'Continue learning')}</Link>
+            {nextOpen
+              ? <Link href={`/lesson/${nextOpen.id}`} data-testid="link-continue-learning" className={btnClass('gold', 'lg')}><Play className="size-5 rtl:-scale-x-100" />{t('تابع التعلّم', 'Continue learning')}</Link>
               : path.total > 0 && <p className="font-semibold text-primary" data-testid="text-path-done">{t('أنهيت كل الدروس المتاحة', 'All available lessons completed')}</p>}
           </Card>
 
@@ -96,7 +115,7 @@ export default function Learn() {
                 <button key={m.course.id} type="button" onClick={() => setSel(m.course.month)} data-testid={`button-course-${m.course.id}`} aria-current={i === idx}
                   className={cn('lift rise w-full rounded-3xl border p-4 text-start', i === idx ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card')}
                   style={{ animationDelay: `${i * 50}ms` }}>
-                  <p className={cn('text-xs font-bold', i === idx ? 'text-gold' : 'text-primary')}>{ar ? m.stage.titleAr : m.stage.titleEn} · {t('الشهر', 'Month')} {m.course.month}</p>
+                  <p className={cn('text-xs font-bold', i === idx ? 'text-gold' : 'text-primary')}>{ar ? m.stage.titleAr : m.stage.titleEn} · {t('الشهر', 'Month')} {m.course.month}{courseLocked(m.course) && <Lock className="ms-1 inline size-3" />}</p>
                   <p className="font-display font-bold">{title(m.course)}</p>
                   <p className="mt-1 text-xs tabular-nums opacity-80"><bdi dir="ltr">{m.completed} / {m.total} · {m.percent}%</bdi></p>
                   <ProgressBar className="mt-2 bg-black/10" value={m.percent} />
@@ -124,18 +143,21 @@ export default function Learn() {
                       <ul className="space-y-2">
                         {items.map(l => {
                           const conv = isConv(l);
+                          const locked = lessonLocked(cur.course, l);
+                          const Row = (locked ? 'button' : Link) as React.ElementType;
+                          const rowProps = locked ? { type: 'button', onClick: () => lock.open(cur.course.month) } : { href: `/lesson/${l.id}` };
                           return (
                             <li key={l.id} className="flex items-center gap-2">
-                              <Link href={`/lesson/${l.id}`} data-testid={conv ? `conversation-link-${l.id}` : `link-lesson-${l.id}`} className="lift flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-border bg-background p-4">
-                                {l.completed ? <CheckCircle2 className="pop size-6 shrink-0 text-primary" /> : <Circle className="size-6 shrink-0 text-muted-foreground" />}
+                              <Row {...rowProps} data-testid={conv ? `conversation-link-${l.id}` : `link-lesson-${l.id}`} className="lift flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-border bg-background p-4 text-start">
+                                {locked ? <Lock className="size-6 shrink-0 text-gold" /> : l.completed ? <CheckCircle2 className="pop size-6 shrink-0 text-primary" /> : <Circle className="size-6 shrink-0 text-muted-foreground" />}
                                 <div className="min-w-0 flex-1">
                                   <p className="font-semibold">{title(l)}</p>
                                   {conv && <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary"><MessageCircle className="size-3.5" />{t('محادثة', 'Conversation')} · {l.dialogue!.length} {t('جمل', 'turns')}</span>}
                                   <Am className="block text-sm text-muted-foreground">{l.titleAm}</Am>
                                 </div>
                                 <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock className="size-3.5" />{l.minutes}{t(' د', 'm')}</span>
-                              </Link>
-                              <FavouriteButton id={l.id} />
+                              </Row>
+                              {!locked && <FavouriteButton id={l.id} />}
                             </li>
                           );
                         })}
@@ -152,6 +174,7 @@ export default function Learn() {
         </>
       )}
       </>}
+      {lock.dialog}
       <PilotNote className="mt-6" />
     </Shell>
   );

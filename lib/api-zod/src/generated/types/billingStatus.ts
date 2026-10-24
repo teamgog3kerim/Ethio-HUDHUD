@@ -10,10 +10,19 @@ import type { BillingStatusPendingCheckoutPlan } from './billingStatusPendingChe
 import type { BillingStatusResumablePlan } from './billingStatusResumablePlan';
 import type { BillingStatusSelectedPlan } from './billingStatusSelectedPlan';
 import type { BillingStatusSource } from './billingStatusSource';
+import type { CourseMonthOpening } from './courseMonthOpening';
 import type { CourseOffer } from './courseOffer';
 import type { CourseTrial } from './courseTrial';
 
 export interface BillingStatus {
+  /** Verified early monthly renewals waiting for their original paid-period start; do not ask the learner to pay for these again. */
+  scheduledCourseMonths?: CourseMonthOpening[];
+  /**
+     * Server-verified course months this account may learn now; plan selection and pending checkout never unlock content.
+     * @items.minimum 1
+     * @items.maximum 6
+     */
+  accessibleMonths?: number[];
   plan: string;
   /**
      * Learner preference only, never proof of a paid subscription

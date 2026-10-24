@@ -113,6 +113,10 @@ export const GetCourseCatalogResponseItem = zod.object({
 export const GetCourseCatalogResponse = zod.array(GetCourseCatalogResponseItem)
 
 
+export const getCoursesResponseLessonsItemMonthMax = 6;
+
+
+
 export const GetCoursesResponseItem = zod.object({
   "id": zod.string(),
   "titleAr": zod.string(),
@@ -121,9 +125,12 @@ export const GetCoursesResponseItem = zod.object({
   "level": zod.string(),
   "category": zod.string(),
   "month": zod.number().int(),
+  "accessible": zod.boolean().optional(),
   "lessons": zod.array(zod.object({
   "id": zod.string(),
   "courseId": zod.string(),
+  "month": zod.number().int().min(1).max(getCoursesResponseLessonsItemMonthMax).optional(),
+  "locked": zod.boolean().optional().describe('Month not currently accessible; only preview metadata is returned when true.'),
   "titleAr": zod.string(),
   "titleEn": zod.string(),
   "titleAm": zod.string(),
@@ -163,9 +170,15 @@ export const GetCoursesResponse = zod.array(GetCoursesResponseItem)
 /**
  * Active saved lessons for the current account or signed guest session only.
  */
+export const getFavouritesResponseMonthMax = 6;
+
+
+
 export const GetFavouritesResponseItem = zod.object({
   "id": zod.string(),
   "courseId": zod.string(),
+  "month": zod.number().int().min(1).max(getFavouritesResponseMonthMax).optional(),
+  "locked": zod.boolean().optional().describe('Month not currently accessible; only preview metadata is returned when true.'),
   "titleAr": zod.string(),
   "titleEn": zod.string(),
   "titleAm": zod.string(),
@@ -230,9 +243,15 @@ export const GetLessonParams = zod.object({
   "id": zod.coerce.string()
 })
 
+export const getLessonResponseMonthMax = 6;
+
+
+
 export const GetLessonResponse = zod.object({
   "id": zod.string(),
   "courseId": zod.string(),
+  "month": zod.number().int().min(1).max(getLessonResponseMonthMax).optional(),
+  "locked": zod.boolean().optional().describe('Month not currently accessible; only preview metadata is returned when true.'),
   "titleAr": zod.string(),
   "titleEn": zod.string(),
   "titleAm": zod.string(),
@@ -495,6 +514,7 @@ export const SaveStudyScheduleResponse = zod.object({
 
 
 export const GetStudyPlanResponseItem = zod.object({
+  "locked": zod.boolean().optional(),
   "suggestedDate": zod.string().nullish(),
   "suggestedWeek": zod.number().int().nullish(),
   "currentSuggestedWeek": zod.number().int().nullish(),
@@ -720,6 +740,10 @@ export const SelectCoursePlanBody = zod.object({
   "plan": zod.enum(['trial', 'monthly', 'six_month'])
 })
 
+export const selectCoursePlanResponseScheduledCourseMonthsItemMonthMax = 6;
+
+export const selectCoursePlanResponseAccessibleMonthsItemMax = 6;
+
 export const selectCoursePlanResponseMonthlyPaymentCountMin = 0;
 
 
@@ -732,6 +756,11 @@ export const selectCoursePlanResponseReminderOneDaysRemainingMax = 4;
 
 
 export const SelectCoursePlanResponse = zod.object({
+  "scheduledCourseMonths": zod.array(zod.object({
+  "month": zod.number().int().min(1).max(selectCoursePlanResponseScheduledCourseMonthsItemMonthMax),
+  "startsAt": zod.string()
+})).optional().describe('Verified early monthly renewals waiting for their original paid-period start; do not ask the learner to pay for these again.'),
+  "accessibleMonths": zod.array(zod.number().int().min(1).max(selectCoursePlanResponseAccessibleMonthsItemMax)).optional().describe('Server-verified course months this account may learn now; plan selection and pending checkout never unlock content.'),
   "plan": zod.string(),
   "selectedPlan": zod.union([zod.literal('trial'),zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish().describe('Learner preference only, never proof of a paid subscription'),
   "configured": zod.boolean(),
@@ -860,6 +889,10 @@ export const RemoveReminderDeviceParams = zod.object({
 export const RemoveReminderDeviceResponse = zod.void()
 
 
+export const getBillingStatusResponseScheduledCourseMonthsItemMonthMax = 6;
+
+export const getBillingStatusResponseAccessibleMonthsItemMax = 6;
+
 export const getBillingStatusResponseMonthlyPaymentCountMin = 0;
 
 
@@ -872,6 +905,11 @@ export const getBillingStatusResponseReminderOneDaysRemainingMax = 4;
 
 
 export const GetBillingStatusResponse = zod.object({
+  "scheduledCourseMonths": zod.array(zod.object({
+  "month": zod.number().int().min(1).max(getBillingStatusResponseScheduledCourseMonthsItemMonthMax),
+  "startsAt": zod.string()
+})).optional().describe('Verified early monthly renewals waiting for their original paid-period start; do not ask the learner to pay for these again.'),
+  "accessibleMonths": zod.array(zod.number().int().min(1).max(getBillingStatusResponseAccessibleMonthsItemMax)).optional().describe('Server-verified course months this account may learn now; plan selection and pending checkout never unlock content.'),
   "plan": zod.string(),
   "selectedPlan": zod.union([zod.literal('trial'),zod.literal('monthly'),zod.literal('six_month'),zod.literal(null)]).nullish().describe('Learner preference only, never proof of a paid subscription'),
   "configured": zod.boolean(),

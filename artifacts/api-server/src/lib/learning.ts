@@ -1,5 +1,5 @@
 import { db, courses, lessons, completions, attempts, reviews, type LessonContent } from "@workspace/db";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, inArray } from "drizzle-orm";
 import { dateInZone } from "./learner";
 import { arabicLessonContent, arabicLearningText, arabicPronunciation } from "@workspace/db/pronunciation";
 
@@ -13,18 +13,22 @@ export async function getCatalog(learnerId: string) {
   return allCourses.map(c => ({
     ...c, completedCount: allLessons.filter(l => l.courseId === c.id && ids.has(l.id)).length,
     lessons: allLessons.filter(l => l.courseId === c.id).map(l => ({
-      ...arabicLessonContent(l.content as LessonContent), id: l.id, courseId: l.courseId,
+      ...arabicLessonContent(l.content as LessonContent), id: l.id, courseId: l.courseId, month: c.month,
       reviewStatus: l.reviewStatus, completed: ids.has(l.id),
     })),
   }));
 }
-export async function getWordQueue(learnerId: string) {
-  const [all, scheduled] = await Promise.all([
+export async function getWordQueue(learnerId: string, accessibleMonths?: number[]) {
+  const [all, scheduled, allowedCourses] = await Promise.all([
     db.select().from(lessons).where(eq(lessons.active, true)).orderBy(asc(lessons.sequence)),
     db.select().from(reviews).where(eq(reviews.learnerId, learnerId)),
+    accessibleMonths ? db.select({ id: courses.id }).from(courses).where(inArray(courses.month, accessibleMonths)) : Promise.resolve(null),
   ]);
   const uniqueWords = new Map<string, LessonContent["words"][number]>();
-  for (const l of all) for (const w of (l.content as LessonContent).words) uniqueWords.set(w.id, w);
+  for (const l of all) {
+    if (allowedCourses && !allowedCourses.some(c => c.id === l.courseId)) continue;
+    for (const w of (l.content as LessonContent).words) uniqueWords.set(w.id, w);
+  }
   return [...uniqueWords.values()].map(w => {
     const review = scheduled.find(s => s.wordId === w.id);
     return { ...w, arabic: arabicLearningText(w.arabic),

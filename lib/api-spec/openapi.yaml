@@ -919,6 +919,8 @@ components:
       properties:
         id: { type: string }
         courseId: { type: string }
+        month: { type: integer, minimum: 1, maximum: 6 }
+        locked: { type: boolean, description: Month not currently accessible; only preview metadata is returned when true. }
         titleAr: { type: string }
         titleEn: { type: string }
         titleAm: { type: string }
@@ -952,6 +954,7 @@ components:
         level: { type: string }
         category: { type: string }
         month: { type: integer }
+        accessible: { type: boolean }
         lessons: { type: array, items: { $ref: "#/components/schemas/Lesson" } }
         completedCount: { type: integer }
     LessonSubmission:
@@ -999,6 +1002,7 @@ components:
       type: object
       required: [day, month, title, lessonId, type, completed]
       properties:
+        locked: { type: boolean }
         suggestedDate: { type: ["string", "null"] }
         suggestedWeek: { type: ["integer", "null"] }
         currentSuggestedWeek: { type: ["integer", "null"] }
@@ -1062,10 +1066,24 @@ components:
         state: { type: string, enum: [disabled, enabled, expired] }
         nextAt: { type: [string, "null"], format: date-time }
         lastResult: { type: [string, "null"], enum: [sending, accepted, confirmed, failed, unknown, null] }
+    CourseMonthOpening:
+      type: object
+      required: [month, startsAt]
+      properties:
+        month: { type: integer, minimum: 1, maximum: 6 }
+        startsAt: { type: string }
     BillingStatus:
       type: object
       required: [plan, configured, message, trial, offers, enforcementEnabled, fullCourseAccess, reminder, isGuest]
       properties:
+        scheduledCourseMonths:
+          type: array
+          description: Verified early monthly renewals waiting for their original paid-period start; do not ask the learner to pay for these again.
+          items: { $ref: "#/components/schemas/CourseMonthOpening" }
+        accessibleMonths:
+          type: array
+          description: Server-verified course months this account may learn now; plan selection and pending checkout never unlock content.
+          items: { type: integer, minimum: 1, maximum: 6 }
         plan: { type: string }
         selectedPlan:
           type: [string, "null"]

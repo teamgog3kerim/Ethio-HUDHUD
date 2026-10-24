@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@clerk/react';
 import { Link, useParams } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
-import { Check, Eye, EyeOff, ChevronLeft, ChevronRight, RotateCw, Timer, X } from 'lucide-react';
+import { Check, Eye, EyeOff, ChevronLeft, ChevronRight, Lock, RotateCw, Timer, X } from 'lucide-react';
 import {
   getGetCoursesQueryKey, getGetLessonQueryKey, getGetProgressQueryKey, getGetStudyPlanQueryKey, getGetFavouritesQueryKey,
   getGetVocabularyQueryKey, getLessonPosition, useCompleteLesson, useGetCourses, useGetLesson, type LessonResult,
@@ -11,6 +11,9 @@ import { Am, Btn, Card, ErrorState, LinkBtn, PilotNote, ProgressBar, Skeleton } 
 import { Shell } from '@/components/shell';
 import { useActiveTimer } from '@/hooks/use-active-timer';
 import { useApp } from '@/lib/app';
+import { useBilling } from '@/components/billing-notice';
+import { CourseMonthDialog } from '@/components/course-month-dialog';
+import { isMonthLocked, monthRequiredFromError } from '@/lib/month-access';
 import { isEthiopic } from '@/lib/options';
 import { cn } from '@/lib/utils';
 import { PronunciationNote } from '@/components/pronunciation-note';
@@ -31,6 +34,10 @@ function LessonView({ id }: { id: string }) {
   const qc = useQueryClient();
   const [identityGeneration] = useState(() => getIdentityGeneration(qc));
   const q = useGetLesson(id);
+  const { data: bill } = useBilling();
+  const am = bill?.accessibleMonths;
+  const [dismissed, setDismissed] = useState(false);
+  const [dlg, setDlg] = useState<number | null>(null);
   const courses = useGetCourses();
   const pos = courses.data ? getLessonPosition(courses.data, id) : null;
   const alive = useRef(true);
@@ -62,10 +69,15 @@ function LessonView({ id }: { id: string }) {
         qc.invalidateQueries({ queryKey: getGetStudyPlanQueryKey() });
         qc.invalidateQueries({ queryKey: getGetFavouritesQueryKey() });
       },
+      onError: (e) => { const m = monthRequiredFromError(e); if (m !== null) setDlg(m); },
     },
   });
 
   const lesson = q.data;
+  const currentMonth = lesson?.month ?? courses.data?.find(c => c.id === lesson?.courseId)?.month;
+  const redacted = lesson && (isMonthLocked(currentMonth, am, lesson.locked)
+    || (Array.isArray(am) && am.length < 6 && currentMonth === undefined));
+  const denied = monthRequiredFromError(q.error) ?? (redacted ? (currentMonth ?? 0) : null);
   const submit = (final: number[]) =>
     complete.mutate({ id, data: { answers: final, activeSeconds: Math.min(3600, seconds) } });
 
@@ -89,14 +101,23 @@ function LessonView({ id }: { id: string }) {
   const readingSteps = lesson?.dialogue?.length ? 1 : (lesson?.words.length ?? 0);
   const total = lesson ? readingSteps + lesson.exercises.length : 1;
   const done = phase === 'vocab' ? vi : phase === 'quiz' ? readingSteps + qi : total;
+  const navLink = (l: { id: string; month?: number; locked?: boolean }, fallbackMonth: number) => isMonthLocked(l.month ?? fallbackMonth, am, l.locked) ? (m: number) => { setDlg(m); } : null;
   const NextIcon = lang === 'ar' ? ChevronLeft : ChevronRight;
   const PrevIcon = lang === 'ar' ? ChevronRight : ChevronLeft;
 
   return (
     <Shell>
       {q.isLoading && <div className="space-y-3"><Skeleton className="h-10" /><Skeleton className="h-72" /></div>}
-      {q.isError && <ErrorState onRetry={() => q.refetch()} what={t('الدرس', 'the lesson')} />}
-      {lesson && (
+      {denied !== null && (
+        <div className="mx-auto max-w-md py-10 text-center" data-testid="panel-month-locked">
+          <Lock className="mx-auto mb-3 size-8 text-gold" />
+          <p className="font-semibold">{t('هذا الدرس يحتاج دفعة موثّقة لشهره', 'This lesson needs a verified payment for its month')}</p>
+          <Btn className="mt-4" variant="gold" onClick={() => setDlg(denied)} data-testid="button-open-month-lock">{t('التفاصيل', 'Details')}</Btn>
+          <LinkBtn href="/learn" variant="outline" testId="link-locked-back">{t('العودة إلى الدروس', 'Back to lessons')}</LinkBtn>
+        </div>
+      )}
+      {q.isError && denied === null && <ErrorState onRetry={() => q.refetch()} what={t('الدرس', 'the lesson')} />}
+      {lesson && !redacted && (
         <div className="mx-auto max-w-2xl">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -116,8 +137,8 @@ function LessonView({ id }: { id: string }) {
           )}
           {pos && (
             <div className="mb-4 flex justify-between gap-2 text-sm">
-              {pos.previous ? <Link href={`/lesson/${pos.previous.id}`} data-testid="link-prev-lesson" className="press inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5"><PrevIcon className="size-4" />{t('الدرس السابق', 'Previous lesson')}</Link> : <span />}
-              {pos.next ? <Link href={`/lesson/${pos.next.id}`} data-testid="link-next-lesson-top" className="press inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5">{t('الدرس التالي', 'Next lesson')}<NextIcon className="size-4" /></Link> : <span />}
+              {pos.previous && navLink(pos.previous, pos.course.month) ? <button type="button" onClick={() => setDlg((pos.previous as { month?: number }).month ?? pos.course.month)} data-testid="link-prev-lesson" className="press inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5"><Lock className="size-3.5" />{t('الدرس السابق', 'Previous lesson')}</button> : pos.previous ? <Link href={`/lesson/${pos.previous.id}`} data-testid="link-prev-lesson" className="press inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5"><PrevIcon className="size-4" />{t('الدرس السابق', 'Previous lesson')}</Link> : <span />}
+              {pos.next && navLink(pos.next, pos.course.month) ? <button type="button" onClick={() => setDlg((pos.next as { month?: number }).month ?? pos.course.month)} data-testid="link-next-lesson-top" className="press inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5">{t('الدرس التالي', 'Next lesson')}<Lock className="size-3.5" /></button> : pos.next ? <Link href={`/lesson/${pos.next.id}`} data-testid="link-next-lesson-top" className="press inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5">{t('الدرس التالي', 'Next lesson')}<NextIcon className="size-4" /></Link> : <span />}
             </div>
           )}
           <ProgressBar value={(done / total) * 100} className="mb-6" />
@@ -185,7 +206,7 @@ function LessonView({ id }: { id: string }) {
                 })}
               </div>
               {complete.isPending && <p className="mt-4 text-center text-sm text-muted-foreground">{t('يصحّح الخادم إجاباتك...', 'The server is grading your answers...')}</p>}
-              {complete.isError && (
+              {complete.isError && monthRequiredFromError(complete.error) === null && (
                 <div className="mt-4"><ErrorState what={t('النتيجة', 'the result')} onRetry={() => submit(answers)} /></div>
               )}
             </div>
@@ -218,7 +239,7 @@ function LessonView({ id }: { id: string }) {
                 );
               })}
               <div className="flex flex-wrap gap-3">
-                {result.passed && pos?.next && <LinkBtn href={`/lesson/${pos.next.id}`} variant="gold" size="lg" testId="link-next-lesson">{t('الدرس التالي', 'Next lesson')}<NextIcon className="size-4" /></LinkBtn>}
+                {result.passed && pos?.next && !navLink(pos.next, pos.course.month) && <LinkBtn href={`/lesson/${pos.next.id}`} variant="gold" size="lg" testId="link-next-lesson">{t('الدرس التالي', 'Next lesson')}<NextIcon className="size-4" /></LinkBtn>}
                 {!result.passed && <Btn size="lg" onClick={retry} data-testid="button-retry-lesson"><RotateCw className="size-4" />{t('أعد المحاولة', 'Try again')}</Btn>}
                 <LinkBtn href="/learn" variant="outline" testId="link-back-learn">{t('العودة إلى الدروس', 'Back to lessons')}</LinkBtn>
                 {result.passed && <LinkBtn href="/review" variant="outline" testId="link-to-review">{t('راجع الكلمات', 'Review words')}</LinkBtn>}
@@ -228,6 +249,7 @@ function LessonView({ id }: { id: string }) {
           <PilotNote className="mt-8" />
         </div>
       )}
+      <CourseMonthDialog month={dlg ?? (denied !== null && !dismissed ? denied : null)} onClose={() => { setDlg(null); setDismissed(true); }} />
     </Shell>
   );
 }

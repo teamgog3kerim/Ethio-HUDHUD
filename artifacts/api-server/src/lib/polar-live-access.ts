@@ -4,13 +4,14 @@ import { LIVE_VERIFICATION_TTL } from "./polar-live-policy";
 import { assertLiveAccount, refreshLiveCheckout } from "./polar-live";
 import { manualMonthlyState } from "./manual-monthly";
 import { hasLiveBillingHistory } from "./polar-live-portal";
+import { paidCourseMonths, scheduledCourseMonths } from "./course-month-policy";
 
 export async function liveAccess(userId: string | null, verify = refreshLiveCheckout) {
   const none = { hasLivePurchase: false, paymentVerificationPending: false, paidPlan: null, paidPeriodEndsAt: null, cancelAtPeriodEnd: false, subscriptionStatus: null, accessUntil: null } as const;
-  if (!userId) return { ...none, ...manualMonthlyState([]), monthlyCanPurchase: false };
+  if (!userId) return { ...none, ...manualMonthlyState([]), monthlyCanPurchase: false, paidCourseMonths: [] as number[], scheduledCourseMonths: [] as { month: number; startsAt: string }[] };
   await assertLiveAccount(userId);
   let rows = await db.select().from(polarLivePurchases).where(eq(polarLivePurchases.userId, userId));
-  if (!rows.length) return { ...none, ...manualMonthlyState([]) };
+  if (!rows.length) return { ...none, ...manualMonthlyState([]), paidCourseMonths: [] as number[], scheduledCourseMonths: [] as { month: number; startsAt: string }[] };
   let verificationFailed = false;
   for (const row of rows) {
     if (!row.checkoutId || (row.verifiedAt && Date.now() - row.verifiedAt.getTime() < LIVE_VERIFICATION_TTL)) continue;
@@ -23,6 +24,8 @@ export async function liveAccess(userId: string | null, verify = refreshLiveChec
     && r.verifiedAt && Date.now() - r.verifiedAt.getTime() < LIVE_VERIFICATION_TTL)
     .sort((a, b) => b.accessUntil!.getTime() - a.accessUntil!.getTime())[0];
   return {
+    paidCourseMonths: paidCourseMonths(rows),
+    scheduledCourseMonths: scheduledCourseMonths(rows),
     ...manualMonthlyState(rows),
     ...(verificationFailed ? { monthlyCanPurchase: false } : {}),
     hasLivePurchase: rows.some(hasLiveBillingHistory),

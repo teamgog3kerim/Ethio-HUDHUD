@@ -11,6 +11,13 @@ import type { Word } from './word';
 export interface Lesson {
   id: string;
   courseId: string;
+  /**
+     * @minimum 1
+     * @maximum 6
+     */
+  month?: number;
+  /** Month not currently accessible; only preview metadata is returned when true. */
+  locked?: boolean;
   titleAr: string;
   titleEn: string;
   titleAm: string;

@@ -157,6 +157,21 @@ Use the furthest prepaid coverage end for reminders; do not invite a seventh
 renewal. The earlier three-day failed-automatic-renewal grace applies only if
 automatic billing is separately approved in future, not to manual purchases.
 
+Monthly course access is month-specific: each verified monthly payment covers
+its corresponding course month, once that paid period begins. Earlier paid
+months remain available while course access is valid; unpaid months do not
+unlock simply because calendar time passed. Verified six-month access includes
+all six course months.
+
+**Why:** The user requested that monthly listed content be accessible according
+to the learner's monthly subscriptions, with an explanatory subscription popup
+for unpaid content, while six-month subscribers receive full access.
+
+**How to apply:** Preserve the trial, administrator and complimentary-grant
+exceptions. Keep unpaid previews visible without disclosing lesson material.
+Do not renumber paid course months after a refund, or ask learners to pay again
+for an early renewal that is already paid and waiting for its scheduled start.
+
 Native renewal pushes must check current device/account consent before presentation, not rely on unregistering a push token alone.
 
 **Why:** A queued push can outlive sign-out or reach a token reused by another account. Automatic OS alert payloads bypass the app's account check.

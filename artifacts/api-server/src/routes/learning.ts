@@ -1,3 +1,4 @@
+import { restrictCatalog } from "../lib/course-month-policy";
 import 
 {
  Router, type IRouter 
@@ -103,7 +104,7 @@ router.get("/favourites", async (req, res) =>
   ])
 ;
 
-  const active = new Map(catalog.flatMap(c => c.lessons).map(l => [l.id, l]))
+  const active = new Map(restrictCatalog(catalog, res.locals.courseAccess?.accessibleMonths ?? []).flatMap(c => c.lessons).map(l => [l.id, l]))
 ;
 
   res.json(GetFavouritesResponse.parse(saved.flatMap(s => active.has(s.lessonId) ? [active.get(s.lessonId)!] : [])))
@@ -411,7 +412,7 @@ router.get("/courses", async (req, res) =>
   const learner = await getLearner(req, res)
 ;
 
-  res.json(GetCoursesResponse.parse(await getCatalog(learner.id)))
+  res.json(GetCoursesResponse.parse(restrictCatalog(await getCatalog(learner.id), res.locals.courseAccess?.accessibleMonths ?? [])))
 ;
 
 }
@@ -654,7 +655,9 @@ router.get("/study-plan", async (req, res) =>
   const plan = schedulePlan(buildStudyPlan(catalog), learner.preferences.studySchedule, learner.preferences.timezone)
 ;
 
-  res.json(GetStudyPlanResponse.parse(plan))
+  res.json(GetStudyPlanResponse.parse(plan.map(day => ({
+    ...day, locked: !(res.locals.courseAccess?.accessibleMonths ?? []).includes(day.month),
+  }))))
 ;
 
 }
@@ -664,7 +667,7 @@ router.get("/study-plan", async (req, res) =>
 router.get("/vocabulary", async (req, res) => 
 {
 
-  res.json(GetVocabularyResponse.parse(await getWordQueue((await getLearner(req, res)).id)))
+  res.json(GetVocabularyResponse.parse(await getWordQueue((await getLearner(req, res)).id, res.locals.courseAccess?.accessibleMonths ?? [])))
 ;
 
 }
@@ -696,7 +699,7 @@ router.post("/vocabulary/:id/review", async (req, res) =>
   const learner = await getLearner(req, res)
 ;
 
-  const words = await getWordQueue(learner.id)
+  const words = await getWordQueue(learner.id, res.locals.courseAccess?.accessibleMonths ?? [])
 ;
 
   const word = words.find(w => w.id === p.data.id)
