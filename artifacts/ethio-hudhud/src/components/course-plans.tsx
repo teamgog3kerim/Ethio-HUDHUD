@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react';
+import { Check, Sparkles } from 'lucide-react';
 import { useAuth } from '@clerk/react';
 import { Btn, Card, ErrorState, LinkBtn, Skeleton } from '@/components/bits';
 import { useBilling } from '@/components/billing-notice';
@@ -85,11 +85,15 @@ export function CoursePlans({ onPay, payingPlan, busy, paidOnly = false }: { onP
             {current === 'monthly' && b.liveCheckoutEnabled !== true && !b.sandboxCheckoutEnabled && <p className="mt-2 text-xs text-muted-foreground" data-testid="text-plan-monthly-cap">{t('شراء الشهري غير متاح بسبب الإعداد الحالي. لا رسوم.', 'Monthly purchase is unavailable under the current configuration. Nothing is charged.')}</p>}
             {action('monthly', t('اختر الشهري', 'Choose monthly'))}
           </Card>
-          <Card data-testid="card-plan-six_month" className={cls('six_month', 'border-primary')}>
+          <Card data-testid="card-plan-six_month" className={cls('six_month', 'relative border-2 border-primary/60 bg-gradient-to-br from-primary/10 via-card to-gold/15 shadow-lg shadow-primary/10')}>
+            <span className="mb-4 inline-flex w-fit items-center gap-2 self-start rounded-full bg-gold px-3 py-1.5 text-sm font-bold text-gold-foreground" data-testid="badge-plan-recommended">
+              <Sparkles className="size-4 shrink-0" aria-hidden="true" />
+              {t('موصى بها', 'Recommended')}
+            </span>
             <p className="text-xs font-bold uppercase tracking-widest text-primary">{t('ستة أشهر دفعة واحدة', 'Six months, once')}</p>
             <p className="font-display mt-2 text-3xl font-extrabold" data-testid="text-price-six_month">${six.priceUsd}<span className="text-base font-medium text-muted-foreground"> {t('مرة واحدة', 'one time')}</span></p>
             <p className="mt-2 text-sm text-muted-foreground" data-testid="text-total-six_month">{t(`وصول ${six.durationMonths} أشهر.`, `${six.durationMonths} months of access.`)}</p>
-            {six.savingsUsd > 0 && <p className="mb-4 mt-2 flex items-center gap-2 text-sm font-semibold" data-testid="text-savings"><Check className="size-4 text-primary" />{t(`توفير $${six.savingsUsd} (${six.savingsPercent}%)`, `Save $${six.savingsUsd} (${six.savingsPercent}%)`)}</p>}
+            {six.savingsUsd > 0 && <p className="mb-4 mt-3 flex w-fit items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-sm font-bold text-primary" data-testid="text-savings"><Check className="size-4 shrink-0" aria-hidden="true" />{t(`توفير $${six.savingsUsd} (${six.savingsPercent}%)`, `Save $${six.savingsUsd} (${six.savingsPercent}%)`)}</p>}
             {action('six_month', t('اختر ستة أشهر', 'Choose six months'))}
           </Card>
         </div>

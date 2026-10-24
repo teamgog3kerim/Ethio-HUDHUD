@@ -68,3 +68,11 @@ only on the Account page.
 
 **How to apply:** Keep this device-reminder settings panel account-only when
 changing notification or billing interfaces.
+
+Present the six-month subscription as the recommended option, with attractive
+visual emphasis while keeping monthly payments easy to choose.
+
+**Why:** The user explicitly requested recommending and highlighting this plan.
+
+**How to apply:** Keep pricing, real savings, payment terms and both plan choices
+clear; do not imply that the recommendation is a popularity statistic.
