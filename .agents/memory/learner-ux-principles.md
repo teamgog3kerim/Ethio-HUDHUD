@@ -42,10 +42,12 @@ actual recorded purchases, unfinished attempts and verification freshness;
 a selected plan or pending attempt is not proof of paid access.
 
 Keep the floating install button compact, with both its icon and visible text;
-do not interpret “smaller” as an icon-only button.
+do not interpret “smaller” as a permanently icon-only button. While scrolling
+up or down, temporarily shrink it to the icon and restore the text after idle.
 
 **Why:** The user explicitly corrected the icon-only version and requested its
 text back at a smaller size than the original button.
 
 **How to apply:** Reduce padding, icon and text size while preserving an easy
-tap target and the existing installation action.
+tap target and the existing installation action. Keep automatic scroll shrinking
+alongside the smaller resting button; the user explicitly requested both.
