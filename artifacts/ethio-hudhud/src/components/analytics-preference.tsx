@@ -18,7 +18,7 @@ export function AnalyticsPreference() {
     <section className="my-6 space-y-3 rounded-2xl border border-border p-5" aria-labelledby="analytics-heading">
       <h2 id="analytics-heading" className="font-display text-lg font-bold">{t('تحليلات الاستخدام الاختيارية', 'Optional usage analytics')}</h2>
       <p id="analytics-description" className="text-sm leading-relaxed text-muted-foreground">
-        {t('السماح بقياس زيارات الصفحات وتفاعلات التثبيت لتحسين الموقع، دون إرسال معرّفات المتعلمين أو نصوص المحادثات. يُحفظ الاختيار في هذا المتصفح فقط ويُطبّق فورًا دون حفظ إعدادات الحساب.', 'Allow pageview and installation interaction measurements to improve the website, without sending learner identifiers or chat content. This choice is saved only in this browser and applies immediately, without saving account settings.')}
+        {t('يتحكم هذا الخيار بتحليلات Replit/Umami الاختيارية فقط، مثل زيارات الصفحات وتفاعلات التثبيت. لا يغيّر موافقة لوحة الزوار المنفصلة أدناه، ولا يرسل معرّفات المتعلمين أو نصوص المحادثات. يُحفظ الاختيار في هذا المتصفح فقط.', 'This controls optional Replit/Umami analytics only, such as pageviews and install interactions. It does not change the separate visitor-dashboard choice below and does not send learner identifiers or chat content. This choice is stored in this browser only.')}
       </p>
       <label className="flex items-center justify-between gap-4 text-sm font-semibold">
         {t('السماح بالتحليلات الاختيارية', 'Allow optional analytics')}

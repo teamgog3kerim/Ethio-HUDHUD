@@ -28,6 +28,66 @@ export interface AdminOverview {
   billingConfigured: boolean;
 }
 
+export type VisitorPageviewInputLanguage = typeof VisitorPageviewInputLanguage[keyof typeof VisitorPageviewInputLanguage];
+
+
+export const VisitorPageviewInputLanguage = {
+  ar: 'ar',
+  en: 'en',
+  other: 'other',
+} as const;
+
+export interface VisitorPageviewInput {
+  visitorId: string;
+  pageViewId: string;
+  /** @pattern ^/(?!admin(?:/|$))[A-Za-z0-9/_-]{0,120}$ */
+  path: string;
+  language: VisitorPageviewInputLanguage;
+}
+
+export interface AdminVisitorDaily {
+  date: string;
+  visitors: number;
+  pageviews: number;
+}
+
+export interface AdminVisitorCountry {
+  country: string;
+  visitors: number;
+  pageviews: number;
+}
+
+export interface AdminVisitorSegment {
+  category: string;
+  visitors: number;
+}
+
+export interface AdminLearningProfiles {
+  totalLearners: number;
+  levels: AdminVisitorSegment[];
+  languages: AdminVisitorSegment[];
+}
+
+export type AdminVisitorsDays = typeof AdminVisitorsDays[keyof typeof AdminVisitorsDays];
+
+
+export const AdminVisitorsDays = {
+  NUMBER_7: 7,
+  NUMBER_30: 30,
+} as const;
+
+export interface AdminVisitors {
+  days: AdminVisitorsDays;
+  visitors: number;
+  pageviews: number;
+  daily: AdminVisitorDaily[];
+  countries: AdminVisitorCountry[];
+  devices: AdminVisitorSegment[];
+  browsers: AdminVisitorSegment[];
+  languages: AdminVisitorSegment[];
+  learningProfiles: AdminLearningProfiles;
+}
+
 export type AdminUserRole = typeof AdminUserRole[keyof typeof AdminUserRole];
 
 
@@ -930,6 +990,18 @@ export interface PolarPortal {
 }
 
 export type ExportAccount200 = { [key: string]: unknown };
+
+export type GetAdminVisitorsParams = {
+days?: GetAdminVisitorsDays;
+};
+
+export type GetAdminVisitorsDays = typeof GetAdminVisitorsDays[keyof typeof GetAdminVisitorsDays];
+
+
+export const GetAdminVisitorsDays = {
+  NUMBER_7: 7,
+  NUMBER_30: 30,
+} as const;
 
 export type GetAdminUsersParams = {
 /**

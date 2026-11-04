@@ -987,6 +987,68 @@ export const GetAdminOverviewResponse = zod.object({
 })
 
 
+export const getAdminVisitorsQueryDaysDefault = 30;
+
+export const GetAdminVisitorsQueryParams = zod.object({
+  "days": zod.union([zod.literal(7),zod.literal(30)]).default(getAdminVisitorsQueryDaysDefault)
+})
+
+export const GetAdminVisitorsResponse = zod.object({
+  "days": zod.union([zod.literal(7),zod.literal(30)]),
+  "visitors": zod.number().int(),
+  "pageviews": zod.number().int(),
+  "daily": zod.array(zod.object({
+  "date": zod.string(),
+  "visitors": zod.number().int(),
+  "pageviews": zod.number().int()
+})),
+  "countries": zod.array(zod.object({
+  "country": zod.string(),
+  "visitors": zod.number().int(),
+  "pageviews": zod.number().int()
+})),
+  "devices": zod.array(zod.object({
+  "category": zod.string(),
+  "visitors": zod.number().int()
+})),
+  "browsers": zod.array(zod.object({
+  "category": zod.string(),
+  "visitors": zod.number().int()
+})),
+  "languages": zod.array(zod.object({
+  "category": zod.string(),
+  "visitors": zod.number().int()
+})),
+  "learningProfiles": zod.object({
+  "totalLearners": zod.number().int(),
+  "levels": zod.array(zod.object({
+  "category": zod.string(),
+  "visitors": zod.number().int()
+})),
+  "languages": zod.array(zod.object({
+  "category": zod.string(),
+  "visitors": zod.number().int()
+}))
+})
+})
+
+
+/**
+ * Records an anonymous page view only after optional analytics consent. Country is resolved from the Replit deployment proxy, never from the client request body. No IP address or account identifier is stored.
+ */
+export const recordVisitorPageviewBodyPathRegExp = new RegExp('^/(?!admin(?:/|$))[A-Za-z0-9/_-]{0,120}$');
+
+
+export const RecordVisitorPageviewBody = zod.object({
+  "visitorId": zod.string().uuid(),
+  "pageViewId": zod.string().uuid(),
+  "path": zod.string().regex(recordVisitorPageviewBodyPathRegExp),
+  "language": zod.enum(['ar', 'en', 'other'])
+})
+
+export const RecordVisitorPageviewResponse = zod.void()
+
+
 export const getAdminUsersQuerySearchMax = 100;
 
 export const getAdminUsersQueryPageDefault = 1;

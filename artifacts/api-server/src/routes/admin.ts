@@ -10,6 +10,7 @@ import { getAppSettings } from "../lib/app-settings";
 import { HttpError } from "../lib/http-error";
 import usersRouter from "./admin-users";
 import contentRouter from "./admin-content";
+import visitorsRouter from "./admin-visitors";
 const router: IRouter = Router();
 router.get("/me", async (req, res) => {
   const { userId } = getAuth(req);
@@ -45,5 +46,6 @@ router.get("/audit", async (_req, res) => {
   res.json(GetAdminAuditResponse.parse(rows.map(row => ({ ...row, createdAt: row.createdAt.toISOString() }))));
 });
 router.use(usersRouter);
+router.use(visitorsRouter);
 router.use(contentRouter);
 export default router;

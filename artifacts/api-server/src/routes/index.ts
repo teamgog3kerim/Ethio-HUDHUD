@@ -11,6 +11,7 @@ import { getAppSettings } from "../lib/app-settings";
 import { HttpError } from "../lib/http-error";
 import { enforceCourseAccess } from "../lib/course-access";
 import studyReminderRouter from "./study-reminders";
+import visitorAnalyticsRouter from "./visitor-analytics";
 import { db, courses } from "@workspace/db";
 import { asc } from "drizzle-orm";
 import { GetCourseCatalogResponse } from "@workspace/api-zod";
@@ -29,6 +30,7 @@ router.get("/app-settings", async (_req, res) => {
   const { defaultDailyGoal: _privateDefault, ...settings } = await getAppSettings();
   res.json(settings);
 });
+router.use("/visitor/pageview", visitorAnalyticsRouter);
 router.use(enforceAccountStatus);
 router.use("/admin", adminRouter);
 router.use(polarSandboxRouter);

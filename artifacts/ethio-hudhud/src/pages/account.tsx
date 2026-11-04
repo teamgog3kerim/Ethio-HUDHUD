@@ -15,6 +15,7 @@ import { toInput } from '@/lib/options';
 import { cn } from '@/lib/utils';
 import { SignOutAction } from '@/components/sign-out';
 import { AnalyticsPreference } from '@/components/analytics-preference';
+import { VisitorAnalyticsPreference } from '@/components/visitor-analytics-preference';
 import { InviteFriend } from '@/components/invite-friend';
 import { StudyScheduleSettings } from '@/components/study-schedule';
 
@@ -72,6 +73,7 @@ export default function Account() {
         </Card>
       )}
       <AnalyticsPreference />
+      <VisitorAnalyticsPreference />
       {q.isLoading && <Skeleton className="h-96" />}
       {q.isError && <ErrorState onRetry={() => q.refetch()} />}
       {f && q.data && (

@@ -33,6 +33,7 @@ import AdminUsers from '@/pages/admin/users';
 import AdminSettings from '@/pages/admin/settings';
 import AdminContent from '@/pages/admin/content';
 import AdminAudit from '@/pages/admin/audit';
+import AdminVisitors from '@/pages/admin/visitors';
 import { Privacy, Terms } from '@/pages/legal';
 import { RenewalIdentityBoundary } from '@/components/renewal-push';
 import { CourseAccessGate } from '@/components/course-access-gate';
@@ -40,6 +41,7 @@ import { ErrorState, Skeleton } from '@/components/bits';
 import { NewUserWelcome } from '@/components/new-user-welcome';
 import { StudyPushIdentityBoundary } from '@/components/study-push-identity';
 import { StartupWelcome } from '@/components/startup-welcome';
+import { VisitorPageviewTracker } from '@/components/visitor-pageview-tracker';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } } });
 
@@ -155,6 +157,7 @@ function ClerkProviderWithRoutes() {
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
     >
       <ClerkQueryClientCacheInvalidator />
+      <VisitorPageviewTracker />
       <RenewalIdentityBoundary />
       <StudyPushIdentityBoundary />
       <NewUserWelcome />
@@ -184,6 +187,7 @@ function ClerkProviderWithRoutes() {
           <Route path="/admin/settings" component={AdminSettings} />
           <Route path="/admin/content" component={AdminContent} />
           <Route path="/admin/audit" component={AdminAudit} />
+          <Route path="/admin/visitors" component={AdminVisitors} />
           <Route path="/privacy" component={Privacy} />
           <Route path="/terms" component={Terms} />
           <Route component={NotFound} />

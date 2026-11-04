@@ -17,6 +17,7 @@ export function AdminLayout({ title, sub, children }: { title: string; sub?: str
     { href: '/admin/content', label: t('المحتوى', 'Content') },
     { href: '/admin/settings', label: t('الإعدادات', 'Settings') },
     { href: '/admin/audit', label: t('السجل', 'Audit') },
+    { href: '/admin/visitors', label: t('الزوار', 'Visitors') },
   ];
   let body: ReactNode;
   if (access.isLoading) body = <div className="space-y-3"><Skeleton className="h-10 w-1/2" /><Skeleton className="h-40" /></div>;

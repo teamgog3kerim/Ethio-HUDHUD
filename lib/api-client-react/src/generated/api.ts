@@ -28,6 +28,7 @@ import type {
   AdminUserDelete,
   AdminUserUpdate,
   AdminUsers,
+  AdminVisitors,
   AppSettings,
   BillingStatus,
   ChatInput,
@@ -35,6 +36,7 @@ import type {
   Course,
   ExportAccount200,
   GetAdminUsersParams,
+  GetAdminVisitorsParams,
   HealthStatus,
   Lesson,
   LessonResult,
@@ -58,6 +60,7 @@ import type {
   StudyReminderSettings,
   StudyReminderStatus,
   StudyScheduleInput,
+  VisitorPageviewInput,
   Word
 } from './api.schemas';
 
@@ -3364,6 +3367,169 @@ export function useGetAdminOverview<TData = Awaited<ReturnType<typeof getAdminOv
 
 
 
+
+export const getGetAdminVisitorsUrl = (params?: GetAdminVisitorsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/visitors?${stringifiedParams}` : `/api/admin/visitors`
+}
+
+export const getAdminVisitors = async (params?: GetAdminVisitorsParams, options?: Parameters<typeof customFetch>[1]): Promise<AdminVisitors> => {
+
+  return customFetch<AdminVisitors>(getGetAdminVisitorsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminVisitorsQueryKey = (params?: GetAdminVisitorsParams,) => {
+    return [
+    `/api/admin/visitors`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAdminVisitorsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminVisitors>>, TError = ErrorType<unknown>>(params?: GetAdminVisitorsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminVisitors>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminVisitorsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminVisitors>>> = ({ signal }) => getAdminVisitors(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminVisitors>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminVisitorsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminVisitors>>>
+export type GetAdminVisitorsQueryError = ErrorType<unknown>
+
+
+
+export function useGetAdminVisitors<TData = Awaited<ReturnType<typeof getAdminVisitors>>, TError = ErrorType<unknown>>(
+ params?: GetAdminVisitorsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminVisitors>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminVisitorsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRecordVisitorPageviewUrl = () => {
+
+
+
+
+  return `/api/visitor/pageview`
+}
+
+/**
+ * Records an anonymous page view only after optional analytics consent. Country is resolved from the Replit deployment proxy, never from the client request body. No IP address or account identifier is stored.
+ */
+export const recordVisitorPageview = async (visitorPageviewInput: VisitorPageviewInput, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<void>(getRecordVisitorPageviewUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(visitorPageviewInput)
+  }
+);}
+
+
+
+
+
+export const getRecordVisitorPageviewMutationKey = () => ['recordVisitorPageview'] as const;
+
+export const getRecordVisitorPageviewMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordVisitorPageview>>, TError,RecordVisitorPageviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof recordVisitorPageview>>, TError,RecordVisitorPageviewMutationVariables, TContext> => {
+
+const mutationKey = getRecordVisitorPageviewMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordVisitorPageview>>, RecordVisitorPageviewMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  recordVisitorPageview(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecordVisitorPageviewMutationResult = NonNullable<Awaited<ReturnType<typeof recordVisitorPageview>>>
+    export type RecordVisitorPageviewMutationBody = BodyType<VisitorPageviewInput>
+    export type RecordVisitorPageviewMutationError = ErrorType<unknown>
+    export type RecordVisitorPageviewMutationVariables = {data: BodyType<VisitorPageviewInput>}
+
+    export const useRecordVisitorPageview = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordVisitorPageview>>, TError,RecordVisitorPageviewMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof recordVisitorPageview>>,
+        TError,
+        RecordVisitorPageviewMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRecordVisitorPageviewMutationOptions(options));
+    }
 
 export const getGetAdminUsersUrl = (params?: GetAdminUsersParams,) => {
   const normalizedParams = new URLSearchParams();

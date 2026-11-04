@@ -26,3 +26,4 @@ export * from "./renewal-notifications";
 export * from "./polar-sandbox";
 export * from "./polar-live";
 export * from "./polar-live-purchases";
+export * from "./visitor-analytics";

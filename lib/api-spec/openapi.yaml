@@ -516,6 +516,28 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AdminOverview" }
+  /admin/visitors:
+    get:
+      operationId: getAdminVisitors
+      parameters:
+        - { name: days, in: query, schema: { type: integer, enum: [7, 30], default: 30 } }
+      responses:
+        "200":
+          description: Aggregated, consented visitor activity and learning profile segments
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminVisitors" }
+  /visitor/pageview:
+    post:
+      operationId: recordVisitorPageview
+      description: Records an anonymous page view only after optional analytics consent. Country is resolved from the Replit deployment proxy, never from the client request body. No IP address or account identifier is stored.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VisitorPageviewInput" }
+      responses:
+        "202": { description: Accepted for aggregate reporting }
   /admin/users:
     get:
       operationId: getAdminUsers
@@ -659,6 +681,69 @@ components:
         activeComplimentary: { type: integer }
         suspendedUsers: { type: integer }
         billingConfigured: { type: boolean }
+    VisitorPageviewInput:
+      type: object
+      additionalProperties: false
+      required: [visitorId, pageViewId, path, language]
+      properties:
+        visitorId: { type: string, format: uuid }
+        pageViewId: { type: string, format: uuid }
+        path: { type: string, pattern: "^/(?!admin(?:/|$))[A-Za-z0-9/_-]{0,120}$" }
+        language: { type: string, enum: [ar, en, other] }
+    AdminVisitorDaily:
+      type: object
+      required: [date, visitors, pageviews]
+      properties:
+        date: { type: string }
+        visitors: { type: integer }
+        pageviews: { type: integer }
+    AdminVisitorCountry:
+      type: object
+      required: [country, visitors, pageviews]
+      properties:
+        country: { type: string }
+        visitors: { type: integer }
+        pageviews: { type: integer }
+    AdminVisitorSegment:
+      type: object
+      required: [category, visitors]
+      properties:
+        category: { type: string }
+        visitors: { type: integer }
+    AdminLearningProfiles:
+      type: object
+      required: [totalLearners, levels, languages]
+      properties:
+        totalLearners: { type: integer }
+        levels:
+          type: array
+          items: { $ref: "#/components/schemas/AdminVisitorSegment" }
+        languages:
+          type: array
+          items: { $ref: "#/components/schemas/AdminVisitorSegment" }
+    AdminVisitors:
+      type: object
+      required: [days, visitors, pageviews, daily, countries, devices, browsers, languages, learningProfiles]
+      properties:
+        days: { type: integer, enum: [7, 30] }
+        visitors: { type: integer }
+        pageviews: { type: integer }
+        daily:
+          type: array
+          items: { $ref: "#/components/schemas/AdminVisitorDaily" }
+        countries:
+          type: array
+          items: { $ref: "#/components/schemas/AdminVisitorCountry" }
+        devices:
+          type: array
+          items: { $ref: "#/components/schemas/AdminVisitorSegment" }
+        browsers:
+          type: array
+          items: { $ref: "#/components/schemas/AdminVisitorSegment" }
+        languages:
+          type: array
+          items: { $ref: "#/components/schemas/AdminVisitorSegment" }
+        learningProfiles: { $ref: "#/components/schemas/AdminLearningProfiles" }
     AdminUser:
       type: object
       required: [id, email, emailVerified, displayName, role, suspended, createdAt, lastSignInAt, lessonsCompleted, xp, dailyGoal, accessPlan, accessExpiresAt, accessReason]
