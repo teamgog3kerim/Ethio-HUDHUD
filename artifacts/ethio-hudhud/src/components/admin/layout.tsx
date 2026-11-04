@@ -4,6 +4,7 @@ import { ShieldAlert } from 'lucide-react';
 import { useGetAdminAccess } from '@workspace/api-client-react';
 import { Card, ErrorState, LinkBtn, PageHead, Skeleton } from '@/components/bits';
 import { Shell } from '@/components/shell';
+import { AdminSignupNotifications } from '@/components/admin/signup-notifications';
 import { useApp } from '@/lib/app';
 import { cn } from '@/lib/utils';
 
@@ -43,6 +44,7 @@ export function AdminLayout({ title, sub, children }: { title: string; sub?: str
   } else {
     body = (
       <>
+        <AdminSignupNotifications />
         <nav className="mb-6 flex gap-1 overflow-x-auto rounded-2xl border border-border bg-card p-1" aria-label="admin">
           {tabs.map((x) => (
             <Link key={x.href} href={x.href} data-testid={`admin-tab-${x.href.split('/')[2] ?? 'overview'}`}
