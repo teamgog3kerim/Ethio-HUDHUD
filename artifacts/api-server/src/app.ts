@@ -11,6 +11,9 @@ import { rateLimit } from "express-rate-limit";
 import { HttpError } from "./lib/http-error";
 import { handleSandboxWebhook } from "./lib/polar-sandbox";
 import { handleLiveWebhook } from "./lib/polar-live-webhook";
+import path from "node:path";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
 const app: Express = express();
 
@@ -35,11 +38,22 @@ app.use(
 );
 app.set("trust proxy", 1);
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
+function normalizeOrigin(value: string): string | undefined {
+  const candidate = value.trim();
+  if (!candidate) return;
+  try {
+    return new URL(candidate.includes("://") ? candidate : `https://${candidate}`).origin;
+  } catch {
+    return;
+  }
+}
 const allowedOrigins = new Set([
+  process.env.PUBLIC_APP_ORIGIN,
+  ...(process.env.ALLOWED_ORIGINS ?? "").split(","),
   process.env.REPLIT_DEV_DOMAIN,
   process.env.REPLIT_EXPO_DEV_DOMAIN,
   ...(process.env.REPLIT_DOMAINS ?? "").split(","),
-].filter(Boolean).map(host => `https://${host}`));
+].filter((origin): origin is string => !!origin).map(normalizeOrigin).filter((origin): origin is string => !!origin));
 app.use(cors({ credentials: true, origin: (origin, callback) => callback(null, !!origin && allowedOrigins.has(origin)) }));
 // Raw signed payload, before JSON parsing, Clerk auth and browser CSRF checks.
 app.post("/api/billing/polar/live/webhook",
@@ -85,6 +99,22 @@ app.use("/api", (req, res, next) => {
 });
 
 app.use("/api", router);
+if (process.env.SERVE_WEB === "true") {
+  const webPublicDir = path.resolve(
+    process.env.WEB_PUBLIC_DIR
+      ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../ethio-hudhud/dist/public"),
+  );
+  const indexPath = path.join(webPublicDir, "index.html");
+  if (!existsSync(indexPath)) {
+    throw new Error(`SERVE_WEB is enabled but the built web app was not found at ${indexPath}`);
+  }
+  app.use(express.static(webPublicDir, { index: false, maxAge: "1h" }));
+  app.get(/^(?!\/api(?:\/|$)).*/, (_req, res, next) => {
+    res.sendFile(indexPath, (err) => {
+      if (err) next(err);
+    });
+  });
+}
 app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (err instanceof HttpError) { res.status(err.status).json({ error: err.message }); return; }
   req.log.error({ err }, "Request failed");
